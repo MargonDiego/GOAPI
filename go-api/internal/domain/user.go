@@ -3,7 +3,6 @@ package domain
 import (
 	"context"
 	"errors"
-	"regexp"
 	"strings"
 )
 
@@ -14,10 +13,6 @@ var (
 	ErrInsufficientPerms = errors.New("insufficient permissions")
 	ErrInvalidInput      = errors.New("invalid user input data")
 	ErrRoleNotFound      = errors.New("role not found")
-
-	// validUsername asegura que el input sea alfanumérico estricto, 
-	// previniendo XSS, Log Forging o Path Traversal. 
-	validUsername = regexp.MustCompile(`^[a-zA-Z0-9_-]{3,32}$`)
 )
 
 type Permission struct {
@@ -39,15 +34,12 @@ type User struct {
 }
 
 // NewUser es la Fábrica (Factory) del Dominio Puro.
-// Encapsula las invariantes CERO de seguridad en creación.
+// Encapsula las invariantes de creación de usuario.
 func NewUser(username, passwordHash string, defaultRole Role) (*User, error) {
 	username = strings.TrimSpace(username)
-	
-	// Boundary Check Defensivo (Whitelist regex)
-	if !validUsername.MatchString(username) {
+	if len(username) < 3 {
 		return nil, ErrInvalidInput
 	}
-	
 	if passwordHash == "" {
 		return nil, ErrInvalidInput
 	}

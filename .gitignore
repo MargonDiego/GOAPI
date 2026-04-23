@@ -12,3 +12,9 @@ coverage/
 /go-api/*.db
 /go-api/*.db-journal
 __debug_bin
+
+# Go API specific
+/go-api/api
+/go-api/*.db
+/go-api/*.db-journal
+__debug_bin

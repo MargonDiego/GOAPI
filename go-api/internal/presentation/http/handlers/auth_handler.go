@@ -10,6 +10,8 @@ import (
 	"github.com/diego/go-api/internal/domain"
 )
 
+// AuthRequest centraliza el DTO de entrada.
+// Evita declarar structs anónimos inline múltiples veces.
 type AuthRequest struct {
 	Username string `json:"username"`
 	Password string `json:"password"`
@@ -24,12 +26,9 @@ func NewAuthHandler(s application.AuthService) *AuthHandler {
 }
 
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
-	// MITIGACIÓN DOS: Limitar payload a 10KB para evitar OOM y agotamiento por parsing.
-	r.Body = http.MaxBytesReader(w, r.Body, 1024*10)
-
 	var req AuthRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		RespondError(w, http.StatusRequestEntityTooLarge, "payload too large or invalid json")
+		RespondError(w, http.StatusBadRequest, "invalid json payload")
 		return
 	}
 
@@ -51,12 +50,9 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
-	// MITIGACIÓN DOS: Limitar payload a 10KB
-	r.Body = http.MaxBytesReader(w, r.Body, 1024*10)
-
 	var req AuthRequest
 	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		RespondError(w, http.StatusRequestEntityTooLarge, "payload too large or invalid json")
+		RespondError(w, http.StatusBadRequest, "invalid json payload")
 		return
 	}
 
@@ -71,6 +67,8 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// handleAuthError mapea errores del dominio/aplicación a códigos HTTP RESTful.
+// Mejora la legibilidad quitando estos "if err" de los bloques funcionales.
 func (h *AuthHandler) handleAuthError(w http.ResponseWriter, err error) {
 	switch {
 	case errors.Is(err, domain.ErrUserAlreadyExists):
@@ -80,7 +78,7 @@ func (h *AuthHandler) handleAuthError(w http.ResponseWriter, err error) {
 	case errors.Is(err, domain.ErrInvalidCreds):
 		RespondError(w, http.StatusUnauthorized, err.Error())
 	default:
-		// Se ocultan errores internos explícitamente para evitar exfiltración
+		// Logging en un entorno real debe capturar `err`
 		RespondError(w, http.StatusInternalServerError, "internal server error")
 	}
 }
