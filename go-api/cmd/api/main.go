@@ -11,6 +11,9 @@ import (
 	mypresentation "github.com/diego/go-api/internal/presentation/http"
 	"github.com/diego/go-api/internal/presentation/http/handlers"
 	"github.com/diego/go-api/internal/presentation/http/middleware"
+
+	// Importación anónima para auto-cargar variables desde el archivo .env (si existe)
+	_ "github.com/joho/godotenv/autoload"
 )
 
 func main() {

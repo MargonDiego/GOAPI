@@ -2,12 +2,12 @@ package middleware
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"net/http"
 	"strings"
 
 	"github.com/golang-jwt/jwt/v5"
-	"github.com/diego/go-api/internal/presentation/http/handlers"
 )
 
 type contextKey string
@@ -40,12 +40,19 @@ func NewAuthMiddleware(secret []byte) *AuthMiddleware {
 	return &AuthMiddleware{jwtSecret: secret}
 }
 
+// respondError local para romper el ciclo de importación circular con /handlers
+func respondError(w http.ResponseWriter, status int, message string) {
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(map[string]string{"error": message})
+}
+
 func (m *AuthMiddleware) RequireAuth() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			tokenString, err := extractBearerToken(r.Header.Get("Authorization"))
 			if err != nil {
-				handlers.RespondError(w, http.StatusUnauthorized, err.Error())
+				respondError(w, http.StatusUnauthorized, err.Error())
 				return
 			}
 
@@ -55,13 +62,13 @@ func (m *AuthMiddleware) RequireAuth() func(http.Handler) http.Handler {
 			})
 
 			if err != nil || !token.Valid {
-				handlers.RespondError(w, http.StatusUnauthorized, "invalid or expired token")
+				respondError(w, http.StatusUnauthorized, "invalid or expired token")
 				return
 			}
 
 			sub, ok := claims["sub"].(string)
 			if !ok {
-				handlers.RespondError(w, http.StatusUnauthorized, "invalid token payload")
+				respondError(w, http.StatusUnauthorized, "invalid token payload")
 				return
 			}
 
@@ -91,13 +98,13 @@ func (m *AuthMiddleware) RequirePermission(requiredPerm string) func(http.Handle
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			session, ok := GetSessionFromContext(r.Context())
 			if !ok {
-				handlers.RespondError(w, http.StatusUnauthorized, "unauthorized access context")
+				respondError(w, http.StatusUnauthorized, "unauthorized access context")
 				return
 			}
 
 			// HOT PATH OPTIMIZADO: Look-up en memoria O(1). CERO base de datos.
 			if !session.Permissions[requiredPerm] {
-				handlers.RespondError(w, http.StatusForbidden, "forbidden: core-permission missing")
+				respondError(w, http.StatusForbidden, "forbidden: core-permission missing")
 				return
 			}
 
