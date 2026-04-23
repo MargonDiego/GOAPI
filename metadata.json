@@ -1,0 +1,6 @@
+{
+  "name": "Go API RBAC",
+  "description": "Golang API Server con Autenticación JWT, Usuarios, Roles y Permisos",
+  "requestFramePermissions": [],
+  "majorCapabilities": []
+}

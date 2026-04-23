@@ -1,0 +1,14 @@
+node_modules/
+build/
+dist/
+coverage/
+.DS_Store
+*.log
+.env*
+!.env.example
+
+# Go API specific
+/go-api/api
+/go-api/*.db
+/go-api/*.db-journal
+__debug_bin
