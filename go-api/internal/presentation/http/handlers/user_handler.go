@@ -10,6 +10,25 @@ import (
 	"github.com/diego/go-api/internal/presentation/http/middleware"
 )
 
+// DTOs de respuesta tipados — más rápidos que map[string]interface{} para el encoder JSON
+// y eliminan heap allocations de maps por cada request.
+type permissionResponse struct {
+	ID   uint   `json:"id"`
+	Name string `json:"name"`
+}
+
+type roleResponse struct {
+	ID          uint                 `json:"id"`
+	Name        string               `json:"name"`
+	Permissions []permissionResponse `json:"permissions"`
+}
+
+type userResponse struct {
+	ID       uint           `json:"id"`
+	Username string         `json:"username"`
+	Roles    []roleResponse `json:"roles"`
+}
+
 type UserHandler struct {
 	userService application.UserService
 }
@@ -18,6 +37,17 @@ func NewUserHandler(s application.UserService) *UserHandler {
 	return &UserHandler{userService: s}
 }
 
+// GetMe retorna el perfil del usuario autenticado.
+//
+// @Summary      Mi perfil
+// @Description  Retorna los datos del usuario extraído del token JWT
+// @Tags         users
+// @Produce      json
+// @Success      200 {object} userResponse
+// @Failure      401 {object} ErrorResponse
+// @Failure      404 {object} ErrorResponse
+// @Security     BearerAuth
+// @Router       /me [get]
 func (h *UserHandler) GetMe(w http.ResponseWriter, r *http.Request) {
 	username, ok := middleware.GetUsernameFromContext(r.Context())
 	if !ok {
@@ -35,13 +65,22 @@ func (h *UserHandler) GetMe(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	RespondJSON(w, http.StatusOK, map[string]interface{}{
-		"id":       user.ID,
-		"username": user.Username,
-		"roles":    user.Roles,
-	})
+	RespondJSON(w, http.StatusOK, toUserResponse(*user))
 }
 
+// GetAll lista todos los usuarios paginados.
+//
+// @Summary      Listar usuarios
+// @Description  Retorna la lista paginada de usuarios. Requiere permiso read:users
+// @Tags         users
+// @Produce      json
+// @Param        page query int false "Número de página" default(1)
+// @Param        size query int false "Tamaño de página" default(10)
+// @Success      200 {array}  userResponse
+// @Failure      401 {object} ErrorResponse
+// @Failure      403 {object} ErrorResponse
+// @Security     BearerAuth
+// @Router       /users [get]
 func (h *UserHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 	page := parseQueryInt(r, "page", 1)
 	size := parseQueryInt(r, "size", 10)
@@ -52,17 +91,25 @@ func (h *UserHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Pre-aloja capacidad para reducir allocations de memoria
-	response := make([]map[string]interface{}, 0, len(users))
+	response := make([]userResponse, 0, len(users))
 	for _, u := range users {
-		response = append(response, map[string]interface{}{
-			"id":       u.ID,
-			"username": u.Username,
-			"roles":    u.Roles,
-		})
+		response = append(response, toUserResponse(u))
 	}
 
 	RespondJSON(w, http.StatusOK, response)
+}
+
+// toUserResponse convierte un domain.User al DTO de respuesta tipado.
+func toUserResponse(u domain.User) userResponse {
+	roles := make([]roleResponse, 0, len(u.Roles))
+	for _, r := range u.Roles {
+		perms := make([]permissionResponse, 0, len(r.Permissions))
+		for _, p := range r.Permissions {
+			perms = append(perms, permissionResponse{ID: p.ID, Name: p.Name})
+		}
+		roles = append(roles, roleResponse{ID: r.ID, Name: r.Name, Permissions: perms})
+	}
+	return userResponse{ID: u.ID, Username: u.Username, Roles: roles}
 }
 
 // parseQueryInt abstrae el casteo y previene silent failures con fallbacks seguros.

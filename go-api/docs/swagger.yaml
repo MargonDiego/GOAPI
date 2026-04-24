@@ -1,0 +1,230 @@
+basePath: /api
+definitions:
+  handlers.AuthRequest:
+    properties:
+      email:
+        description: Opcional. Se cifra con AES-256-GCM antes de persistir.
+        example: johndoe@example.com
+        type: string
+      password:
+        example: secret1234
+        type: string
+      username:
+        example: johndoe
+        type: string
+    type: object
+  handlers.AuthResponse:
+    properties:
+      access_token:
+        example: eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+        type: string
+      refresh_token:
+        example: rand_base64_string
+        type: string
+    type: object
+  handlers.ErrorResponse:
+    properties:
+      error:
+        example: invalid credentials
+        type: string
+    type: object
+  handlers.MessageResponse:
+    properties:
+      message:
+        example: user registered successfully
+        type: string
+    type: object
+  handlers.RefreshRequest:
+    properties:
+      refresh_token:
+        example: rand_base64_string
+        type: string
+    type: object
+  handlers.permissionResponse:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+    type: object
+  handlers.roleResponse:
+    properties:
+      id:
+        type: integer
+      name:
+        type: string
+      permissions:
+        items:
+          $ref: '#/definitions/handlers.permissionResponse'
+        type: array
+    type: object
+  handlers.userResponse:
+    properties:
+      id:
+        type: integer
+      roles:
+        items:
+          $ref: '#/definitions/handlers.roleResponse'
+        type: array
+      username:
+        type: string
+    type: object
+host: localhost:8080
+info:
+  contact: {}
+  description: API REST con autenticación JWT y control de permisos basado en roles.
+  title: Clean Architecture Go API
+  version: "1.0"
+paths:
+  /login:
+    post:
+      consumes:
+      - application/json
+      description: Autentica credenciales y retorna un token JWT con permisos embebidos
+      parameters:
+      - description: Credenciales
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.AuthRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.AuthResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Login de usuario
+      tags:
+      - auth
+  /me:
+    get:
+      description: Retorna los datos del usuario extraído del token JWT
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.userResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Mi perfil
+      tags:
+      - users
+  /refresh:
+    post:
+      consumes:
+      - application/json
+      description: Emite un nuevo Access Token y rota el Refresh Token
+      parameters:
+      - description: Refresh Token actual
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.RefreshRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.AuthResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Renovar sesión
+      tags:
+      - auth
+  /register:
+    post:
+      consumes:
+      - application/json
+      description: Crea un nuevo usuario con el rol User por defecto
+      parameters:
+      - description: Credenciales del nuevo usuario
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.AuthRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      summary: Registro de usuario
+      tags:
+      - auth
+  /users:
+    get:
+      description: Retorna la lista paginada de usuarios. Requiere permiso read:users
+      parameters:
+      - default: 1
+        description: Número de página
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Tamaño de página
+        in: query
+        name: size
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handlers.userResponse'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Listar usuarios
+      tags:
+      - users
+securityDefinitions:
+  BearerAuth:
+    description: 'Ingresá el token con el prefijo Bearer. Ejemplo: "Bearer {token}"'
+    in: header
+    name: Authorization
+    type: apiKey
+swagger: "2.0"
