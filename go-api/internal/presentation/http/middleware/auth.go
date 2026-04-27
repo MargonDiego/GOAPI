@@ -26,6 +26,11 @@ func GetSessionFromContext(ctx context.Context) (UserSession, bool) {
 	return session, ok
 }
 
+// ContextWithSession inyecta una UserSession en el contexto (útil para tests)
+func ContextWithSession(ctx context.Context, session UserSession) context.Context {
+	return context.WithValue(ctx, userSessionKey, session)
+}
+
 // GetUsernameFromContext se mantiene por retrocompatibilidad con handlers existentes
 func GetUsernameFromContext(ctx context.Context) (string, bool) {
 	session, ok := GetSessionFromContext(ctx)

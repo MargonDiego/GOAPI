@@ -1,0 +1,13 @@
+with-expecter: true
+outpkg: mocks
+dir: mocks
+packages:
+  github.com/diego/go-api/internal/domain:
+    interfaces:
+      UserRepository:
+      RoleRepository:
+  github.com/diego/go-api/internal/application:
+    interfaces:
+      AuthService:
+      UserService:
+      RoleService:
