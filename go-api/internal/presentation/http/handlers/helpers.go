@@ -2,7 +2,11 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
+	"strconv"
+
+	"github.com/gorilla/mux"
 )
 
 // RespondJSON es un helper para serializar respuestas exitosas
@@ -19,4 +23,14 @@ func RespondJSON(w http.ResponseWriter, status int, payload interface{}) {
 // RespondError es un helper estandarizado para emitir errores de cliente controlados
 func RespondError(w http.ResponseWriter, status int, message string) {
 	RespondJSON(w, status, map[string]string{"error": message})
+}
+
+// getIDFromURL extrae un ID entero de los parámetros de ruta de mux.Router
+func getIDFromURL(r *http.Request, param string) (int, error) {
+	vars := mux.Vars(r)
+	idStr, ok := vars[param]
+	if !ok {
+		return 0, errors.New("parameter not found in URL")
+	}
+	return strconv.Atoi(idStr)
 }

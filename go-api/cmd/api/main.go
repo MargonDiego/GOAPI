@@ -69,21 +69,24 @@ func main() {
 		log.Fatal().Err(err).Msg("Failed to connect to PostgreSQL database")
 	}
 	userRepo := database.NewUserRepository(db)
+	roleRepo := database.NewRoleRepository(db)
 
 	// Encryptor para PII (fail-fast garantizado por la validación de emailKey arriba).
 	enc, _ := crypto.NewEncryptor(emailKey)
 
 	// 2. Capa de Aplicación (Servicios de dominio)
 	authService := application.NewAuthService(userRepo, jwtSecret, enc)
-	userService := application.NewUserService(userRepo)
+	userService := application.NewUserService(userRepo, roleRepo)
+	roleService := application.NewRoleService(roleRepo)
 
 	// 3. Capa de Presentación HTTP (Middlewares y Controladores)
 	authHandler := handlers.NewAuthHandler(authService)
 	userHandler := handlers.NewUserHandler(userService)
+	roleHandler := handlers.NewRoleHandler(roleService)
 	authMw := middleware.NewAuthMiddleware(jwtSecret)
 
 	// Inicialización de Router con logging de requests
-	router := mypresentation.NewRouter(authHandler, userHandler, authMw)
+	router := mypresentation.NewRouter(authHandler, userHandler, roleHandler, authMw)
 	router.Use(middleware.RequestLogger())
 
 	log.Info().Str("port", port).Msg("Starting API server")

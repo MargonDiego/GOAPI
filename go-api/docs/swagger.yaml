@@ -1,5 +1,26 @@
 basePath: /api
 definitions:
+  handlers.AssignPermissionsRequest:
+    properties:
+      permission_ids:
+        example:
+        - 1
+        - 2
+        - 3
+        items:
+          type: integer
+        type: array
+    type: object
+  handlers.AssignRolesRequest:
+    properties:
+      role_ids:
+        example:
+        - 1
+        - 2
+        items:
+          type: integer
+        type: array
+    type: object
   handlers.AuthRequest:
     properties:
       email:
@@ -34,20 +55,26 @@ definitions:
         example: user registered successfully
         type: string
     type: object
-  handlers.RefreshRequest:
-    properties:
-      refresh_token:
-        example: rand_base64_string
-        type: string
-    type: object
-  handlers.permissionResponse:
+  handlers.PermissionResponse:
     properties:
       id:
         type: integer
       name:
         type: string
     type: object
-  handlers.roleResponse:
+  handlers.RefreshRequest:
+    properties:
+      refresh_token:
+        example: rand_base64_string
+        type: string
+    type: object
+  handlers.RoleCreateRequest:
+    properties:
+      name:
+        example: Editor
+        type: string
+    type: object
+  handlers.RoleResponse:
     properties:
       id:
         type: integer
@@ -55,16 +82,16 @@ definitions:
         type: string
       permissions:
         items:
-          $ref: '#/definitions/handlers.permissionResponse'
+          $ref: '#/definitions/handlers.PermissionResponse'
         type: array
     type: object
-  handlers.userResponse:
+  handlers.UserResponse:
     properties:
       id:
         type: integer
       roles:
         items:
-          $ref: '#/definitions/handlers.roleResponse'
+          $ref: '#/definitions/handlers.RoleResponse'
         type: array
       username:
         type: string
@@ -111,7 +138,7 @@ paths:
         "200":
           description: OK
           schema:
-            $ref: '#/definitions/handlers.userResponse'
+            $ref: '#/definitions/handlers.UserResponse'
         "401":
           description: Unauthorized
           schema:
@@ -125,6 +152,27 @@ paths:
       summary: Mi perfil
       tags:
       - users
+  /permissions:
+    get:
+      description: Obtiene todos los permisos disponibles en el sistema
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handlers.PermissionResponse'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Listar permisos
+      tags:
+      - roles
   /refresh:
     post:
       consumes:
@@ -185,6 +233,87 @@ paths:
       summary: Registro de usuario
       tags:
       - auth
+  /roles:
+    get:
+      description: Obtiene todos los roles con sus permisos asociados
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            items:
+              $ref: '#/definitions/handlers.RoleResponse'
+            type: array
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Listar roles
+      tags:
+      - roles
+    post:
+      consumes:
+      - application/json
+      description: Crea un nuevo rol en el sistema
+      parameters:
+      - description: Datos del rol
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.RoleCreateRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.RoleResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Crear un rol
+      tags:
+      - roles
+  /roles/{id}/permissions:
+    put:
+      consumes:
+      - application/json
+      description: Actualiza los permisos asociados a un rol específico
+      parameters:
+      - description: Role ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: IDs de los permisos
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.AssignPermissionsRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Asignar permisos a rol
+      tags:
+      - roles
   /users:
     get:
       description: Retorna la lista paginada de usuarios. Requiere permiso read:users
@@ -199,6 +328,11 @@ paths:
         in: query
         name: size
         type: integer
+      - default: 10
+        description: Tamaño de página
+        in: query
+        name: size
+        type: integer
       produces:
       - application/json
       responses:
@@ -206,7 +340,7 @@ paths:
           description: OK
           schema:
             items:
-              $ref: '#/definitions/handlers.userResponse'
+              $ref: '#/definitions/handlers.UserResponse'
             type: array
         "401":
           description: Unauthorized
@@ -219,6 +353,39 @@ paths:
       security:
       - BearerAuth: []
       summary: Listar usuarios
+      tags:
+      - users
+  /users/{id}/roles:
+    put:
+      consumes:
+      - application/json
+      description: Actualiza los roles asociados a un usuario específico
+      parameters:
+      - description: User ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: IDs de los roles
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.AssignRolesRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Asignar roles a usuario
       tags:
       - users
 securityDefinitions:

@@ -117,6 +117,7 @@ func (u *User) HasPermission(p string) bool {
 type UserRepository interface {
 	Save(ctx context.Context, u *User) error
 	Update(ctx context.Context, u *User) error
+	UpdateRoles(ctx context.Context, userID uint, roles []Role) error
 	FindByUsername(ctx context.Context, username string) (*User, error)
 	FindByID(ctx context.Context, id uint) (*User, error)
 	FindByEmailHash(ctx context.Context, emailHash string) (*User, error)

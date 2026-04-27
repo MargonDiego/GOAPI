@@ -44,6 +44,23 @@ func (r *userRepository) Update(ctx context.Context, u *domain.User) error {
 	return nil
 }
 
+func (r *userRepository) UpdateRoles(ctx context.Context, userID uint, roles []domain.Role) error {
+	var dbUser User
+	if err := r.db.WithContext(ctx).First(&dbUser, userID).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return domain.ErrUserNotFound
+		}
+		return err
+	}
+
+	var dbRoles []Role
+	for _, role := range roles {
+		dbRoles = append(dbRoles, Role{Model: gorm.Model{ID: role.ID}, Name: role.Name})
+	}
+
+	return r.db.WithContext(ctx).Model(&dbUser).Association("Roles").Replace(&dbRoles)
+}
+
 func (r *userRepository) FindByUsername(ctx context.Context, username string) (*domain.User, error) {
 	var u User
 	if err := r.db.WithContext(ctx).Preload("Roles.Permissions").Where("username = ?", username).First(&u).Error; err != nil {

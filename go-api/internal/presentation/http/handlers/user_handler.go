@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"encoding/json"
 	"errors"
 	"net/http"
 	"strconv"
@@ -10,23 +11,10 @@ import (
 	"github.com/diego/go-api/internal/presentation/http/middleware"
 )
 
-// DTOs de respuesta tipados — más rápidos que map[string]interface{} para el encoder JSON
-// y eliminan heap allocations de maps por cada request.
-type permissionResponse struct {
-	ID   uint   `json:"id"`
-	Name string `json:"name"`
-}
-
-type roleResponse struct {
-	ID          uint                 `json:"id"`
-	Name        string               `json:"name"`
-	Permissions []permissionResponse `json:"permissions"`
-}
-
-type userResponse struct {
+type UserResponse struct {
 	ID       uint           `json:"id"`
 	Username string         `json:"username"`
-	Roles    []roleResponse `json:"roles"`
+	Roles    []RoleResponse `json:"roles"`
 }
 
 type UserHandler struct {
@@ -43,7 +31,7 @@ func NewUserHandler(s application.UserService) *UserHandler {
 // @Description  Retorna los datos del usuario extraído del token JWT
 // @Tags         users
 // @Produce      json
-// @Success      200 {object} userResponse
+// @Success      200 {object} UserResponse
 // @Failure      401 {object} ErrorResponse
 // @Failure      404 {object} ErrorResponse
 // @Security     BearerAuth
@@ -76,7 +64,8 @@ func (h *UserHandler) GetMe(w http.ResponseWriter, r *http.Request) {
 // @Produce      json
 // @Param        page query int false "Número de página" default(1)
 // @Param        size query int false "Tamaño de página" default(10)
-// @Success      200 {array}  userResponse
+// @Param        size query int false "Tamaño de página" default(10)
+// @Success      200 {array}  UserResponse
 // @Failure      401 {object} ErrorResponse
 // @Failure      403 {object} ErrorResponse
 // @Security     BearerAuth
@@ -91,25 +80,68 @@ func (h *UserHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := make([]userResponse, 0, len(users))
+	response := make([]UserResponse, 0, len(users))
 	for _, u := range users {
 		response = append(response, toUserResponse(u))
+	}
+
+	if response == nil {
+		response = []UserResponse{}
 	}
 
 	RespondJSON(w, http.StatusOK, response)
 }
 
-// toUserResponse convierte un domain.User al DTO de respuesta tipado.
-func toUserResponse(u domain.User) userResponse {
-	roles := make([]roleResponse, 0, len(u.Roles))
-	for _, r := range u.Roles {
-		perms := make([]permissionResponse, 0, len(r.Permissions))
-		for _, p := range r.Permissions {
-			perms = append(perms, permissionResponse{ID: p.ID, Name: p.Name})
-		}
-		roles = append(roles, roleResponse{ID: r.ID, Name: r.Name, Permissions: perms})
+// AssignRolesRequest es el DTO para asignar roles a un usuario.
+type AssignRolesRequest struct {
+	RoleIDs []uint `json:"role_ids" example:"1,2"`
+}
+
+// AssignRoles asigna uno o más roles a un usuario.
+//
+// @Summary      Asignar roles a usuario
+// @Description  Actualiza los roles asociados a un usuario específico
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param        id path int true "User ID"
+// @Param        body body AssignRolesRequest true "IDs de los roles"
+// @Security     BearerAuth
+// @Success      200 {object} MessageResponse
+// @Failure      400 {object} ErrorResponse
+// @Router       /users/{id}/roles [put]
+func (h *UserHandler) AssignRoles(w http.ResponseWriter, r *http.Request) {
+	userID, err := getIDFromURL(r, "id")
+	if err != nil {
+		RespondError(w, http.StatusBadRequest, "invalid user id")
+		return
 	}
-	return userResponse{ID: u.ID, Username: u.Username, Roles: roles}
+
+	var req AssignRolesRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		RespondError(w, http.StatusBadRequest, "invalid json payload")
+		return
+	}
+
+	if err := h.userService.AssignRolesToUser(r.Context(), uint(userID), req.RoleIDs); err != nil {
+		RespondError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	RespondJSON(w, http.StatusOK, MessageResponse{Message: "roles assigned successfully"})
+}
+
+// toUserResponse convierte un domain.User al DTO de respuesta tipado.
+func toUserResponse(u domain.User) UserResponse {
+	roles := make([]RoleResponse, 0, len(u.Roles))
+	for _, r := range u.Roles {
+		perms := make([]PermissionResponse, 0, len(r.Permissions))
+		for _, p := range r.Permissions {
+			perms = append(perms, PermissionResponse{ID: p.ID, Name: p.Name})
+		}
+		roles = append(roles, RoleResponse{ID: r.ID, Name: r.Name, Permissions: perms})
+	}
+	return UserResponse{ID: u.ID, Username: u.Username, Roles: roles}
 }
 
 // parseQueryInt abstrae el casteo y previene silent failures con fallbacks seguros.
