@@ -57,6 +57,7 @@ func NewAuthHandler(s application.AuthService) *AuthHandler {
 // @Success      201 {object} MessageResponse
 // @Failure      400 {object} ErrorResponse
 // @Failure      409 {object} ErrorResponse
+// @Failure      500 {object} ErrorResponse
 // @Router       /register [post]
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var req AuthRequest
@@ -92,7 +93,10 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 // @Produce      json
 // @Param        body body AuthRequest true "Credenciales"
 // @Success      200 {object} AuthResponse
+// @Failure      400 {object} ErrorResponse
 // @Failure      401 {object} ErrorResponse
+// @Failure      429 {object} ErrorResponse
+// @Failure      500 {object} ErrorResponse
 // @Router       /login [post]
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req AuthRequest
@@ -124,6 +128,7 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 // @Success      200 {object} AuthResponse
 // @Failure      400 {object} ErrorResponse
 // @Failure      401 {object} ErrorResponse
+// @Failure      500 {object} ErrorResponse
 // @Router       /refresh [post]
 func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 	var req RefreshRequest

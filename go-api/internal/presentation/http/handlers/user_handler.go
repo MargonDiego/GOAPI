@@ -34,6 +34,7 @@ func NewUserHandler(s application.UserService) *UserHandler {
 // @Success      200 {object} UserResponse
 // @Failure      401 {object} ErrorResponse
 // @Failure      404 {object} ErrorResponse
+// @Failure      500 {object} ErrorResponse
 // @Security     BearerAuth
 // @Router       /me [get]
 func (h *UserHandler) GetMe(w http.ResponseWriter, r *http.Request) {
@@ -64,10 +65,10 @@ func (h *UserHandler) GetMe(w http.ResponseWriter, r *http.Request) {
 // @Produce      json
 // @Param        page query int false "Número de página" default(1)
 // @Param        size query int false "Tamaño de página" default(10)
-// @Param        size query int false "Tamaño de página" default(10)
 // @Success      200 {array}  UserResponse
 // @Failure      401 {object} ErrorResponse
 // @Failure      403 {object} ErrorResponse
+// @Failure      500 {object} ErrorResponse
 // @Security     BearerAuth
 // @Router       /users [get]
 func (h *UserHandler) GetAll(w http.ResponseWriter, r *http.Request) {
@@ -109,6 +110,9 @@ type AssignRolesRequest struct {
 // @Security     BearerAuth
 // @Success      200 {object} MessageResponse
 // @Failure      400 {object} ErrorResponse
+// @Failure      401 {object} ErrorResponse
+// @Failure      403 {object} ErrorResponse
+// @Failure      500 {object} ErrorResponse
 // @Router       /users/{id}/roles [put]
 func (h *UserHandler) AssignRoles(w http.ResponseWriter, r *http.Request) {
 	userID, err := getIDFromURL(r, "id")

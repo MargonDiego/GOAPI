@@ -49,6 +49,9 @@ func NewRoleHandler(s application.RoleService) *RoleHandler {
 // @Security     BearerAuth
 // @Success      201 {object} RoleResponse
 // @Failure      400 {object} ErrorResponse
+// @Failure      401 {object} ErrorResponse
+// @Failure      403 {object} ErrorResponse
+// @Failure      500 {object} ErrorResponse
 // @Router       /roles [post]
 func (h *RoleHandler) CreateRole(w http.ResponseWriter, r *http.Request) {
 	var req RoleCreateRequest
@@ -78,6 +81,8 @@ func (h *RoleHandler) CreateRole(w http.ResponseWriter, r *http.Request) {
 // @Produce      json
 // @Security     BearerAuth
 // @Success      200 {array} RoleResponse
+// @Failure      401 {object} ErrorResponse
+// @Failure      403 {object} ErrorResponse
 // @Failure      500 {object} ErrorResponse
 // @Router       /roles [get]
 func (h *RoleHandler) GetRoles(w http.ResponseWriter, r *http.Request) {
@@ -116,6 +121,8 @@ func (h *RoleHandler) GetRoles(w http.ResponseWriter, r *http.Request) {
 // @Produce      json
 // @Security     BearerAuth
 // @Success      200 {array} PermissionResponse
+// @Failure      401 {object} ErrorResponse
+// @Failure      403 {object} ErrorResponse
 // @Failure      500 {object} ErrorResponse
 // @Router       /permissions [get]
 func (h *RoleHandler) GetPermissions(w http.ResponseWriter, r *http.Request) {
@@ -149,6 +156,9 @@ func (h *RoleHandler) GetPermissions(w http.ResponseWriter, r *http.Request) {
 // @Security     BearerAuth
 // @Success      200 {object} MessageResponse
 // @Failure      400 {object} ErrorResponse
+// @Failure      401 {object} ErrorResponse
+// @Failure      403 {object} ErrorResponse
+// @Failure      500 {object} ErrorResponse
 // @Router       /roles/{id}/permissions [put]
 func (h *RoleHandler) AssignPermissions(w http.ResponseWriter, r *http.Request) {
 	roleID, err := getIDFromURL(r, "id")
