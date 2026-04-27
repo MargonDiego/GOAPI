@@ -135,6 +135,173 @@ func (h *UserHandler) AssignRoles(w http.ResponseWriter, r *http.Request) {
 	RespondJSON(w, http.StatusOK, MessageResponse{Message: "roles assigned successfully"})
 }
 
+// CreateUserRequest es el DTO para crear usuario.
+type CreateUserRequest struct {
+	Username string `json:"username" example:"johndoe"`
+	Password string `json:"password" example:"secret1234"`
+	Email    string `json:"email,omitempty" example:"johndoe@example.com"`
+}
+
+// GetByID Obtiene un usuario por su ID.
+//
+// @Summary      Obtener usuario por ID
+// @Description  Retorna los datos de un usuario específico
+// @Tags         users
+// @Produce      json
+// @Param        id path int true "User ID"
+// @Success      200 {object} UserResponse
+// @Failure      401 {object} ErrorResponse
+// @Failure      403 {object} ErrorResponse
+// @Failure      404 {object} ErrorResponse
+// @Security     BearerAuth
+// @Router       /users/{id} [get]
+func (h *UserHandler) GetByID(w http.ResponseWriter, r *http.Request) {
+	id, err := getIDFromURL(r, "id")
+	if err != nil {
+		RespondError(w, http.StatusBadRequest, "invalid user id")
+		return
+	}
+
+	user, err := h.userService.GetUserByID(r.Context(), uint(id))
+	if err != nil {
+		if errors.Is(err, domain.ErrUserNotFound) {
+			RespondError(w, http.StatusNotFound, err.Error())
+			return
+		}
+		RespondError(w, http.StatusInternalServerError, "internal server error")
+		return
+	}
+
+	RespondJSON(w, http.StatusOK, toUserResponse(*user))
+}
+
+// Create crea un nuevo usuario.
+//
+// @Summary      Crear usuario
+// @Description  Crea un nuevo usuario en el sistema
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param        body body CreateUserRequest true "Datos del nuevo usuario"
+// @Security     BearerAuth
+// @Success      201 {object} MessageResponse
+// @Failure      400 {object} ErrorResponse
+// @Failure      401 {object} ErrorResponse
+// @Failure      403 {object} ErrorResponse
+// @Failure      409 {object} ErrorResponse
+// @Router       /users [post]
+func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
+	var req CreateUserRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		RespondError(w, http.StatusBadRequest, "invalid json payload")
+		return
+	}
+
+	if req.Username == "" || req.Password == "" {
+		RespondError(w, http.StatusBadRequest, "username and password are required")
+		return
+	}
+
+	err := h.userService.CreateUser(r.Context(), req.Username, req.Password, req.Email)
+	if err != nil {
+		if errors.Is(err, domain.ErrUserAlreadyExists) || errors.Is(err, domain.ErrEmailAlreadyExists) {
+			RespondError(w, http.StatusConflict, err.Error())
+			return
+		}
+		RespondError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	RespondJSON(w, http.StatusCreated, MessageResponse{Message: "user created successfully"})
+}
+
+// UpdateUserRequest es el DTO para actualizar usuario.
+type UpdateUserRequest struct {
+	Username string `json:"username,omitempty" example:"johndoe"`
+	Email    string `json:"email,omitempty" example:"johndoe@example.com"`
+}
+
+// Update actualiza un usuario existente.
+//
+// @Summary      Actualizar usuario
+// @Description  Actualiza los datos de un usuario existente
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param        id path int true "User ID"
+// @Param        body body UpdateUserRequest true "Datos a actualizar"
+// @Security     BearerAuth
+// @Success      200 {object} MessageResponse
+// @Failure      400 {object} ErrorResponse
+// @Failure      401 {object} ErrorResponse
+// @Failure      403 {object} ErrorResponse
+// @Failure      404 {object} ErrorResponse
+// @Router       /users/{id} [put]
+func (h *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
+	id, err := getIDFromURL(r, "id")
+	if err != nil {
+		RespondError(w, http.StatusBadRequest, "invalid user id")
+		return
+	}
+
+	var req UpdateUserRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		RespondError(w, http.StatusBadRequest, "invalid json payload")
+		return
+	}
+
+	if req.Username == "" && req.Email == "" {
+		RespondError(w, http.StatusBadRequest, "at least one field to update is required")
+		return
+	}
+
+	err = h.userService.UpdateUser(r.Context(), uint(id), req.Username, req.Email)
+	if err != nil {
+		if errors.Is(err, domain.ErrUserNotFound) {
+			RespondError(w, http.StatusNotFound, err.Error())
+			return
+		}
+		RespondError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	RespondJSON(w, http.StatusOK, MessageResponse{Message: "user updated successfully"})
+}
+
+// Delete elimina un usuario existente.
+//
+// @Summary      Eliminar usuario
+// @Description  Elimina un usuario del sistema
+// @Tags         users
+// @Produce      json
+// @Param        id path int true "User ID"
+// @Security     BearerAuth
+// @Success      200 {object} MessageResponse
+// @Failure      400 {object} ErrorResponse
+// @Failure      401 {object} ErrorResponse
+// @Failure      403 {object} ErrorResponse
+// @Failure      404 {object} ErrorResponse
+// @Router       /users/{id} [delete]
+func (h *UserHandler) Delete(w http.ResponseWriter, r *http.Request) {
+	id, err := getIDFromURL(r, "id")
+	if err != nil {
+		RespondError(w, http.StatusBadRequest, "invalid user id")
+		return
+	}
+
+	err = h.userService.DeleteUser(r.Context(), uint(id))
+	if err != nil {
+		if errors.Is(err, domain.ErrUserNotFound) {
+			RespondError(w, http.StatusNotFound, err.Error())
+			return
+		}
+		RespondError(w, http.StatusInternalServerError, "failed to delete user")
+		return
+	}
+
+	RespondJSON(w, http.StatusOK, MessageResponse{Message: "user deleted successfully"})
+}
+
 // toUserResponse convierte un domain.User al DTO de respuesta tipado.
 func toUserResponse(u domain.User) UserResponse {
 	roles := make([]RoleResponse, 0, len(u.Roles))

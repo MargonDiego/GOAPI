@@ -14,11 +14,13 @@ import (
 type contextKey string
 
 const userSessionKey contextKey = "user_session"
+const userIDKey contextKey = "user_id"
 
 // UserSession almacena los datos extraídos en memoria (Cero I/O)
 type UserSession struct {
 	Username    string
 	Permissions map[string]bool
+	UserID     uint
 }
 
 func GetSessionFromContext(ctx context.Context) (UserSession, bool) {
@@ -35,6 +37,11 @@ func ContextWithSession(ctx context.Context, session UserSession) context.Contex
 func GetUsernameFromContext(ctx context.Context) (string, bool) {
 	session, ok := GetSessionFromContext(ctx)
 	return session.Username, ok
+}
+
+func GetUserIDFromContext(ctx context.Context) (uint, bool) {
+	id, ok := ctx.Value(userIDKey).(uint)
+	return id, ok
 }
 
 type AuthMiddleware struct {
@@ -81,6 +88,9 @@ func (m *AuthMiddleware) RequireAuth() func(http.Handler) http.Handler {
 				return
 			}
 
+			uid, _ := claims["uid"].(float64)
+			userID := uint(uid)
+
 			// Pre-calcular el mapa de permisos en memoria (O(1) lookups posteriores)
 			permsMap := make(map[string]bool)
 			if permsArr, ok := claims["permissions"].([]interface{}); ok {
@@ -93,10 +103,12 @@ func (m *AuthMiddleware) RequireAuth() func(http.Handler) http.Handler {
 
 			session := UserSession{
 				Username:    sub,
+				UserID:     userID,
 				Permissions: permsMap,
 			}
 
 			ctx := context.WithValue(r.Context(), userSessionKey, session)
+			ctx = context.WithValue(ctx, userIDKey, userID)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})
 	}

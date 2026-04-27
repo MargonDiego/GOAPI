@@ -18,6 +18,7 @@ type AuthService interface {
 	Register(ctx context.Context, username, password, email string) error
 	Login(ctx context.Context, username, password string) (accessToken string, refreshToken string, err error)
 	RefreshTokens(ctx context.Context, refreshToken string) (accessToken string, newRefreshToken string, err error)
+	Logout(ctx context.Context, userID uint) error
 }
 
 type authService struct {
@@ -138,6 +139,7 @@ func (s *authService) Login(ctx context.Context, username, password string) (str
 
 	claims := jwt.MapClaims{
 		"sub":         user.Username,
+		"uid":         user.ID,
 		"exp":         time.Now().Add(15 * time.Minute).Unix(), // Access Token corto (15 min)
 		"permissions": permArray,
 	}
@@ -194,6 +196,7 @@ func (s *authService) RefreshTokens(ctx context.Context, refreshToken string) (s
 
 	claims := jwt.MapClaims{
 		"sub":         user.Username,
+		"uid":         user.ID,
 		"exp":         time.Now().Add(15 * time.Minute).Unix(),
 		"permissions": permArray,
 	}
@@ -238,4 +241,16 @@ func generateSecureToken() string {
 	b := make([]byte, 32)
 	rand.Read(b)
 	return base64.URLEncoding.EncodeToString(b)
+}
+
+func (s *authService) Logout(ctx context.Context, userID uint) error {
+	ctxTimeout, cancel := context.WithTimeout(ctx, 3*time.Second)
+	defer cancel()
+
+	_, err := s.repo.FindByID(ctxTimeout, userID)
+	if err != nil {
+		return err
+	}
+
+	return s.repo.DeleteAllRefreshTokens(ctxTimeout, userID)
 }

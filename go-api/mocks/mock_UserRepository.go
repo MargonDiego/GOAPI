@@ -22,6 +22,100 @@ func (_m *MockUserRepository) EXPECT() *MockUserRepository_Expecter {
 	return &MockUserRepository_Expecter{mock: &_m.Mock}
 }
 
+// Delete provides a mock function with given fields: ctx, id
+func (_m *MockUserRepository) Delete(ctx context.Context, id uint) error {
+	ret := _m.Called(ctx, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Delete")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, uint) error); ok {
+		r0 = rf(ctx, id)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MockUserRepository_Delete_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Delete'
+type MockUserRepository_Delete_Call struct {
+	*mock.Call
+}
+
+// Delete is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id uint
+func (_e *MockUserRepository_Expecter) Delete(ctx interface{}, id interface{}) *MockUserRepository_Delete_Call {
+	return &MockUserRepository_Delete_Call{Call: _e.mock.On("Delete", ctx, id)}
+}
+
+func (_c *MockUserRepository_Delete_Call) Run(run func(ctx context.Context, id uint)) *MockUserRepository_Delete_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(uint))
+	})
+	return _c
+}
+
+func (_c *MockUserRepository_Delete_Call) Return(_a0 error) *MockUserRepository_Delete_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockUserRepository_Delete_Call) RunAndReturn(run func(context.Context, uint) error) *MockUserRepository_Delete_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// DeleteAllRefreshTokens provides a mock function with given fields: ctx, userID
+func (_m *MockUserRepository) DeleteAllRefreshTokens(ctx context.Context, userID uint) error {
+	ret := _m.Called(ctx, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteAllRefreshTokens")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, uint) error); ok {
+		r0 = rf(ctx, userID)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MockUserRepository_DeleteAllRefreshTokens_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteAllRefreshTokens'
+type MockUserRepository_DeleteAllRefreshTokens_Call struct {
+	*mock.Call
+}
+
+// DeleteAllRefreshTokens is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID uint
+func (_e *MockUserRepository_Expecter) DeleteAllRefreshTokens(ctx interface{}, userID interface{}) *MockUserRepository_DeleteAllRefreshTokens_Call {
+	return &MockUserRepository_DeleteAllRefreshTokens_Call{Call: _e.mock.On("DeleteAllRefreshTokens", ctx, userID)}
+}
+
+func (_c *MockUserRepository_DeleteAllRefreshTokens_Call) Run(run func(ctx context.Context, userID uint)) *MockUserRepository_DeleteAllRefreshTokens_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(uint))
+	})
+	return _c
+}
+
+func (_c *MockUserRepository_DeleteAllRefreshTokens_Call) Return(_a0 error) *MockUserRepository_DeleteAllRefreshTokens_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockUserRepository_DeleteAllRefreshTokens_Call) RunAndReturn(run func(context.Context, uint) error) *MockUserRepository_DeleteAllRefreshTokens_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // DeleteRefreshToken provides a mock function with given fields: ctx, token
 func (_m *MockUserRepository) DeleteRefreshToken(ctx context.Context, token string) error {
 	ret := _m.Called(ctx, token)

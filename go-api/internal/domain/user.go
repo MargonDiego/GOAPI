@@ -128,4 +128,6 @@ type UserRepository interface {
 	SaveRefreshToken(ctx context.Context, rt *RefreshToken) error
 	GetRefreshToken(ctx context.Context, token string) (*RefreshToken, error)
 	DeleteRefreshToken(ctx context.Context, token string) error
+	DeleteAllRefreshTokens(ctx context.Context, userID uint) error
+	Delete(ctx context.Context, id uint) error
 }

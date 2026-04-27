@@ -10,8 +10,12 @@ import (
 type RoleService interface {
 	CreateRole(ctx context.Context, name string) (*domain.Role, error)
 	GetRoles(ctx context.Context) ([]domain.Role, error)
+	GetRoleByID(ctx context.Context, id uint) (*domain.Role, error)
 	GetPermissions(ctx context.Context) ([]domain.Permission, error)
+	CreatePermission(ctx context.Context, name string) error
 	AssignPermissionsToRole(ctx context.Context, roleID uint, permissionIDs []uint) error
+	UpdateRole(ctx context.Context, roleID uint, name string) error
+	DeleteRole(ctx context.Context, roleID uint) error
 }
 
 type roleService struct {
@@ -73,5 +77,49 @@ func (s *roleService) AssignPermissionsToRole(ctx context.Context, roleID uint, 
 		return fmt.Errorf("failed to update role permissions: %w", err)
 	}
 
+	return nil
+}
+
+func (s *roleService) GetRoleByID(ctx context.Context, id uint) (*domain.Role, error) {
+	role, err := s.repo.FindByID(ctx, id)
+	if err != nil {
+		return nil, fmt.Errorf("failed to get role: %w", err)
+	}
+	return role, nil
+}
+
+func (s *roleService) CreatePermission(ctx context.Context, name string) error {
+	if name == "" {
+		return fmt.Errorf("%w: permission name cannot be empty", domain.ErrInvalidInput)
+	}
+
+	if err := s.repo.CreatePermission(ctx, name); err != nil {
+		return fmt.Errorf("failed to create permission: %w", err)
+	}
+	return nil
+}
+
+func (s *roleService) UpdateRole(ctx context.Context, roleID uint, name string) error {
+	if name == "" {
+		return fmt.Errorf("%w: role name cannot be empty", domain.ErrInvalidInput)
+	}
+
+	role, err := s.repo.FindByID(ctx, roleID)
+	if err != nil {
+		return fmt.Errorf("failed to find role: %w", err)
+	}
+
+	role.Name = name
+	if err := s.repo.Update(ctx, role); err != nil {
+		return fmt.Errorf("failed to update role: %w", err)
+	}
+
+	return nil
+}
+
+func (s *roleService) DeleteRole(ctx context.Context, roleID uint) error {
+	if err := s.repo.Delete(ctx, roleID); err != nil {
+		return fmt.Errorf("failed to delete role: %w", err)
+	}
 	return nil
 }

@@ -65,7 +65,7 @@ func main() {
 
 	// 4. Capa de Aplicación (Servicios de dominio)
 	authService := application.NewAuthService(userRepo, cfg.JWTSecret, enc)
-	userService := application.NewUserService(userRepo, roleRepo)
+	userService := application.NewUserService(userRepo, roleRepo, enc)
 	roleService := application.NewRoleService(roleRepo)
 
 	// 5. Capa de Presentación HTTP (Middlewares y Controladores)

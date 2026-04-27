@@ -141,3 +141,32 @@ func (r *roleRepository) FindRolesByIDs(ctx context.Context, ids []uint) ([]doma
 	}
 	return roles, nil
 }
+
+func (r *roleRepository) FindByName(ctx context.Context, name string) (*domain.Role, error) {
+	var dbRole Role
+	if err := r.db.WithContext(ctx).Preload("Permissions").Where("name = ?", name).First(&dbRole).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrRoleNotFound
+		}
+		return nil, err
+	}
+
+	perms := make([]domain.Permission, 0, len(dbRole.Permissions))
+	for _, p := range dbRole.Permissions {
+		perms = append(perms, domain.Permission{ID: p.ID, Name: p.Name})
+	}
+
+	return &domain.Role{
+		ID:          dbRole.ID,
+		Name:        dbRole.Name,
+		Permissions: perms,
+	}, nil
+}
+
+func (r *roleRepository) Delete(ctx context.Context, id uint) error {
+	return r.db.WithContext(ctx).Delete(&Role{}, id).Error
+}
+
+func (r *roleRepository) CreatePermission(ctx context.Context, name string) error {
+	return r.db.WithContext(ctx).Create(&Permission{Name: name}).Error
+}

@@ -8,6 +8,7 @@ import (
 
 	"github.com/diego/go-api/internal/application"
 	"github.com/diego/go-api/internal/domain"
+	"github.com/diego/go-api/internal/presentation/http/middleware"
 )
 
 // AuthRequest es el DTO de entrada para registro y login.
@@ -152,6 +153,34 @@ func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 	RespondJSON(w, http.StatusOK, AuthResponse{
 		AccessToken:  newAccess,
 		RefreshToken: newRefresh,
+	})
+}
+
+// Logout cierra la sesión del usuario.
+//
+// @Summary      Cerrar sesión
+// @Description  Invalida todos los refresh tokens del usuario
+// @Tags         auth
+// @Accept       json
+// @Produce      json
+// @Success      200 {object} MessageResponse
+// @Failure      401 {object} ErrorResponse
+// @Failure      500 {object} ErrorResponse
+// @Router       /logout [post]
+func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
+	userID, ok := middleware.GetUserIDFromContext(r.Context())
+	if !ok || userID == 0 {
+		RespondError(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+
+	if err := h.authService.Logout(r.Context(), userID); err != nil {
+		RespondError(w, http.StatusInternalServerError, "failed to logout")
+		return
+	}
+
+	RespondJSON(w, http.StatusOK, MessageResponse{
+		Message: "logged out successfully",
 	})
 }
 

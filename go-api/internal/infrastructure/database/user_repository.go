@@ -154,3 +154,11 @@ func (r *userRepository) GetRefreshToken(ctx context.Context, token string) (*do
 func (r *userRepository) DeleteRefreshToken(ctx context.Context, token string) error {
 	return r.db.WithContext(ctx).Where("token = ?", token).Delete(&RefreshToken{}).Error
 }
+
+func (r *userRepository) DeleteAllRefreshTokens(ctx context.Context, userID uint) error {
+	return r.db.WithContext(ctx).Where("user_id = ?", userID).Delete(&RefreshToken{}).Error
+}
+
+func (r *userRepository) Delete(ctx context.Context, id uint) error {
+	return r.db.WithContext(ctx).Delete(&User{}, id).Error
+}

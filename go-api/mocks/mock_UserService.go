@@ -70,6 +70,102 @@ func (_c *MockUserService_AssignRolesToUser_Call) RunAndReturn(run func(context.
 	return _c
 }
 
+// CreateUser provides a mock function with given fields: ctx, username, password, email
+func (_m *MockUserService) CreateUser(ctx context.Context, username string, password string, email string) error {
+	ret := _m.Called(ctx, username, password, email)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreateUser")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) error); ok {
+		r0 = rf(ctx, username, password, email)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MockUserService_CreateUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreateUser'
+type MockUserService_CreateUser_Call struct {
+	*mock.Call
+}
+
+// CreateUser is a helper method to define mock.On call
+//   - ctx context.Context
+//   - username string
+//   - password string
+//   - email string
+func (_e *MockUserService_Expecter) CreateUser(ctx interface{}, username interface{}, password interface{}, email interface{}) *MockUserService_CreateUser_Call {
+	return &MockUserService_CreateUser_Call{Call: _e.mock.On("CreateUser", ctx, username, password, email)}
+}
+
+func (_c *MockUserService_CreateUser_Call) Run(run func(ctx context.Context, username string, password string, email string)) *MockUserService_CreateUser_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string))
+	})
+	return _c
+}
+
+func (_c *MockUserService_CreateUser_Call) Return(_a0 error) *MockUserService_CreateUser_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockUserService_CreateUser_Call) RunAndReturn(run func(context.Context, string, string, string) error) *MockUserService_CreateUser_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// DeleteUser provides a mock function with given fields: ctx, userID
+func (_m *MockUserService) DeleteUser(ctx context.Context, userID uint) error {
+	ret := _m.Called(ctx, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteUser")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, uint) error); ok {
+		r0 = rf(ctx, userID)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MockUserService_DeleteUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteUser'
+type MockUserService_DeleteUser_Call struct {
+	*mock.Call
+}
+
+// DeleteUser is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID uint
+func (_e *MockUserService_Expecter) DeleteUser(ctx interface{}, userID interface{}) *MockUserService_DeleteUser_Call {
+	return &MockUserService_DeleteUser_Call{Call: _e.mock.On("DeleteUser", ctx, userID)}
+}
+
+func (_c *MockUserService_DeleteUser_Call) Run(run func(ctx context.Context, userID uint)) *MockUserService_DeleteUser_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(uint))
+	})
+	return _c
+}
+
+func (_c *MockUserService_DeleteUser_Call) Return(_a0 error) *MockUserService_DeleteUser_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockUserService_DeleteUser_Call) RunAndReturn(run func(context.Context, uint) error) *MockUserService_DeleteUser_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetAllUsers provides a mock function with given fields: ctx, page, size
 func (_m *MockUserService) GetAllUsers(ctx context.Context, page int, size int) ([]domain.User, error) {
 	ret := _m.Called(ctx, page, size)
@@ -130,6 +226,65 @@ func (_c *MockUserService_GetAllUsers_Call) RunAndReturn(run func(context.Contex
 	return _c
 }
 
+// GetUserByID provides a mock function with given fields: ctx, id
+func (_m *MockUserService) GetUserByID(ctx context.Context, id uint) (*domain.User, error) {
+	ret := _m.Called(ctx, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetUserByID")
+	}
+
+	var r0 *domain.User
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, uint) (*domain.User, error)); ok {
+		return rf(ctx, id)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, uint) *domain.User); ok {
+		r0 = rf(ctx, id)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*domain.User)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, uint) error); ok {
+		r1 = rf(ctx, id)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockUserService_GetUserByID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetUserByID'
+type MockUserService_GetUserByID_Call struct {
+	*mock.Call
+}
+
+// GetUserByID is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id uint
+func (_e *MockUserService_Expecter) GetUserByID(ctx interface{}, id interface{}) *MockUserService_GetUserByID_Call {
+	return &MockUserService_GetUserByID_Call{Call: _e.mock.On("GetUserByID", ctx, id)}
+}
+
+func (_c *MockUserService_GetUserByID_Call) Run(run func(ctx context.Context, id uint)) *MockUserService_GetUserByID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(uint))
+	})
+	return _c
+}
+
+func (_c *MockUserService_GetUserByID_Call) Return(_a0 *domain.User, _a1 error) *MockUserService_GetUserByID_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockUserService_GetUserByID_Call) RunAndReturn(run func(context.Context, uint) (*domain.User, error)) *MockUserService_GetUserByID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetUserByUsername provides a mock function with given fields: ctx, username
 func (_m *MockUserService) GetUserByUsername(ctx context.Context, username string) (*domain.User, error) {
 	ret := _m.Called(ctx, username)
@@ -185,6 +340,55 @@ func (_c *MockUserService_GetUserByUsername_Call) Return(_a0 *domain.User, _a1 e
 }
 
 func (_c *MockUserService_GetUserByUsername_Call) RunAndReturn(run func(context.Context, string) (*domain.User, error)) *MockUserService_GetUserByUsername_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdateUser provides a mock function with given fields: ctx, userID, username, email
+func (_m *MockUserService) UpdateUser(ctx context.Context, userID uint, username string, email string) error {
+	ret := _m.Called(ctx, userID, username, email)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateUser")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, uint, string, string) error); ok {
+		r0 = rf(ctx, userID, username, email)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MockUserService_UpdateUser_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateUser'
+type MockUserService_UpdateUser_Call struct {
+	*mock.Call
+}
+
+// UpdateUser is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID uint
+//   - username string
+//   - email string
+func (_e *MockUserService_Expecter) UpdateUser(ctx interface{}, userID interface{}, username interface{}, email interface{}) *MockUserService_UpdateUser_Call {
+	return &MockUserService_UpdateUser_Call{Call: _e.mock.On("UpdateUser", ctx, userID, username, email)}
+}
+
+func (_c *MockUserService_UpdateUser_Call) Run(run func(ctx context.Context, userID uint, username string, email string)) *MockUserService_UpdateUser_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(uint), args[2].(string), args[3].(string))
+	})
+	return _c
+}
+
+func (_c *MockUserService_UpdateUser_Call) Return(_a0 error) *MockUserService_UpdateUser_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockUserService_UpdateUser_Call) RunAndReturn(run func(context.Context, uint, string, string) error) *MockUserService_UpdateUser_Call {
 	_c.Call.Return(run)
 	return _c
 }

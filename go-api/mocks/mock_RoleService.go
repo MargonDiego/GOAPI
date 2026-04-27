@@ -70,6 +70,53 @@ func (_c *MockRoleService_AssignPermissionsToRole_Call) RunAndReturn(run func(co
 	return _c
 }
 
+// CreatePermission provides a mock function with given fields: ctx, name
+func (_m *MockRoleService) CreatePermission(ctx context.Context, name string) error {
+	ret := _m.Called(ctx, name)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreatePermission")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) error); ok {
+		r0 = rf(ctx, name)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MockRoleService_CreatePermission_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreatePermission'
+type MockRoleService_CreatePermission_Call struct {
+	*mock.Call
+}
+
+// CreatePermission is a helper method to define mock.On call
+//   - ctx context.Context
+//   - name string
+func (_e *MockRoleService_Expecter) CreatePermission(ctx interface{}, name interface{}) *MockRoleService_CreatePermission_Call {
+	return &MockRoleService_CreatePermission_Call{Call: _e.mock.On("CreatePermission", ctx, name)}
+}
+
+func (_c *MockRoleService_CreatePermission_Call) Run(run func(ctx context.Context, name string)) *MockRoleService_CreatePermission_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *MockRoleService_CreatePermission_Call) Return(_a0 error) *MockRoleService_CreatePermission_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockRoleService_CreatePermission_Call) RunAndReturn(run func(context.Context, string) error) *MockRoleService_CreatePermission_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // CreateRole provides a mock function with given fields: ctx, name
 func (_m *MockRoleService) CreateRole(ctx context.Context, name string) (*domain.Role, error) {
 	ret := _m.Called(ctx, name)
@@ -125,6 +172,53 @@ func (_c *MockRoleService_CreateRole_Call) Return(_a0 *domain.Role, _a1 error) *
 }
 
 func (_c *MockRoleService_CreateRole_Call) RunAndReturn(run func(context.Context, string) (*domain.Role, error)) *MockRoleService_CreateRole_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// DeleteRole provides a mock function with given fields: ctx, roleID
+func (_m *MockRoleService) DeleteRole(ctx context.Context, roleID uint) error {
+	ret := _m.Called(ctx, roleID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for DeleteRole")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, uint) error); ok {
+		r0 = rf(ctx, roleID)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MockRoleService_DeleteRole_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'DeleteRole'
+type MockRoleService_DeleteRole_Call struct {
+	*mock.Call
+}
+
+// DeleteRole is a helper method to define mock.On call
+//   - ctx context.Context
+//   - roleID uint
+func (_e *MockRoleService_Expecter) DeleteRole(ctx interface{}, roleID interface{}) *MockRoleService_DeleteRole_Call {
+	return &MockRoleService_DeleteRole_Call{Call: _e.mock.On("DeleteRole", ctx, roleID)}
+}
+
+func (_c *MockRoleService_DeleteRole_Call) Run(run func(ctx context.Context, roleID uint)) *MockRoleService_DeleteRole_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(uint))
+	})
+	return _c
+}
+
+func (_c *MockRoleService_DeleteRole_Call) Return(_a0 error) *MockRoleService_DeleteRole_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockRoleService_DeleteRole_Call) RunAndReturn(run func(context.Context, uint) error) *MockRoleService_DeleteRole_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -187,6 +281,65 @@ func (_c *MockRoleService_GetPermissions_Call) RunAndReturn(run func(context.Con
 	return _c
 }
 
+// GetRoleByID provides a mock function with given fields: ctx, id
+func (_m *MockRoleService) GetRoleByID(ctx context.Context, id uint) (*domain.Role, error) {
+	ret := _m.Called(ctx, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetRoleByID")
+	}
+
+	var r0 *domain.Role
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, uint) (*domain.Role, error)); ok {
+		return rf(ctx, id)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, uint) *domain.Role); ok {
+		r0 = rf(ctx, id)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*domain.Role)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, uint) error); ok {
+		r1 = rf(ctx, id)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockRoleService_GetRoleByID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetRoleByID'
+type MockRoleService_GetRoleByID_Call struct {
+	*mock.Call
+}
+
+// GetRoleByID is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id uint
+func (_e *MockRoleService_Expecter) GetRoleByID(ctx interface{}, id interface{}) *MockRoleService_GetRoleByID_Call {
+	return &MockRoleService_GetRoleByID_Call{Call: _e.mock.On("GetRoleByID", ctx, id)}
+}
+
+func (_c *MockRoleService_GetRoleByID_Call) Run(run func(ctx context.Context, id uint)) *MockRoleService_GetRoleByID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(uint))
+	})
+	return _c
+}
+
+func (_c *MockRoleService_GetRoleByID_Call) Return(_a0 *domain.Role, _a1 error) *MockRoleService_GetRoleByID_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockRoleService_GetRoleByID_Call) RunAndReturn(run func(context.Context, uint) (*domain.Role, error)) *MockRoleService_GetRoleByID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetRoles provides a mock function with given fields: ctx
 func (_m *MockRoleService) GetRoles(ctx context.Context) ([]domain.Role, error) {
 	ret := _m.Called(ctx)
@@ -241,6 +394,54 @@ func (_c *MockRoleService_GetRoles_Call) Return(_a0 []domain.Role, _a1 error) *M
 }
 
 func (_c *MockRoleService_GetRoles_Call) RunAndReturn(run func(context.Context) ([]domain.Role, error)) *MockRoleService_GetRoles_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdateRole provides a mock function with given fields: ctx, roleID, name
+func (_m *MockRoleService) UpdateRole(ctx context.Context, roleID uint, name string) error {
+	ret := _m.Called(ctx, roleID, name)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdateRole")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, uint, string) error); ok {
+		r0 = rf(ctx, roleID, name)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MockRoleService_UpdateRole_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdateRole'
+type MockRoleService_UpdateRole_Call struct {
+	*mock.Call
+}
+
+// UpdateRole is a helper method to define mock.On call
+//   - ctx context.Context
+//   - roleID uint
+//   - name string
+func (_e *MockRoleService_Expecter) UpdateRole(ctx interface{}, roleID interface{}, name interface{}) *MockRoleService_UpdateRole_Call {
+	return &MockRoleService_UpdateRole_Call{Call: _e.mock.On("UpdateRole", ctx, roleID, name)}
+}
+
+func (_c *MockRoleService_UpdateRole_Call) Run(run func(ctx context.Context, roleID uint, name string)) *MockRoleService_UpdateRole_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(uint), args[2].(string))
+	})
+	return _c
+}
+
+func (_c *MockRoleService_UpdateRole_Call) Return(_a0 error) *MockRoleService_UpdateRole_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockRoleService_UpdateRole_Call) RunAndReturn(run func(context.Context, uint, string) error) *MockRoleService_UpdateRole_Call {
 	_c.Call.Return(run)
 	return _c
 }

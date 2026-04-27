@@ -2,9 +2,11 @@ package handlers
 
 import (
 	"encoding/json"
+	"errors"
 	"net/http"
 
 	"github.com/diego/go-api/internal/application"
+	"github.com/diego/go-api/internal/domain"
 )
 
 // RoleCreateRequest es el DTO para crear un rol.
@@ -179,4 +181,172 @@ func (h *RoleHandler) AssignPermissions(w http.ResponseWriter, r *http.Request) 
 	}
 
 	RespondJSON(w, http.StatusOK, MessageResponse{Message: "permissions assigned successfully"})
+}
+
+// GetRoleByID Obtiene un rol por su ID.
+//
+// @Summary      Obtener rol por ID
+// @Description  Retorna los datos de un rol específico
+// @Tags         roles
+// @Produce      json
+// @Param        id path int true "Role ID"
+// @Success      200 {object} RoleResponse
+// @Failure      401 {object} ErrorResponse
+// @Failure      403 {object} ErrorResponse
+// @Failure      404 {object} ErrorResponse
+// @Security     BearerAuth
+// @Router       /roles/{id} [get]
+func (h *RoleHandler) GetRoleByID(w http.ResponseWriter, r *http.Request) {
+	id, err := getIDFromURL(r, "id")
+	if err != nil {
+		RespondError(w, http.StatusBadRequest, "invalid role id")
+		return
+	}
+
+	role, err := h.roleService.GetRoleByID(r.Context(), uint(id))
+	if err != nil {
+		if errors.Is(err, domain.ErrRoleNotFound) {
+			RespondError(w, http.StatusNotFound, err.Error())
+			return
+		}
+		RespondError(w, http.StatusInternalServerError, "failed to get role")
+		return
+	}
+
+	var perms []PermissionResponse
+	for _, p := range role.Permissions {
+		perms = append(perms, PermissionResponse{ID: p.ID, Name: p.Name})
+	}
+
+	RespondJSON(w, http.StatusOK, RoleResponse{
+		ID:          role.ID,
+		Name:        role.Name,
+		Permissions: perms,
+	})
+}
+
+// RoleUpdateRequest es el DTO para actualizar un rol.
+type RoleUpdateRequest struct {
+	Name string `json:"name,omitempty" example:"Editor"`
+}
+
+// UpdateRole actualiza un rol existente.
+//
+// @Summary      Actualizar rol
+// @Description  Actualiza los datos de un rol existente
+// @Tags         roles
+// @Accept       json
+// @Produce      json
+// @Param        id path int true "Role ID"
+// @Param        body body RoleUpdateRequest true "Datos a actualizar"
+// @Security     BearerAuth
+// @Success      200 {object} MessageResponse
+// @Failure      400 {object} ErrorResponse
+// @Failure      401 {object} ErrorResponse
+// @Failure      403 {object} ErrorResponse
+// @Failure      404 {object} ErrorResponse
+// @Router       /roles/{id} [put]
+func (h *RoleHandler) UpdateRole(w http.ResponseWriter, r *http.Request) {
+	id, err := getIDFromURL(r, "id")
+	if err != nil {
+		RespondError(w, http.StatusBadRequest, "invalid role id")
+		return
+	}
+
+	var req RoleUpdateRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		RespondError(w, http.StatusBadRequest, "invalid json payload")
+		return
+	}
+
+	if req.Name == "" {
+		RespondError(w, http.StatusBadRequest, "role name is required")
+		return
+	}
+
+	err = h.roleService.UpdateRole(r.Context(), uint(id), req.Name)
+	if err != nil {
+		if errors.Is(err, domain.ErrRoleNotFound) {
+			RespondError(w, http.StatusNotFound, err.Error())
+			return
+		}
+		RespondError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	RespondJSON(w, http.StatusOK, MessageResponse{Message: "role updated successfully"})
+}
+
+// DeleteRole elimina un rol existente.
+//
+// @Summary      Eliminar rol
+// @Description  Elimina un rol del sistema
+// @Tags         roles
+// @Produce      json
+// @Param        id path int true "Role ID"
+// @Security     BearerAuth
+// @Success      200 {object} MessageResponse
+// @Failure      400 {object} ErrorResponse
+// @Failure      401 {object} ErrorResponse
+// @Failure      403 {object} ErrorResponse
+// @Failure      404 {object} ErrorResponse
+// @Router       /roles/{id} [delete]
+func (h *RoleHandler) DeleteRole(w http.ResponseWriter, r *http.Request) {
+	id, err := getIDFromURL(r, "id")
+	if err != nil {
+		RespondError(w, http.StatusBadRequest, "invalid role id")
+		return
+	}
+
+	err = h.roleService.DeleteRole(r.Context(), uint(id))
+	if err != nil {
+		if errors.Is(err, domain.ErrRoleNotFound) {
+			RespondError(w, http.StatusNotFound, err.Error())
+			return
+		}
+		RespondError(w, http.StatusInternalServerError, "failed to delete role")
+		return
+	}
+
+	RespondJSON(w, http.StatusOK, MessageResponse{Message: "role deleted successfully"})
+}
+
+// PermissionCreateRequest es el DTO para crear un permiso.
+type PermissionCreateRequest struct {
+	Name string `json:"name" example:"read:posts"`
+}
+
+// CreatePermission crea un nuevo permiso.
+//
+// @Summary      Crear permiso
+// @Description  Crea un nuevo permiso en el sistema
+// @Tags         permissions
+// @Accept       json
+// @Produce      json
+// @Param        body body PermissionCreateRequest true "Datos del permiso"
+// @Security     BearerAuth
+// @Success      201 {object} MessageResponse
+// @Failure      400 {object} ErrorResponse
+// @Failure      401 {object} ErrorResponse
+// @Failure      403 {object} ErrorResponse
+// @Router       /permissions [post]
+func (h *RoleHandler) CreatePermission(w http.ResponseWriter, r *http.Request) {
+	var req PermissionCreateRequest
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		RespondError(w, http.StatusBadRequest, "invalid json payload")
+		return
+	}
+
+	if req.Name == "" {
+		RespondError(w, http.StatusBadRequest, "permission name is required")
+		return
+	}
+
+	err := h.roleService.CreatePermission(r.Context(), req.Name)
+	if err != nil {
+		RespondError(w, http.StatusBadRequest, err.Error())
+		return
+	}
+
+	RespondJSON(w, http.StatusCreated, MessageResponse{Message: "permission created successfully"})
 }

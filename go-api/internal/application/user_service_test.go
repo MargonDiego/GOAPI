@@ -10,8 +10,17 @@ import (
 
 	"github.com/diego/go-api/internal/application"
 	"github.com/diego/go-api/internal/domain"
+	appcrypto "github.com/diego/go-api/internal/infrastructure/crypto"
 	"github.com/diego/go-api/mocks"
 )
+
+func setupTestEncryptorForUserService(t *testing.T) *appcrypto.Encryptor {
+	t.Helper()
+	key := []byte("12345678901234567890123456789012")
+	enc, err := appcrypto.NewEncryptor(key)
+	assert.NoError(t, err)
+	return enc
+}
 
 func TestUserService_GetAllUsers(t *testing.T) {
 	t.Parallel()
@@ -65,11 +74,11 @@ func TestUserService_GetAllUsers(t *testing.T) {
 
 			mockUserRepo := mocks.NewMockUserRepository(t)
 			tt.setupMock(mockUserRepo)
-			
-			// RoleRepo no se usa en GetAllUsers
-			mockRoleRepo := mocks.NewMockRoleRepository(t)
 
-			service := application.NewUserService(mockUserRepo, mockRoleRepo)
+			mockRoleRepo := mocks.NewMockRoleRepository(t)
+			enc := setupTestEncryptorForUserService(t)
+
+			service := application.NewUserService(mockUserRepo, mockRoleRepo, enc)
 			ctx := context.Background()
 
 			users, err := service.GetAllUsers(ctx, tt.page, tt.size)
@@ -161,11 +170,12 @@ func TestUserService_AssignRolesToUser(t *testing.T) {
 
 			mockUserRepo := mocks.NewMockUserRepository(t)
 			mockRoleRepo := mocks.NewMockRoleRepository(t)
-			
+			enc := setupTestEncryptor(t)
+
 			tt.setupUserMock(mockUserRepo)
 			tt.setupRoleMock(mockRoleRepo)
 
-			service := application.NewUserService(mockUserRepo, mockRoleRepo)
+			service := application.NewUserService(mockUserRepo, mockRoleRepo, enc)
 			ctx := context.Background()
 
 			err := service.AssignRolesToUser(ctx, tt.userID, tt.roleIDs)
