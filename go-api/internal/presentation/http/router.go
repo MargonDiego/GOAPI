@@ -14,12 +14,17 @@ func NewRouter(
 	authHandler *handlers.AuthHandler,
 	userHandler *handlers.UserHandler,
 	roleHandler *handlers.RoleHandler,
+	healthHandler *handlers.HealthHandler,
 	authMw *middleware.AuthMiddleware,
 ) *mux.Router {
 	r := mux.NewRouter()
 
 	// Swagger UI — disponible en /swagger/index.html
 	r.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
+
+	// Healthchecks (Kubernetes/Docker probes)
+	r.HandleFunc("/health/liveness", healthHandler.Liveness).Methods("GET")
+	r.HandleFunc("/health/readiness", healthHandler.Readiness).Methods("GET")
 
 	// Limitador estricto para rutas de autenticación (protege bcrypt):
 	// 1 petición por segundo máximo, con ráfagas permitidas de hasta 5.
