@@ -15,15 +15,18 @@ const (
 )
 
 var (
-	ErrUserNotFound      = errors.New("user not found")
-	ErrInvalidCreds      = errors.New("invalid credentials")
-	ErrUserAlreadyExists = errors.New("username already exists")
-	ErrEmailAlreadyExists = errors.New("email already registered")
-	ErrInsufficientPerms = errors.New("insufficient permissions")
-	ErrInvalidInput      = errors.New("invalid user input data")
-	ErrRoleNotFound      = errors.New("role not found")
-	ErrInvalidToken      = errors.New("invalid or expired refresh token")
-	ErrAccountLocked     = errors.New("account temporarily locked due to multiple failed attempts")
+	ErrUserNotFound            = errors.New("user not found")
+	ErrInvalidCreds            = errors.New("invalid credentials")
+	ErrUserAlreadyExists       = errors.New("username already exists")
+	ErrEmailAlreadyExists      = errors.New("email already registered")
+	ErrInsufficientPerms       = errors.New("insufficient permissions")
+	ErrInvalidInput            = errors.New("invalid user input data")
+	ErrRoleNotFound            = errors.New("role not found")
+	ErrRoleAlreadyExists       = errors.New("role already exists")
+	ErrPermissionNotFound      = errors.New("permission not found")
+	ErrPermissionAlreadyExists = errors.New("permission already exists")
+	ErrInvalidToken            = errors.New("invalid or expired refresh token")
+	ErrAccountLocked           = errors.New("account temporarily locked due to multiple failed attempts")
 )
 
 type Permission struct {
@@ -45,10 +48,11 @@ type User struct {
 	ID             uint
 	Username       string
 	PasswordHash   string
-	EmailEncrypted string    // AES-256-GCM, IV aleatorio, base64 — confidencialidad
-	EmailHash      string    // HMAC-SHA256, determinista — permite WHERE email_hash = ?
-	FailedAttempts int       // Contador de intentos fallidos consecutivos
+	EmailEncrypted string     // AES-256-GCM, IV aleatorio, base64 — confidencialidad
+	EmailHash      string     // HMAC-SHA256, determinista — permite WHERE email_hash = ?
+	FailedAttempts int        // Contador de intentos fallidos consecutivos
 	LockedUntil    *time.Time // nil = no bloqueado; not nil = bloqueado hasta esa hora
+	TokenVersion   int        // Versión del token: se incrementa al cambiar roles/permisos
 	Roles          []Role
 }
 
@@ -123,6 +127,19 @@ type UserRepository interface {
 	FindByEmailHash(ctx context.Context, emailHash string) (*User, error)
 	FindAll(ctx context.Context, page, size int) ([]User, error)
 	FindRoleByName(ctx context.Context, roleName string) (Role, error)
+
+	// IncrementTokenVersion invalida todos los JWT activos del usuario incrementando
+	// su token_version. Llamar siempre que cambien los roles o permisos de un usuario.
+	// Retorna la nueva versión para que el caller pueda propagarla si es necesario.
+	IncrementTokenVersion(ctx context.Context, userID uint) (int, error)
+
+	// GetTokenVersion retorna la token_version actual del usuario.
+	// Usado por el middleware para validar el claim "ver" del JWT.
+	GetTokenVersion(ctx context.Context, userID uint) (int, error)
+
+	// FindUserIDsByRoleID retorna los IDs de todos los usuarios que tienen asignado el rol.
+	// Usado para invalidar los tokens de todos los afectados cuando cambian los permisos de un rol.
+	FindUserIDsByRoleID(ctx context.Context, roleID uint) ([]uint, error)
 
 	// Operaciones para Refresh Tokens
 	SaveRefreshToken(ctx context.Context, rt *RefreshToken) error

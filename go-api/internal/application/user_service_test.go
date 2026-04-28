@@ -22,6 +22,65 @@ func setupTestEncryptorForUserService(t *testing.T) *appcrypto.Encryptor {
 	return enc
 }
 
+func TestUserService_GetUserByUsername(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name          string
+		username      string
+		setupMock     func(m *mocks.MockUserRepository)
+		expectedUser  *domain.User
+		expectedError error
+	}{
+		{
+			name:    "Usuario encontrado por username",
+			username: "john",
+			setupMock: func(m *mocks.MockUserRepository) {
+				m.On("FindByUsername", mock.Anything, "john").Return(&domain.User{ID: 1, Username: "john"}, nil)
+			},
+			expectedUser: &domain.User{ID: 1, Username: "john"},
+			expectedError: nil,
+		},
+		{
+			name:    "Usuario no encontrado por username",
+			username: "nonexistent",
+			setupMock: func(m *mocks.MockUserRepository) {
+				m.On("FindByUsername", mock.Anything, "nonexistent").Return(nil, domain.ErrUserNotFound)
+			},
+			expectedUser: nil,
+			expectedError: domain.ErrUserNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			mockUserRepo := mocks.NewMockUserRepository(t)
+			mockRoleRepo := mocks.NewMockRoleRepository(t)
+			enc := setupTestEncryptorForUserService(t)
+
+			tt.setupMock(mockUserRepo)
+
+			service := application.NewUserService(mockUserRepo, mockRoleRepo, enc)
+			ctx := context.Background()
+
+			user, err := service.GetUserByUsername(ctx, tt.username)
+
+			if tt.expectedError != nil {
+				assert.Error(t, err)
+				assert.ErrorIs(t, err, tt.expectedError)
+				assert.Nil(t, user)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expectedUser.ID, user.ID)
+				assert.Equal(t, tt.expectedUser.Username, user.Username)
+			}
+		})
+	}
+}
+
 func TestUserService_GetAllUsers(t *testing.T) {
 	t.Parallel()
 
@@ -188,6 +247,237 @@ func TestUserService_AssignRolesToUser(t *testing.T) {
 				} else {
 					assert.Contains(t, err.Error(), tt.expectedError.Error())
 				}
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestUserService_GetUserByID(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name          string
+		userID       uint
+		setupMock    func(m *mocks.MockUserRepository)
+		expectedUser *domain.User
+		expectedError error
+	}{
+		{
+			name:    "Usuario encontrado",
+			userID:  1,
+			setupMock: func(m *mocks.MockUserRepository) {
+				m.On("FindByID", mock.Anything, uint(1)).Return(&domain.User{ID: 1, Username: "john"}, nil)
+			},
+			expectedUser: &domain.User{ID: 1, Username: "john"},
+			expectedError: nil,
+		},
+		{
+			name:    "Usuario no encontrado",
+			userID:  999,
+			setupMock: func(m *mocks.MockUserRepository) {
+				m.On("FindByID", mock.Anything, uint(999)).Return(nil, domain.ErrUserNotFound)
+			},
+			expectedUser: nil,
+			expectedError: domain.ErrUserNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			mockUserRepo := mocks.NewMockUserRepository(t)
+			mockRoleRepo := mocks.NewMockRoleRepository(t)
+			enc := setupTestEncryptorForUserService(t)
+
+			tt.setupMock(mockUserRepo)
+
+			service := application.NewUserService(mockUserRepo, mockRoleRepo, enc)
+			ctx := context.Background()
+
+			user, err := service.GetUserByID(ctx, tt.userID)
+
+			if tt.expectedError != nil {
+				assert.Error(t, err)
+				assert.ErrorIs(t, err, tt.expectedError)
+				assert.Nil(t, user)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expectedUser.ID, user.ID)
+				assert.Equal(t, tt.expectedUser.Username, user.Username)
+			}
+		})
+	}
+}
+
+func TestUserService_CreateUser(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name          string
+		username     string
+		password     string
+		email        string
+		setupMock    func(m *mocks.MockUserRepository, mr *mocks.MockRoleRepository)
+		expectedError error
+	}{
+		{
+			name:      "Usuario creado exitosamente",
+			username:  "john",
+			password:  "password123",
+			email:     "john@test.com",
+			setupMock: func(m *mocks.MockUserRepository, mr *mocks.MockRoleRepository) {
+				m.On("FindByUsername", mock.Anything, "john").Return(nil, domain.ErrUserNotFound)
+				m.On("FindByEmailHash", mock.Anything, mock.AnythingOfType("string")).Return(nil, domain.ErrUserNotFound)
+				mr.On("FindByName", mock.Anything, "User").Return(&domain.Role{ID: 1, Name: "User"}, nil)
+				m.On("Save", mock.Anything, mock.AnythingOfType("*domain.User")).Return(nil)
+			},
+			expectedError: nil,
+		},
+		{
+			name:      "Usuario ya existe",
+			username:  "john",
+			password:  "password123",
+			email:     "",
+			setupMock: func(m *mocks.MockUserRepository, mr *mocks.MockRoleRepository) {
+				m.On("FindByUsername", mock.Anything, "john").Return(&domain.User{ID: 1, Username: "john"}, nil)
+			},
+			expectedError: domain.ErrUserAlreadyExists,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			mockUserRepo := mocks.NewMockUserRepository(t)
+			mockRoleRepo := mocks.NewMockRoleRepository(t)
+			enc := setupTestEncryptorForUserService(t)
+
+			tt.setupMock(mockUserRepo, mockRoleRepo)
+
+			service := application.NewUserService(mockUserRepo, mockRoleRepo, enc)
+			ctx := context.Background()
+
+			err := service.CreateUser(ctx, tt.username, tt.password, tt.email)
+
+			if tt.expectedError != nil {
+				assert.Error(t, err)
+				assert.ErrorIs(t, err, tt.expectedError)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestUserService_UpdateUser(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name          string
+		userID       uint
+		newUsername  string
+		setupMock    func(m *mocks.MockUserRepository)
+		expectedError error
+	}{
+		{
+			name:         "Usuario actualizado",
+			userID:       1,
+			newUsername:  "johnnew",
+			setupMock: func(m *mocks.MockUserRepository) {
+				m.On("FindByID", mock.Anything, uint(1)).Return(&domain.User{ID: 1, Username: "john"}, nil)
+				m.On("Save", mock.Anything, mock.AnythingOfType("*domain.User")).Return(nil)
+			},
+			expectedError: nil,
+		},
+		{
+			name:         "Usuario no encontrado",
+			userID:      999,
+			newUsername: "johnnew",
+			setupMock: func(m *mocks.MockUserRepository) {
+				m.On("FindByID", mock.Anything, uint(999)).Return(nil, domain.ErrUserNotFound)
+			},
+			expectedError: domain.ErrUserNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			mockUserRepo := mocks.NewMockUserRepository(t)
+			mockRoleRepo := mocks.NewMockRoleRepository(t)
+			enc := setupTestEncryptorForUserService(t)
+
+			tt.setupMock(mockUserRepo)
+
+			service := application.NewUserService(mockUserRepo, mockRoleRepo, enc)
+			ctx := context.Background()
+
+			err := service.UpdateUser(ctx, tt.userID, tt.newUsername, "")
+
+			if tt.expectedError != nil {
+				assert.Error(t, err)
+				assert.ErrorIs(t, err, tt.expectedError)
+			} else {
+				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestUserService_DeleteUser(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name          string
+		userID       uint
+		setupMock    func(m *mocks.MockUserRepository)
+		expectedError error
+	}{
+		{
+			name:    "Usuario eliminado",
+			userID:  1,
+			setupMock: func(m *mocks.MockUserRepository) {
+				m.On("Delete", mock.Anything, uint(1)).Return(nil)
+			},
+			expectedError: nil,
+		},
+		{
+			name:    "Error al eliminar",
+			userID:  1,
+			setupMock: func(m *mocks.MockUserRepository) {
+				m.On("Delete", mock.Anything, uint(1)).Return(errors.New("db error"))
+			},
+			expectedError: errors.New("db error"),
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			mockUserRepo := mocks.NewMockUserRepository(t)
+			mockRoleRepo := mocks.NewMockRoleRepository(t)
+			enc := setupTestEncryptorForUserService(t)
+
+			tt.setupMock(mockUserRepo)
+
+			service := application.NewUserService(mockUserRepo, mockRoleRepo, enc)
+			ctx := context.Background()
+
+			err := service.DeleteUser(ctx, tt.userID)
+
+			if tt.expectedError != nil {
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), tt.expectedError.Error())
 			} else {
 				assert.NoError(t, err)
 			}

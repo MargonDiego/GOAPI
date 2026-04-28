@@ -105,10 +105,12 @@ func TestRoleService_CreateRole(t *testing.T) {
 			name:     "Éxito al crear rol",
 			roleName: "Manager",
 			setupMock: func(m *mockRoleRepository) {
-				// Arrange: Esperamos que llame a Create con el rol "Manager" y no devuelva error.
+				// El servicio primero verifica unicidad llamando a FindByName.
+				m.On("FindByName", mock.Anything, "Manager").Return(nil, domain.ErrRoleNotFound)
+				// Si no existe, procede a crear.
 				m.On("Create", mock.Anything, &domain.Role{Name: "Manager"}).
 					Run(func(args mock.Arguments) {
-						// Simulamos el comportamiento de GORM de asignar ID al guardarse
+						// Simulamos el comportamiento de GORM de asignar ID al guardarse.
 						roleArg := args.Get(1).(*domain.Role)
 						roleArg.ID = 1
 					}).Return(nil)
@@ -119,18 +121,29 @@ func TestRoleService_CreateRole(t *testing.T) {
 		{
 			name:          "Falla por nombre vacío",
 			roleName:      "",
-			setupMock:     func(m *mockRoleRepository) {}, // No debería llamar al repo
+			setupMock:     func(m *mockRoleRepository) {}, // Validación previa: no debe llamar al repo.
 			expectedError: domain.ErrInvalidInput,
 			expectedRole:  nil,
 		},
 		{
-			name:     "Falla al persistir en base de datos",
+			name:     "Falla por rol duplicado",
 			roleName: "Admin",
 			setupMock: func(m *mockRoleRepository) {
-				m.On("Create", mock.Anything, &domain.Role{Name: "Admin"}).
+				// FindByName retorna el rol existente → debe fallar con ErrRoleAlreadyExists.
+				m.On("FindByName", mock.Anything, "Admin").Return(&domain.Role{ID: 1, Name: "Admin"}, nil)
+			},
+			expectedError: domain.ErrRoleAlreadyExists,
+			expectedRole:  nil,
+		},
+		{
+			name:     "Falla al persistir en base de datos",
+			roleName: "Editor",
+			setupMock: func(m *mockRoleRepository) {
+				m.On("FindByName", mock.Anything, "Editor").Return(nil, domain.ErrRoleNotFound)
+				m.On("Create", mock.Anything, &domain.Role{Name: "Editor"}).
 					Return(errors.New("db error"))
 			},
-			expectedError: errors.New("failed to create role: db error"), // Se espera envoltorio de error
+			expectedError: errors.New("failed to create role: db error"),
 			expectedRole:  nil,
 		},
 	}
@@ -152,18 +165,253 @@ func TestRoleService_CreateRole(t *testing.T) {
 
 			// Assert
 			if tt.expectedError != nil {
-				// Verificamos si la cadena de errores contiene nuestro error esperado
 				assert.Error(t, err)
 				assert.Contains(t, err.Error(), tt.expectedError.Error())
 				assert.Nil(t, got)
 			} else {
+				// Caso éxito: verificar que se retorna el rol con los valores correctos.
 				assert.NoError(t, err)
 				assert.NotNil(t, got)
 				assert.Equal(t, tt.expectedRole.ID, got.ID)
 				assert.Equal(t, tt.expectedRole.Name, got.Name)
 			}
 
-			// Validar que todas las expectativas del mock se cumplieron
+			mockRepo.AssertExpectations(t)
+		})
+	}
+}
+
+func TestRoleService_CreatePermission(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name          string
+		permName      string
+		setupMock     func(m *mockRoleRepository)
+		expectedError error
+	}{
+		{
+			name:     "Permiso creado exitosamente",
+			permName: "read:users",
+			setupMock: func(m *mockRoleRepository) {
+				// El servicio primero verifica unicidad con FindAllPermissions.
+				m.On("FindAllPermissions", mock.Anything).Return([]domain.Permission{}, nil)
+				m.On("CreatePermission", mock.Anything, "read:users").Return(nil)
+			},
+			expectedError: nil,
+		},
+		{
+			name:     "Nombre vacío",
+			permName: "",
+			setupMock: func(m *mockRoleRepository) {
+				// Validación previa: no debe llamar al repo.
+			},
+			expectedError: domain.ErrInvalidInput,
+		},
+		{
+			name:     "Falla por permiso duplicado",
+			permName: "read:users",
+			setupMock: func(m *mockRoleRepository) {
+				// FindAllPermissions retorna el permiso ya existente.
+				m.On("FindAllPermissions", mock.Anything).Return(
+					[]domain.Permission{{ID: 1, Name: "read:users"}}, nil,
+				)
+			},
+			expectedError: domain.ErrPermissionAlreadyExists,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			mockRepo := new(mockRoleRepository)
+			tt.setupMock(mockRepo)
+
+			service := application.NewRoleService(mockRepo)
+			ctx := context.Background()
+
+			err := service.CreatePermission(ctx, tt.permName)
+
+			if tt.expectedError != nil {
+				assert.Error(t, err)
+				assert.ErrorIs(t, err, tt.expectedError)
+			} else {
+				assert.NoError(t, err)
+			}
+			mockRepo.AssertExpectations(t)
+		})
+	}
+}
+
+func TestRoleService_GetRoleByID(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name          string
+		roleID      uint
+		setupMock    func(m *mockRoleRepository)
+		expectedRole *domain.Role
+		expectedError error
+	}{
+		{
+			name:    "Rol encontrado",
+			roleID: 1,
+			setupMock: func(m *mockRoleRepository) {
+				m.On("FindByID", mock.Anything, uint(1)).Return(&domain.Role{ID: 1, Name: "Admin"}, nil)
+			},
+			expectedRole: &domain.Role{ID: 1, Name: "Admin"},
+			expectedError: nil,
+		},
+		{
+			name:    "Rol no encontrado",
+			roleID: 999,
+			setupMock: func(m *mockRoleRepository) {
+				m.On("FindByID", mock.Anything, uint(999)).Return(nil, domain.ErrRoleNotFound)
+			},
+			expectedRole: nil,
+			expectedError: domain.ErrRoleNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			mockRepo := new(mockRoleRepository)
+			tt.setupMock(mockRepo)
+
+			service := application.NewRoleService(mockRepo)
+			ctx := context.Background()
+
+			role, err := service.GetRoleByID(ctx, tt.roleID)
+
+			if tt.expectedError != nil {
+				assert.Error(t, err)
+				assert.ErrorIs(t, err, tt.expectedError)
+				assert.Nil(t, role)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expectedRole.ID, role.ID)
+				assert.Equal(t, tt.expectedRole.Name, role.Name)
+			}
+			mockRepo.AssertExpectations(t)
+		})
+	}
+}
+
+func TestRoleService_UpdateRole(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name          string
+		roleID       uint
+		newName      string
+		setupMock    func(m *mockRoleRepository)
+		expectedError error
+	}{
+		{
+			name:    "Rol actualizado",
+			roleID: 1,
+			newName: "SuperAdmin",
+			setupMock: func(m *mockRoleRepository) {
+				m.On("FindByID", mock.Anything, uint(1)).Return(&domain.Role{ID: 1, Name: "Admin"}, nil)
+				m.On("Update", mock.Anything, mock.AnythingOfType("*domain.Role")).Return(nil)
+			},
+			expectedError: nil,
+		},
+		{
+			name:    "Nombre vacío",
+			roleID: 1,
+			newName: "",
+			setupMock: func(m *mockRoleRepository) {
+				// No debe llamar al mock
+			},
+			expectedError: domain.ErrInvalidInput,
+		},
+		{
+			name:    "Rol no encontrado",
+			roleID: 999,
+			newName: "NewRole",
+			setupMock: func(m *mockRoleRepository) {
+				m.On("FindByID", mock.Anything, uint(999)).Return(nil, domain.ErrRoleNotFound)
+			},
+			expectedError: domain.ErrRoleNotFound,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			mockRepo := new(mockRoleRepository)
+			tt.setupMock(mockRepo)
+
+			service := application.NewRoleService(mockRepo)
+			ctx := context.Background()
+
+			err := service.UpdateRole(ctx, tt.roleID, tt.newName)
+
+			if tt.expectedError != nil {
+				assert.Error(t, err)
+				assert.ErrorIs(t, err, tt.expectedError)
+			} else {
+				assert.NoError(t, err)
+			}
+			mockRepo.AssertExpectations(t)
+		})
+	}
+}
+
+func TestRoleService_DeleteRole(t *testing.T) {
+	t.Parallel()
+
+	tests := []struct {
+		name          string
+		roleID       uint
+		setupMock    func(m *mockRoleRepository)
+		expectedError error
+	}{
+		{
+			name:    "Rol eliminado",
+			roleID: 1,
+			setupMock: func(m *mockRoleRepository) {
+				m.On("Delete", mock.Anything, uint(1)).Return(nil)
+			},
+			expectedError: nil,
+		},
+		{
+			name:    "Error al eliminar",
+			roleID: 1,
+			setupMock: func(m *mockRoleRepository) {
+				m.On("Delete", mock.Anything, uint(1)).Return(errors.New("db error"))
+			},
+			expectedError: errors.New("db error"),
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			mockRepo := new(mockRoleRepository)
+			tt.setupMock(mockRepo)
+
+			service := application.NewRoleService(mockRepo)
+			ctx := context.Background()
+
+			err := service.DeleteRole(ctx, tt.roleID)
+
+			if tt.expectedError != nil {
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), tt.expectedError.Error())
+			} else {
+				assert.NoError(t, err)
+			}
 			mockRepo.AssertExpectations(t)
 		})
 	}
