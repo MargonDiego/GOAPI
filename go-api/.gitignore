@@ -4,9 +4,9 @@
 *.dll
 *.so
 *.dylib
-app
-application
-api.exe
+/app
+/application
+/api.exe
 
 # Test binary, built with `go test -c`
 *.test
