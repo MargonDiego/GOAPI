@@ -15,6 +15,9 @@ type User struct {
 	EmailHash      string     `gorm:"column:email_hash;uniqueIndex;not null;default:''"`
 	FailedAttempts int        `gorm:"column:failed_attempts;not null;default:0"`
 	LockedUntil    *time.Time `gorm:"column:locked_until"`
+	// TokenVersion se incrementa cada vez que cambian los roles/permisos del usuario.
+	// El JWT embebe esta versión como claim "ver"; el middleware la valida en cada request.
+	TokenVersion   int        `gorm:"column:token_version;not null;default:1"`
 	Roles          []Role     `gorm:"many2many:user_roles;"`
 }
 
@@ -49,6 +52,7 @@ func toDomainUser(u *User) *domain.User {
 		EmailHash:      u.EmailHash,
 		FailedAttempts: u.FailedAttempts,
 		LockedUntil:    u.LockedUntil,
+		TokenVersion:   u.TokenVersion,
 		Roles:          make([]domain.Role, 0, len(u.Roles)),
 	}
 
@@ -77,6 +81,7 @@ func toDBUser(du *domain.User) *User {
 		EmailHash:      du.EmailHash,
 		FailedAttempts: du.FailedAttempts,
 		LockedUntil:    du.LockedUntil,
+		TokenVersion:   du.TokenVersion,
 		Roles:          make([]Role, 0, len(du.Roles)),
 	}
 	if du.ID != 0 {

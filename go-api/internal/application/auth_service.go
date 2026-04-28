@@ -135,12 +135,15 @@ func (s *authService) Login(ctx context.Context, username, password string) (str
 	_ = s.repo.Update(ctxTimeout, user)
 
 	// 4. "Fat JWT": Integramos los permisos en el token para evitar viajes a DB en los handlers.
+	// "ver" embebe token_version para permitir invalidación inmediata si cambian los permisos.
+	// El middleware valida que JWT.ver == DB.token_version; si no coincide → 401.
 	permArray := buildPermArray(user)
 
 	claims := jwt.MapClaims{
 		"sub":         user.Username,
 		"uid":         user.ID,
-		"exp":         time.Now().Add(15 * time.Minute).Unix(), // Access Token corto (15 min)
+		"ver":         user.TokenVersion, // Token version — invalidación por cambio de roles
+		"exp":         time.Now().Add(15 * time.Minute).Unix(),
 		"permissions": permArray,
 	}
 
@@ -191,12 +194,15 @@ func (s *authService) RefreshTokens(ctx context.Context, refreshToken string) (s
 		return "", "", fmt.Errorf("failed to delete old refresh token: %w", err)
 	}
 
-	// 4. Generar nuevo Access Token (Fat JWT).
+	// 4. Generar nuevo Access Token (Fat JWT) con la token_version actualizada.
+	// Al refrescar, el nuevo token ya refleja la versión actual del usuario en DB,
+	// incluyendo cualquier cambio de roles que haya ocurrido desde el login anterior.
 	permArray := buildPermArray(user)
 
 	claims := jwt.MapClaims{
 		"sub":         user.Username,
 		"uid":         user.ID,
+		"ver":         user.TokenVersion,
 		"exp":         time.Now().Add(15 * time.Minute).Unix(),
 		"permissions": permArray,
 	}

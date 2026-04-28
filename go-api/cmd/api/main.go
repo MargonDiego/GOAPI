@@ -21,6 +21,7 @@ import (
 	_ "github.com/diego/go-api/docs"
 	"github.com/diego/go-api/internal/application"
 	"github.com/diego/go-api/internal/config"
+	"github.com/diego/go-api/internal/infrastructure/cache"
 	"github.com/diego/go-api/internal/infrastructure/crypto"
 	"github.com/diego/go-api/internal/infrastructure/database"
 	mypresentation "github.com/diego/go-api/internal/presentation/http"
@@ -63,17 +64,22 @@ func main() {
 	// Encryptor para PII
 	enc, _ := crypto.NewEncryptor(cfg.EmailEncryptionKey)
 
+	// Cache en memoria para token_version: TTL de 30s reduce la ventana de stale-permissions
+	// de 15 minutos (vida del JWT) a 30 segundos sin hits extra a Postgres por request.
+	// Al cambiar roles/permisos, el cache se invalida explícitamente → efecto inmediato.
+	versionCache := cache.NewTokenVersionCache(30 * time.Second)
+
 	// 4. Capa de Aplicación (Servicios de dominio)
 	authService := application.NewAuthService(userRepo, cfg.JWTSecret, enc)
-	userService := application.NewUserService(userRepo, roleRepo, enc)
-	roleService := application.NewRoleService(roleRepo)
+	userService := application.NewUserService(userRepo, roleRepo, enc, versionCache)
+	roleService := application.NewRoleService(roleRepo, userRepo, versionCache)
 
 	// 5. Capa de Presentación HTTP (Middlewares y Controladores)
 	authHandler := handlers.NewAuthHandler(authService)
 	userHandler := handlers.NewUserHandler(userService)
 	roleHandler := handlers.NewRoleHandler(roleService)
 	healthHandler := handlers.NewHealthHandler(sqlDB)
-	authMw := middleware.NewAuthMiddleware(cfg.JWTSecret)
+	authMw := middleware.NewAuthMiddleware(cfg.JWTSecret, userRepo, versionCache)
 
 	// Inicialización de Router con logging de requests
 	router := mypresentation.NewRouter(authHandler, userHandler, roleHandler, healthHandler, authMw)

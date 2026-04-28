@@ -8,6 +8,8 @@ import (
 	"net/http"
 	"strings"
 
+	"github.com/diego/go-api/internal/domain"
+	"github.com/diego/go-api/internal/infrastructure/cache"
 	"github.com/golang-jwt/jwt/v5"
 )
 
@@ -16,11 +18,11 @@ type contextKey string
 const userSessionKey contextKey = "user_session"
 const userIDKey contextKey = "user_id"
 
-// UserSession almacena los datos extraídos en memoria (Cero I/O)
+// UserSession almacena los datos extraídos del JWT en memoria (cero I/O en handlers).
 type UserSession struct {
 	Username    string
 	Permissions map[string]bool
-	UserID     uint
+	UserID      uint
 }
 
 func GetSessionFromContext(ctx context.Context) (UserSession, bool) {
@@ -28,12 +30,12 @@ func GetSessionFromContext(ctx context.Context) (UserSession, bool) {
 	return session, ok
 }
 
-// ContextWithSession inyecta una UserSession en el contexto (útil para tests)
+// ContextWithSession inyecta una UserSession en el contexto (útil para tests).
 func ContextWithSession(ctx context.Context, session UserSession) context.Context {
 	return context.WithValue(ctx, userSessionKey, session)
 }
 
-// GetUsernameFromContext se mantiene por retrocompatibilidad con handlers existentes
+// GetUsernameFromContext se mantiene por retrocompatibilidad con handlers existentes.
 func GetUsernameFromContext(ctx context.Context) (string, bool) {
 	session, ok := GetSessionFromContext(ctx)
 	return session.Username, ok
@@ -44,22 +46,48 @@ func GetUserIDFromContext(ctx context.Context) (uint, bool) {
 	return id, ok
 }
 
+// AuthMiddleware valida JWT y verifica que token_version no haya sido invalidada.
+//
+// Solución al problema de stale Fat JWT:
+//   - El JWT embebe "ver" = token_version del usuario al momento del login.
+//   - Cuando un admin cambia los roles/permisos de un usuario, se incrementa token_version en DB.
+//   - Este middleware compara JWT.ver con DB.token_version en cada request autenticado.
+//   - Si no coinciden → 401, el usuario debe re-autenticarse para obtener un JWT actualizado.
+//
+// Rendimiento:
+//   - El check usa un cache en memoria con TTL de 30s → cero accesos a Postgres en el caso feliz.
+//   - En invalidación explícita (AssignRoles/AssignPermissions), el cache se limpia inmediatamente.
+//   - La ventana máxima de stale permissions pasa de 15 min (TTL del JWT) a 30s (TTL del cache).
 type AuthMiddleware struct {
-	jwtSecret []byte
+	jwtSecret    []byte
+	userRepo     domain.UserRepository
+	versionCache *cache.TokenVersionCache
 }
 
-// Se elimina user_service, la Base de Datos ya no es requerida aquí.
-func NewAuthMiddleware(secret []byte) *AuthMiddleware {
-	return &AuthMiddleware{jwtSecret: secret}
+// NewAuthMiddleware construye el middleware con sus dependencias inyectadas.
+func NewAuthMiddleware(secret []byte, userRepo domain.UserRepository, versionCache *cache.TokenVersionCache) *AuthMiddleware {
+	return &AuthMiddleware{
+		jwtSecret:    secret,
+		userRepo:     userRepo,
+		versionCache: versionCache,
+	}
 }
 
-// respondError local para romper el ciclo de importación circular con /handlers
+// respondError es local para evitar el ciclo de importación circular con /handlers.
 func respondError(w http.ResponseWriter, status int, message string) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	_ = json.NewEncoder(w).Encode(map[string]string{"error": message})
 }
 
+// RequireAuth valida el JWT y verifica que su token_version coincida con la versión actual.
+//
+// Flujo por request:
+//  1. Extraer y parsear el Bearer token (firma HMAC-SHA256).
+//  2. Leer claims: sub, uid, ver, permissions.
+//  3. Validar token_version: cache hit → O(1), cache miss → SELECT + cache fill.
+//  4. Si JWT.ver != currentVersion → 401 (permisos revocados, re-login requerido).
+//  5. Inyectar UserSession en el contexto para los handlers downstream.
 func (m *AuthMiddleware) RequireAuth() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -91,7 +119,17 @@ func (m *AuthMiddleware) RequireAuth() func(http.Handler) http.Handler {
 			uid, _ := claims["uid"].(float64)
 			userID := uint(uid)
 
-			// Pre-calcular el mapa de permisos en memoria (O(1) lookups posteriores)
+			// Validar token_version: detecta si los permisos cambiaron tras emitir el token.
+			if err := m.validateTokenVersion(r.Context(), userID, claims); err != nil {
+				if errors.Is(err, domain.ErrUserNotFound) {
+					respondError(w, http.StatusUnauthorized, "user not found")
+					return
+				}
+				respondError(w, http.StatusUnauthorized, "token revoked: please log in again")
+				return
+			}
+
+			// Pre-calcular el mapa de permisos en memoria (O(1) en RequirePermission).
 			permsMap := make(map[string]bool)
 			if permsArr, ok := claims["permissions"].([]interface{}); ok {
 				for _, p := range permsArr {
@@ -103,7 +141,7 @@ func (m *AuthMiddleware) RequireAuth() func(http.Handler) http.Handler {
 
 			session := UserSession{
 				Username:    sub,
-				UserID:     userID,
+				UserID:      userID,
 				Permissions: permsMap,
 			}
 
@@ -114,6 +152,42 @@ func (m *AuthMiddleware) RequireAuth() func(http.Handler) http.Handler {
 	}
 }
 
+// validateTokenVersion compara el claim "ver" del JWT con la versión actual del usuario.
+// Estrategia cache-aside:
+//   - Cache hit  → comparación local, sin DB (caso mayoría de requests).
+//   - Cache miss → lectura de Postgres + populate cache para futuros requests.
+//
+// Cuando AssignRolesToUser o AssignPermissionsToRole modifican un usuario,
+// el caller llama a versionCache.Invalidate(userID) para forzar re-lectura inmediata.
+func (m *AuthMiddleware) validateTokenVersion(ctx context.Context, userID uint, claims jwt.MapClaims) error {
+	// 1. Intentar resolución desde cache.
+	currentVersion, cached := m.versionCache.Get(userID)
+	if !cached {
+		// 2. Cache miss: leer desde Postgres y cachear para futuros requests.
+		var err error
+		currentVersion, err = m.userRepo.GetTokenVersion(ctx, userID)
+		if err != nil {
+			return err
+		}
+		m.versionCache.Set(userID, currentVersion)
+	}
+
+	// 3. Extraer versión del JWT. Tokens sin claim "ver" (legacy) se rechazan.
+	verClaim, ok := claims["ver"].(float64)
+	if !ok {
+		return fmt.Errorf("missing or invalid ver claim")
+	}
+	tokenVersion := int(verClaim)
+
+	// 4. Comparar: si no coinciden, los permisos fueron revocados tras emitir este token.
+	if tokenVersion != currentVersion {
+		return fmt.Errorf("token version mismatch: token=%d current=%d", tokenVersion, currentVersion)
+	}
+	return nil
+}
+
+// RequirePermission verifica que la sesión incluya el permiso requerido.
+// HOT PATH: lookup en mapa en memoria — CERO accesos a base de datos.
 func (m *AuthMiddleware) RequirePermission(requiredPerm string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -123,9 +197,8 @@ func (m *AuthMiddleware) RequirePermission(requiredPerm string) func(http.Handle
 				return
 			}
 
-			// HOT PATH OPTIMIZADO: Look-up en memoria O(1). CERO base de datos.
 			if !session.Permissions[requiredPerm] {
-				respondError(w, http.StatusForbidden, "forbidden: core-permission missing")
+				respondError(w, http.StatusForbidden, "forbidden: required permission missing")
 				return
 			}
 
