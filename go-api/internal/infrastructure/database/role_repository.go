@@ -12,10 +12,12 @@ type roleRepository struct {
 	db *gorm.DB
 }
 
+// NewRoleRepository construye un roleRepository con la conexión GORM inyectada.
 func NewRoleRepository(db *gorm.DB) domain.RoleRepository {
 	return &roleRepository{db: db}
 }
 
+// Create inserta un nuevo rol en la base de datos y propaga el ID generado al objeto de dominio.
 func (r *roleRepository) Create(ctx context.Context, role *domain.Role) error {
 	dbRole := &Role{
 		Name: role.Name,
@@ -27,9 +29,10 @@ func (r *roleRepository) Create(ctx context.Context, role *domain.Role) error {
 	return nil
 }
 
+// FindAll retorna todos los roles del sistema con sus permisos pre-cargados.
 func (r *roleRepository) FindAll(ctx context.Context) ([]domain.Role, error) {
 	var dbRoles []Role
-	// Cargamos también los permisos de cada rol para que vengan en la respuesta
+	// Preload de Permissions para que cada rol incluya sus permisos en la respuesta.
 	if err := r.db.WithContext(ctx).Preload("Permissions").Find(&dbRoles).Error; err != nil {
 		return nil, err
 	}
@@ -49,6 +52,8 @@ func (r *roleRepository) FindAll(ctx context.Context) ([]domain.Role, error) {
 	return roles, nil
 }
 
+// FindByID retorna un rol por su ID primario con sus permisos pre-cargados.
+// Retorna domain.ErrRoleNotFound si no existe ningún rol con ese ID.
 func (r *roleRepository) FindByID(ctx context.Context, id uint) (*domain.Role, error) {
 	var dbRole Role
 	if err := r.db.WithContext(ctx).Preload("Permissions").First(&dbRole, id).Error; err != nil {
@@ -70,31 +75,32 @@ func (r *roleRepository) FindByID(ctx context.Context, id uint) (*domain.Role, e
 	}, nil
 }
 
+// Update persiste el nuevo nombre del rol y reemplaza completamente su relación
+// Many-to-Many con permisos. El reemplazo es atómico desde el punto de vista del caller.
 func (r *roleRepository) Update(ctx context.Context, role *domain.Role) error {
-	// Buscamos el rol en DB
 	var dbRole Role
 	if err := r.db.WithContext(ctx).First(&dbRole, role.ID).Error; err != nil {
 		return err
 	}
 
-	// Actualizamos campos simples
+	// Actualizar el campo de nombre.
 	dbRole.Name = role.Name
 
-	// Sincronizamos la relación Many2Many de Permisos
+	// Construir la lista de permisos a asociar (solo ID necesario para la join table).
 	var dbPerms []Permission
 	for _, p := range role.Permissions {
 		dbPerms = append(dbPerms, Permission{Model: gorm.Model{ID: p.ID}, Name: p.Name})
 	}
 
-	// Esto reemplaza completamente las relaciones actuales por las nuevas
+	// Replace reemplaza completamente las relaciones actuales por las nuevas.
 	if err := r.db.WithContext(ctx).Model(&dbRole).Association("Permissions").Replace(&dbPerms); err != nil {
 		return err
 	}
 
-	// Guardamos el rol en sí mismo
 	return r.db.WithContext(ctx).Save(&dbRole).Error
 }
 
+// FindAllPermissions retorna todos los permisos disponibles en el sistema.
 func (r *roleRepository) FindAllPermissions(ctx context.Context) ([]domain.Permission, error) {
 	var dbPerms []Permission
 	if err := r.db.WithContext(ctx).Find(&dbPerms).Error; err != nil {
@@ -108,6 +114,9 @@ func (r *roleRepository) FindAllPermissions(ctx context.Context) ([]domain.Permi
 	return perms, nil
 }
 
+// FindPermissionsByIDs retorna los permisos cuyos IDs están en el slice dado.
+// Si algún ID no existe, el resultado tendrá menos elementos que el input —
+// el caller debe validar que len(result) == len(ids) si necesita exactitud.
 func (r *roleRepository) FindPermissionsByIDs(ctx context.Context, ids []uint) ([]domain.Permission, error) {
 	var dbPerms []Permission
 	if err := r.db.WithContext(ctx).Where("id IN ?", ids).Find(&dbPerms).Error; err != nil {
@@ -121,6 +130,9 @@ func (r *roleRepository) FindPermissionsByIDs(ctx context.Context, ids []uint) (
 	return perms, nil
 }
 
+// FindRolesByIDs retorna los roles cuyos IDs están en el slice dado, con permisos pre-cargados.
+// Si algún ID no existe, el resultado tendrá menos elementos que el input —
+// el caller debe validar que len(result) == len(ids) si necesita exactitud.
 func (r *roleRepository) FindRolesByIDs(ctx context.Context, ids []uint) ([]domain.Role, error) {
 	var dbRoles []Role
 	if err := r.db.WithContext(ctx).Preload("Permissions").Where("id IN ?", ids).Find(&dbRoles).Error; err != nil {
@@ -142,6 +154,8 @@ func (r *roleRepository) FindRolesByIDs(ctx context.Context, ids []uint) ([]doma
 	return roles, nil
 }
 
+// FindByName busca un rol por nombre exacto con sus permisos pre-cargados.
+// Retorna domain.ErrRoleNotFound si no existe ningún rol con ese nombre.
 func (r *roleRepository) FindByName(ctx context.Context, name string) (*domain.Role, error) {
 	var dbRole Role
 	if err := r.db.WithContext(ctx).Preload("Permissions").Where("name = ?", name).First(&dbRole).Error; err != nil {
@@ -163,10 +177,21 @@ func (r *roleRepository) FindByName(ctx context.Context, name string) (*domain.R
 	}, nil
 }
 
+// Delete elimina permanentemente un rol por ID.
+// Los registros en la tabla join role_permissions se eliminan en cascada por GORM.
+// Retorna domain.ErrRoleNotFound si no existe ningún rol con ese ID.
 func (r *roleRepository) Delete(ctx context.Context, id uint) error {
-	return r.db.WithContext(ctx).Delete(&Role{}, id).Error
+	result := r.db.WithContext(ctx).Delete(&Role{}, id)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return domain.ErrRoleNotFound
+	}
+	return nil
 }
 
+// CreatePermission inserta un nuevo permiso con el nombre dado.
 func (r *roleRepository) CreatePermission(ctx context.Context, name string) error {
 	return r.db.WithContext(ctx).Create(&Permission{Name: name}).Error
 }

@@ -43,7 +43,7 @@ func NewRoleHandler(s application.RoleService) *RoleHandler {
 // CreateRole crea un nuevo rol.
 //
 // @Summary      Crear un rol
-// @Description  Crea un nuevo rol en el sistema
+// @Description  Crea un nuevo rol en el sistema. Retorna 409 si el nombre ya existe.
 // @Tags         roles
 // @Accept       json
 // @Produce      json
@@ -53,6 +53,7 @@ func NewRoleHandler(s application.RoleService) *RoleHandler {
 // @Failure      400 {object} ErrorResponse
 // @Failure      401 {object} ErrorResponse
 // @Failure      403 {object} ErrorResponse
+// @Failure      409 {object} ErrorResponse
 // @Failure      500 {object} ErrorResponse
 // @Router       /roles [post]
 func (h *RoleHandler) CreateRole(w http.ResponseWriter, r *http.Request) {
@@ -64,6 +65,10 @@ func (h *RoleHandler) CreateRole(w http.ResponseWriter, r *http.Request) {
 
 	role, err := h.roleService.CreateRole(r.Context(), req.Name)
 	if err != nil {
+		if errors.Is(err, domain.ErrRoleAlreadyExists) {
+			RespondError(w, http.StatusConflict, err.Error())
+			return
+		}
 		RespondError(w, http.StatusBadRequest, err.Error())
 		return
 	}
@@ -94,9 +99,10 @@ func (h *RoleHandler) GetRoles(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var res []RoleResponse
+	res := make([]RoleResponse, 0, len(roles))
 	for _, role := range roles {
-		var perms []PermissionResponse
+		// Inicializar como slice vacío para serializar [] en vez de null cuando no hay permisos.
+		perms := make([]PermissionResponse, 0, len(role.Permissions))
 		for _, p := range role.Permissions {
 			perms = append(perms, PermissionResponse{ID: p.ID, Name: p.Name})
 		}
@@ -105,11 +111,6 @@ func (h *RoleHandler) GetRoles(w http.ResponseWriter, r *http.Request) {
 			Name:        role.Name,
 			Permissions: perms,
 		})
-	}
-
-	// Si no hay roles, devolver array vacío en vez de null
-	if res == nil {
-		res = []RoleResponse{}
 	}
 
 	RespondJSON(w, http.StatusOK, res)
@@ -134,13 +135,9 @@ func (h *RoleHandler) GetPermissions(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var res []PermissionResponse
+	res := make([]PermissionResponse, 0, len(perms))
 	for _, p := range perms {
 		res = append(res, PermissionResponse{ID: p.ID, Name: p.Name})
-	}
-
-	if res == nil {
-		res = []PermissionResponse{}
 	}
 
 	RespondJSON(w, http.StatusOK, res)
@@ -149,7 +146,7 @@ func (h *RoleHandler) GetPermissions(w http.ResponseWriter, r *http.Request) {
 // AssignPermissions asigna permisos a un rol.
 //
 // @Summary      Asignar permisos a rol
-// @Description  Actualiza los permisos asociados a un rol específico
+// @Description  Reemplaza completamente los permisos de un rol. Un array vacío elimina todos los permisos.
 // @Tags         roles
 // @Accept       json
 // @Produce      json
@@ -160,6 +157,7 @@ func (h *RoleHandler) GetPermissions(w http.ResponseWriter, r *http.Request) {
 // @Failure      400 {object} ErrorResponse
 // @Failure      401 {object} ErrorResponse
 // @Failure      403 {object} ErrorResponse
+// @Failure      404 {object} ErrorResponse
 // @Failure      500 {object} ErrorResponse
 // @Router       /roles/{id}/permissions [put]
 func (h *RoleHandler) AssignPermissions(w http.ResponseWriter, r *http.Request) {
@@ -176,7 +174,15 @@ func (h *RoleHandler) AssignPermissions(w http.ResponseWriter, r *http.Request) 
 	}
 
 	if err := h.roleService.AssignPermissionsToRole(r.Context(), uint(roleID), req.PermissionIDs); err != nil {
-		RespondError(w, http.StatusBadRequest, err.Error())
+		if errors.Is(err, domain.ErrRoleNotFound) {
+			RespondError(w, http.StatusNotFound, err.Error())
+			return
+		}
+		if errors.Is(err, domain.ErrInvalidInput) {
+			RespondError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		RespondError(w, http.StatusInternalServerError, "failed to assign permissions")
 		return
 	}
 
@@ -191,9 +197,11 @@ func (h *RoleHandler) AssignPermissions(w http.ResponseWriter, r *http.Request) 
 // @Produce      json
 // @Param        id path int true "Role ID"
 // @Success      200 {object} RoleResponse
+// @Failure      400 {object} ErrorResponse
 // @Failure      401 {object} ErrorResponse
 // @Failure      403 {object} ErrorResponse
 // @Failure      404 {object} ErrorResponse
+// @Failure      500 {object} ErrorResponse
 // @Security     BearerAuth
 // @Router       /roles/{id} [get]
 func (h *RoleHandler) GetRoleByID(w http.ResponseWriter, r *http.Request) {
@@ -213,7 +221,8 @@ func (h *RoleHandler) GetRoleByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	var perms []PermissionResponse
+	// Inicializar como slice vacío para serializar [] en vez de null cuando no hay permisos.
+	perms := make([]PermissionResponse, 0, len(role.Permissions))
 	for _, p := range role.Permissions {
 		perms = append(perms, PermissionResponse{ID: p.ID, Name: p.Name})
 	}
@@ -319,7 +328,7 @@ type PermissionCreateRequest struct {
 // CreatePermission crea un nuevo permiso.
 //
 // @Summary      Crear permiso
-// @Description  Crea un nuevo permiso en el sistema
+// @Description  Crea un nuevo permiso en el sistema. Retorna 409 si el nombre ya existe.
 // @Tags         permissions
 // @Accept       json
 // @Produce      json
@@ -329,6 +338,7 @@ type PermissionCreateRequest struct {
 // @Failure      400 {object} ErrorResponse
 // @Failure      401 {object} ErrorResponse
 // @Failure      403 {object} ErrorResponse
+// @Failure      409 {object} ErrorResponse
 // @Router       /permissions [post]
 func (h *RoleHandler) CreatePermission(w http.ResponseWriter, r *http.Request) {
 	var req PermissionCreateRequest
@@ -344,6 +354,10 @@ func (h *RoleHandler) CreatePermission(w http.ResponseWriter, r *http.Request) {
 
 	err := h.roleService.CreatePermission(r.Context(), req.Name)
 	if err != nil {
+		if errors.Is(err, domain.ErrPermissionAlreadyExists) {
+			RespondError(w, http.StatusConflict, err.Error())
+			return
+		}
 		RespondError(w, http.StatusBadRequest, err.Error())
 		return
 	}

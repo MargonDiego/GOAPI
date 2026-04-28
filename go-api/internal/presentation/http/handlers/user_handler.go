@@ -101,7 +101,7 @@ type AssignRolesRequest struct {
 // AssignRoles asigna uno o más roles a un usuario.
 //
 // @Summary      Asignar roles a usuario
-// @Description  Actualiza los roles asociados a un usuario específico
+// @Description  Actualiza los roles asociados a un usuario específico. Un array vacío elimina todos los roles.
 // @Tags         users
 // @Accept       json
 // @Produce      json
@@ -112,6 +112,7 @@ type AssignRolesRequest struct {
 // @Failure      400 {object} ErrorResponse
 // @Failure      401 {object} ErrorResponse
 // @Failure      403 {object} ErrorResponse
+// @Failure      404 {object} ErrorResponse
 // @Failure      500 {object} ErrorResponse
 // @Router       /users/{id}/roles [put]
 func (h *UserHandler) AssignRoles(w http.ResponseWriter, r *http.Request) {
@@ -128,7 +129,15 @@ func (h *UserHandler) AssignRoles(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if err := h.userService.AssignRolesToUser(r.Context(), uint(userID), req.RoleIDs); err != nil {
-		RespondError(w, http.StatusBadRequest, err.Error())
+		if errors.Is(err, domain.ErrUserNotFound) {
+			RespondError(w, http.StatusNotFound, err.Error())
+			return
+		}
+		if errors.Is(err, domain.ErrInvalidInput) {
+			RespondError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		RespondError(w, http.StatusInternalServerError, "failed to assign roles")
 		return
 	}
 
@@ -150,9 +159,11 @@ type CreateUserRequest struct {
 // @Produce      json
 // @Param        id path int true "User ID"
 // @Success      200 {object} UserResponse
+// @Failure      400 {object} ErrorResponse
 // @Failure      401 {object} ErrorResponse
 // @Failure      403 {object} ErrorResponse
 // @Failure      404 {object} ErrorResponse
+// @Failure      500 {object} ErrorResponse
 // @Security     BearerAuth
 // @Router       /users/{id} [get]
 func (h *UserHandler) GetByID(w http.ResponseWriter, r *http.Request) {
