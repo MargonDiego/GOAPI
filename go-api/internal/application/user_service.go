@@ -192,7 +192,7 @@ func (s *userService) CreateUser(ctx context.Context, username, password, email 
 		user.EmailHash = emailHash
 	}
 
-	if err := s.repo.Save(ctx, user); err != nil {
+	if err := s.repo.Create(ctx, user); err != nil {
 		return fmt.Errorf("failed to create user: %w", err)
 	}
 
@@ -232,8 +232,8 @@ func (s *userService) UpdateUser(ctx context.Context, userID uint, username, ema
 		}
 	}
 
-	// repo.Save detecta ID > 0 y ejecuta UPDATE en lugar de INSERT.
-	if err := s.repo.Save(ctx, user); err != nil {
+	// repo.UpdateProfile persiste solo username, email_encrypted y email_hash.
+	if err := s.repo.UpdateProfile(ctx, user); err != nil {
 		return fmt.Errorf("failed to update user: %w", err)
 	}
 

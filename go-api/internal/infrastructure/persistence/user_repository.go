@@ -18,30 +18,26 @@ func NewUserRepository(db *gorm.DB) domain.UserRepository {
 	return &userRepository{db: db}
 }
 
-// Save inserta un nuevo usuario cuando su ID es 0, o actualiza username y email cuando ID > 0.
-// Para actualizar campos de seguridad (intentos fallidos, bloqueo, email) usar Update.
-// Para actualizar roles usar UpdateRoles.
-func (r *userRepository) Save(ctx context.Context, u *domain.User) error {
+// Create inserta un nuevo usuario y propaga el ID generado al objeto de dominio.
+// Pensado exclusivamente para INSERTS — si el usuario ya tiene ID, se ignora (GORM trata ID>0 como update).
+func (r *userRepository) Create(ctx context.Context, u *domain.User) error {
 	dbUser := toDBUser(u)
-	var err error
-
-	if dbUser.ID == 0 {
-		// Nuevo usuario: INSERT y propagar el ID generado al objeto de dominio.
-		err = r.db.WithContext(ctx).Create(dbUser).Error
-		if err == nil {
-			u.ID = dbUser.ID
-		}
-	} else {
-		// Usuario existente: UPDATE selectivo de campos de perfil.
-		// Select explícito evita sobrescribir password, failed_attempts y campos de seguridad.
-		err = r.db.WithContext(ctx).
-			Model(dbUser).
-			Select("username", "email_encrypted", "email_hash").
-			Updates(dbUser).Error
+	if err := r.db.WithContext(ctx).Create(dbUser).Error; err != nil {
+		return fmt.Errorf("repository unable to create user: %w", err)
 	}
+	u.ID = dbUser.ID
+	return nil
+}
 
-	if err != nil {
-		return fmt.Errorf("repository unable to save user: %w", err)
+// UpdateProfile actualiza selectivamente los campos de perfil (username, email) de un usuario existente.
+// Usa Select explícito para evitar sobrescribir password, failed_attempts y campos de seguridad.
+func (r *userRepository) UpdateProfile(ctx context.Context, u *domain.User) error {
+	dbUser := toDBUser(u)
+	if err := r.db.WithContext(ctx).
+		Model(dbUser).
+		Select("username", "email_encrypted", "email_hash").
+		Updates(dbUser).Error; err != nil {
+		return fmt.Errorf("repository unable to update profile: %w", err)
 	}
 	return nil
 }
@@ -146,22 +142,6 @@ func (r *userRepository) FindAll(ctx context.Context, page, size int) ([]domain.
 
 // FindRoleByName busca un rol por nombre exacto con sus permisos pre-cargados.
 // Retorna domain.ErrRoleNotFound si no existe.
-func (r *userRepository) FindRoleByName(ctx context.Context, roleName string) (domain.Role, error) {
-	var role Role
-	if err := r.db.WithContext(ctx).Preload("Permissions").Where("name = ?", roleName).First(&role).Error; err != nil {
-		if errors.Is(err, gorm.ErrRecordNotFound) {
-			return domain.Role{}, domain.ErrRoleNotFound
-		}
-		return domain.Role{}, fmt.Errorf("database query error: %w", err)
-	}
-
-	dRole := domain.Role{ID: role.ID, Name: role.Name}
-	for _, p := range role.Permissions {
-		dRole.Permissions = append(dRole.Permissions, domain.Permission{ID: p.ID, Name: p.Name})
-	}
-	return dRole, nil
-}
-
 // IncrementTokenVersion incrementa en 1 el token_version del usuario y retorna el nuevo valor.
 // Debe llamarse siempre que cambien los roles o permisos de un usuario para invalidar
 // sus JWT activos. La operación es atómica a nivel de base de datos.

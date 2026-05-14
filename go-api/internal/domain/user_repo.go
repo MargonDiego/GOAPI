@@ -4,12 +4,12 @@ import "context"
 
 // UserRepository define el contrato de persistencia para la entidad User.
 // La implementación concreta vive en infrastructure/persistence y usa GORM.
-//
-// NOTA: El método Save tiene comportamiento dual (INSERT si ID=0, UPDATE si ID>0).
-// En una futura iteración se separará en Create y UpdateProfile para mayor claridad.
 type UserRepository interface {
-	// Save persiste un usuario nuevo (INSERT) o actualiza campos de perfil (UPDATE).
-	Save(ctx context.Context, u *User) error
+	// Create inserta un nuevo usuario y propaga el ID generado al objeto de dominio.
+	Create(ctx context.Context, u *User) error
+
+	// UpdateProfile actualiza los campos de perfil (username, email) de un usuario existente.
+	UpdateProfile(ctx context.Context, u *User) error
 
 	// Update persiste campos de seguridad: intentos fallidos, bloqueo y email.
 	Update(ctx context.Context, u *User) error
@@ -22,7 +22,6 @@ type UserRepository interface {
 	FindByID(ctx context.Context, id uint) (*User, error)
 	FindByEmailHash(ctx context.Context, emailHash string) (*User, error)
 	FindAll(ctx context.Context, page, size int) ([]User, error)
-	FindRoleByName(ctx context.Context, roleName string) (Role, error)
 
 	// --- Token Version (invalidación de JWT) ---
 	IncrementTokenVersion(ctx context.Context, userID uint) (int, error)

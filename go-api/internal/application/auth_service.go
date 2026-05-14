@@ -46,19 +46,21 @@ type AuthService interface {
 }
 
 // authService es la implementación concreta de AuthService.
-// Orquesta el repositorio de usuarios, la firma JWT y el cifrado de emails.
+// Orquesta los repositorios de usuarios y roles, la firma JWT y el cifrado de emails.
 type authService struct {
-	repo      domain.UserRepository
+	repo     domain.UserRepository
+	roleRepo domain.RoleRepository
 	jwtSecret []byte
 	enc       *appcrypto.Encryptor
 }
 
 // NewAuthService construye un authService con todas sus dependencias inyectadas.
 //   - repo: repositorio de usuarios (acceso a Postgres vía GORM).
+//   - roleRepo: repositorio de roles (para obtener el rol "User" por defecto).
 //   - secret: clave HMAC-SHA256 para firmar y verificar JWTs; debe tener ≥ 64 bytes.
 //   - enc: encriptador AES-256-GCM para cifrar emails y calcular su hash de búsqueda.
-func NewAuthService(repo domain.UserRepository, secret []byte, enc *appcrypto.Encryptor) AuthService {
-	return &authService{repo: repo, jwtSecret: secret, enc: enc}
+func NewAuthService(repo domain.UserRepository, roleRepo domain.RoleRepository, secret []byte, enc *appcrypto.Encryptor) AuthService {
+	return &authService{repo: repo, roleRepo: roleRepo, jwtSecret: secret, enc: enc}
 }
 
 // Register implementa AuthService.Register.
@@ -116,12 +118,12 @@ func (s *authService) Register(ctx context.Context, username, password, email st
 		return fmt.Errorf("crypto hashing failure: %w", err)
 	}
 
-	defaultRole, err := s.repo.FindRoleByName(ctxTimeout, "User")
+	defaultRole, err := s.roleRepo.FindByName(ctxTimeout, "User")
 	if err != nil {
 		return fmt.Errorf("could not retrieve default role: %w", err)
 	}
 
-	user, err := domain.NewUser(username, string(hash), defaultRole)
+	user, err := domain.NewUser(username, string(hash), *defaultRole)
 	if err != nil {
 		return err
 	}
@@ -130,7 +132,7 @@ func (s *authService) Register(ctx context.Context, username, password, email st
 	user.EmailEncrypted = emailEncrypted
 	user.EmailHash = emailHash
 
-	if err := s.repo.Save(ctxTimeout, user); err != nil {
+	if err := s.repo.Create(ctxTimeout, user); err != nil {
 		return fmt.Errorf("failed to save registered user: %w", err)
 	}
 	return nil

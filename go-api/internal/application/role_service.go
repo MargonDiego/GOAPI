@@ -2,6 +2,7 @@ package application
 
 import (
 	"context"
+	"errors"
 	"fmt"
 
 	"github.com/diego/go-api/internal/domain"
@@ -154,21 +155,18 @@ func (s *roleService) GetRoleByID(ctx context.Context, id uint) (*domain.Role, e
 
 // CreatePermission valida que el nombre no sea vacío y que no exista ya en el sistema.
 // Retorna domain.ErrPermissionAlreadyExists si ya existe un permiso con ese nombre.
-// Nota: los permisos son un conjunto pequeño y acotado, por lo que la búsqueda lineal es aceptable.
 func (s *roleService) CreatePermission(ctx context.Context, name string) error {
 	if name == "" {
 		return fmt.Errorf("%w: permission name cannot be empty", domain.ErrInvalidInput)
 	}
 
-	// Verificar unicidad para retornar un error de dominio claro en lugar del constraint de DB.
-	perms, err := s.repo.FindAllPermissions(ctx)
-	if err != nil {
+	// Verificar unicidad con búsqueda puntual en DB en lugar de cargar todos los permisos.
+	existing, err := s.repo.FindPermissionByName(ctx, name)
+	if err != nil && !errors.Is(err, domain.ErrPermissionNotFound) {
 		return fmt.Errorf("failed to check permission uniqueness: %w", err)
 	}
-	for _, p := range perms {
-		if p.Name == name {
-			return fmt.Errorf("%w: %s", domain.ErrPermissionAlreadyExists, name)
-		}
+	if existing != nil {
+		return fmt.Errorf("%w: %s", domain.ErrPermissionAlreadyExists, name)
 	}
 
 	if err := s.repo.CreatePermission(ctx, name); err != nil {

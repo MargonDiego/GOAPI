@@ -114,6 +114,19 @@ func (r *roleRepository) FindAllPermissions(ctx context.Context) ([]domain.Permi
 	return perms, nil
 }
 
+// FindPermissionByName busca un permiso por su nombre exacto.
+// Retorna domain.ErrPermissionNotFound si no existe.
+func (r *roleRepository) FindPermissionByName(ctx context.Context, name string) (*domain.Permission, error) {
+	var dbPerm Permission
+	if err := r.db.WithContext(ctx).Where("name = ?", name).First(&dbPerm).Error; err != nil {
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return nil, domain.ErrPermissionNotFound
+		}
+		return nil, err
+	}
+	return &domain.Permission{ID: dbPerm.ID, Name: dbPerm.Name}, nil
+}
+
 // FindPermissionsByIDs retorna los permisos cuyos IDs están en el slice dado.
 // Si algún ID no existe, el resultado tendrá menos elementos que el input —
 // el caller debe validar que len(result) == len(ids) si necesita exactitud.

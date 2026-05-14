@@ -397,6 +397,65 @@ func (_c *MockRoleRepository_FindByName_Call) RunAndReturn(run func(context.Cont
 	return _c
 }
 
+// FindPermissionByName provides a mock function with given fields: ctx, name
+func (_m *MockRoleRepository) FindPermissionByName(ctx context.Context, name string) (*domain.Permission, error) {
+	ret := _m.Called(ctx, name)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FindPermissionByName")
+	}
+
+	var r0 *domain.Permission
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (*domain.Permission, error)); ok {
+		return rf(ctx, name)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) *domain.Permission); ok {
+		r0 = rf(ctx, name)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).(*domain.Permission)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, name)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockRoleRepository_FindPermissionByName_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindPermissionByName'
+type MockRoleRepository_FindPermissionByName_Call struct {
+	*mock.Call
+}
+
+// FindPermissionByName is a helper method to define mock.On call
+//   - ctx context.Context
+//   - name string
+func (_e *MockRoleRepository_Expecter) FindPermissionByName(ctx interface{}, name interface{}) *MockRoleRepository_FindPermissionByName_Call {
+	return &MockRoleRepository_FindPermissionByName_Call{Call: _e.mock.On("FindPermissionByName", ctx, name)}
+}
+
+func (_c *MockRoleRepository_FindPermissionByName_Call) Run(run func(ctx context.Context, name string)) *MockRoleRepository_FindPermissionByName_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *MockRoleRepository_FindPermissionByName_Call) Return(_a0 *domain.Permission, _a1 error) *MockRoleRepository_FindPermissionByName_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockRoleRepository_FindPermissionByName_Call) RunAndReturn(run func(context.Context, string) (*domain.Permission, error)) *MockRoleRepository_FindPermissionByName_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // FindPermissionsByIDs provides a mock function with given fields: ctx, ids
 func (_m *MockRoleRepository) FindPermissionsByIDs(ctx context.Context, ids []uint) ([]domain.Permission, error) {
 	ret := _m.Called(ctx, ids)

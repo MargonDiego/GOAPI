@@ -126,7 +126,7 @@ func mustInitInfra(cfg *config.Config) *infraDeps {
 
 func initServices(cfg *config.Config, infra *infraDeps) *appServices {
 	return &appServices{
-		auth: application.NewAuthService(infra.userRepo, cfg.JWTSecret, infra.enc),
+		auth: application.NewAuthService(infra.userRepo, infra.roleRepo, cfg.JWTSecret, infra.enc),
 		user: application.NewUserService(infra.userRepo, infra.roleRepo, infra.enc, infra.versionCache),
 		role: application.NewRoleService(infra.roleRepo, infra.userRepo, infra.versionCache),
 	}

@@ -335,12 +335,12 @@ func TestUserService_CreateUser(t *testing.T) {
 				m.On("FindByUsername", mock.Anything, "john").Return(nil, domain.ErrUserNotFound)
 				m.On("FindByEmailHash", mock.Anything, mock.AnythingOfType("string")).Return(nil, domain.ErrUserNotFound)
 				mr.On("FindByName", mock.Anything, "User").Return(&domain.Role{ID: 1, Name: "User"}, nil)
-				m.On("Save", mock.Anything, mock.AnythingOfType("*domain.User")).Return(nil)
-			},
-			expectedError: nil,
+			m.On("Create", mock.Anything, mock.AnythingOfType("*domain.User")).Return(nil)
 		},
-		{
-			name:      "Usuario ya existe",
+		expectedError: nil,
+	},
+	{
+		name:      "Usuario ya existe",
 			username:  "john",
 			password:  "password123",
 			email:     "",
@@ -393,7 +393,7 @@ func TestUserService_UpdateUser(t *testing.T) {
 			newUsername:  "johnnew",
 			setupMock: func(m *mocks.MockUserRepository) {
 				m.On("FindByID", mock.Anything, uint(1)).Return(&domain.User{ID: 1, Username: "john"}, nil)
-				m.On("Save", mock.Anything, mock.AnythingOfType("*domain.User")).Return(nil)
+				m.On("UpdateProfile", mock.Anything, mock.AnythingOfType("*domain.User")).Return(nil)
 			},
 			expectedError: nil,
 		},

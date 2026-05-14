@@ -13,6 +13,7 @@ type RoleRepository interface {
 
 	// Gestión de Permisos
 	FindAllPermissions(ctx context.Context) ([]Permission, error)
+	FindPermissionByName(ctx context.Context, name string) (*Permission, error)
 	FindPermissionsByIDs(ctx context.Context, ids []uint) ([]Permission, error)
 	FindRolesByIDs(ctx context.Context, ids []uint) ([]Role, error)
 }

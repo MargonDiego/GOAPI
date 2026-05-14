@@ -1,4 +1,4 @@
-package application_test
+﻿package application_test
 
 import (
 	"context"
@@ -17,7 +17,7 @@ import (
 
 func setupTestEncryptor(t *testing.T) *appcrypto.Encryptor {
 	t.Helper()
-	key := []byte("12345678901234567890123456789012") // 32 bytes exactos
+	key := []byte("12345678901234567890123456789012")
 	enc, err := appcrypto.NewEncryptor(key)
 	assert.NoError(t, err)
 	return enc
@@ -26,7 +26,6 @@ func setupTestEncryptor(t *testing.T) *appcrypto.Encryptor {
 func TestAuthService_Register(t *testing.T) {
 	t.Parallel()
 
-	// Arrange Global
 	jwtSecret := []byte("super_secret")
 	enc := setupTestEncryptor(t)
 
@@ -35,27 +34,26 @@ func TestAuthService_Register(t *testing.T) {
 		username      string
 		password      string
 		email         string
-		setupMock     func(m *mocks.MockUserRepository)
+		setupUserMock func(m *mocks.MockUserRepository)
+		setupRoleMock func(m *mocks.MockRoleRepository)
 		expectedError error
 	}{
 		{
-			name:     "Error de validación: contraseña corta",
+			name:     "Error de validacion: contrasena corta",
 			username: "testuser",
 			password: "123",
 			email:    "test@test.com",
-			setupMock: func(m *mocks.MockUserRepository) {
-				// No se llama a BD
-			},
+			setupUserMock: func(m *mocks.MockUserRepository) {},
+			setupRoleMock: func(m *mocks.MockRoleRepository) {},
 			expectedError: domain.ErrInvalidInput,
 		},
 		{
-			name:     "Error de validación: email vacío",
+			name:     "Error de validacion: email vacio",
 			username: "testuser",
 			password: "validpassword123",
 			email:    "",
-			setupMock: func(m *mocks.MockUserRepository) {
-				// No se llama a BD
-			},
+			setupUserMock: func(m *mocks.MockUserRepository) {},
+			setupRoleMock: func(m *mocks.MockRoleRepository) {},
 			expectedError: domain.ErrInvalidInput,
 		},
 		{
@@ -63,9 +61,10 @@ func TestAuthService_Register(t *testing.T) {
 			username: "existinguser",
 			password: "validpassword123",
 			email:    "new@test.com",
-			setupMock: func(m *mocks.MockUserRepository) {
+			setupUserMock: func(m *mocks.MockUserRepository) {
 				m.On("FindByUsername", mock.Anything, "existinguser").Return(&domain.User{}, nil)
 			},
+			setupRoleMock: func(m *mocks.MockRoleRepository) {},
 			expectedError: domain.ErrUserAlreadyExists,
 		},
 		{
@@ -73,30 +72,28 @@ func TestAuthService_Register(t *testing.T) {
 			username: "newuser",
 			password: "validpassword123",
 			email:    "existing@test.com",
-			setupMock: func(m *mocks.MockUserRepository) {
+			setupUserMock: func(m *mocks.MockUserRepository) {
 				m.On("FindByUsername", mock.Anything, "newuser").Return(nil, domain.ErrUserNotFound)
-				
 				emailHash := enc.HashEmail("existing@test.com")
 				m.On("FindByEmailHash", mock.Anything, emailHash).Return(&domain.User{}, nil)
 			},
+			setupRoleMock: func(m *mocks.MockRoleRepository) {},
 			expectedError: domain.ErrEmailAlreadyExists,
 		},
 		{
-			name:     "Éxito: registro completado",
+			name:     "Exito: registro completado",
 			username: "newuser",
 			password: "validpassword123",
 			email:    "new@test.com",
-			setupMock: func(m *mocks.MockUserRepository) {
+			setupUserMock: func(m *mocks.MockUserRepository) {
 				m.On("FindByUsername", mock.Anything, "newuser").Return(nil, domain.ErrUserNotFound)
-				
 				emailHash := enc.HashEmail("new@test.com")
 				m.On("FindByEmailHash", mock.Anything, emailHash).Return(nil, domain.ErrUserNotFound)
-				
-				defaultRole := domain.Role{ID: 1, Name: "User"}
-				m.On("FindRoleByName", mock.Anything, "User").Return(defaultRole, nil)
-				
-				// En GORM el repositorio guarda el puntero
-				m.On("Save", mock.Anything, mock.AnythingOfType("*domain.User")).Return(nil)
+				m.On("Create", mock.Anything, mock.AnythingOfType("*domain.User")).Return(nil)
+			},
+			setupRoleMock: func(m *mocks.MockRoleRepository) {
+				defaultRole := &domain.Role{ID: 1, Name: "User"}
+				m.On("FindByName", mock.Anything, "User").Return(defaultRole, nil)
 			},
 			expectedError: nil,
 		},
@@ -105,13 +102,13 @@ func TestAuthService_Register(t *testing.T) {
 			username: "newuser",
 			password: "validpassword123",
 			email:    "new@test.com",
-			setupMock: func(m *mocks.MockUserRepository) {
+			setupUserMock: func(m *mocks.MockUserRepository) {
 				m.On("FindByUsername", mock.Anything, "newuser").Return(nil, domain.ErrUserNotFound)
-				
 				emailHash := enc.HashEmail("new@test.com")
 				m.On("FindByEmailHash", mock.Anything, emailHash).Return(nil, domain.ErrUserNotFound)
-				
-				m.On("FindRoleByName", mock.Anything, "User").Return(domain.Role{}, errors.New("db error"))
+			},
+			setupRoleMock: func(m *mocks.MockRoleRepository) {
+				m.On("FindByName", mock.Anything, "User").Return(nil, errors.New("db error"))
 			},
 			expectedError: errors.New("could not retrieve default role: db error"),
 		},
@@ -122,11 +119,12 @@ func TestAuthService_Register(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			t.Parallel()
 
-			// Instanciamos el mock autogenerado por Mockery
-			mockRepo := mocks.NewMockUserRepository(t)
-			tt.setupMock(mockRepo)
+			mockUserRepo := mocks.NewMockUserRepository(t)
+			mockRoleRepo := mocks.NewMockRoleRepository(t)
+			tt.setupUserMock(mockUserRepo)
+			tt.setupRoleMock(mockRoleRepo)
 
-			service := application.NewAuthService(mockRepo, jwtSecret, enc)
+			service := application.NewAuthService(mockUserRepo, mockRoleRepo, jwtSecret, enc)
 			ctx := context.Background()
 
 			err := service.Register(ctx, tt.username, tt.password, tt.email)
@@ -179,8 +177,9 @@ func TestAuthService_Logout(t *testing.T) {
 
 			mockRepo := mocks.NewMockUserRepository(t)
 			tt.setupMock(mockRepo)
+			mockRoleRepo := mocks.NewMockRoleRepository(t)
 
-			service := application.NewAuthService(mockRepo, jwtSecret, enc)
+			service := application.NewAuthService(mockRepo, mockRoleRepo, jwtSecret, enc)
 			ctx := context.Background()
 
 			err := service.Logout(ctx, tt.userID)
@@ -209,30 +208,26 @@ func TestAuthService_RefreshTokens(t *testing.T) {
 		expectedError error
 	}{
 		{
-			name:     "Éxito: refresh token válido",
+			name:     "Exito: refresh token valido",
 			refreshToken: "valid-refresh-token",
 			userID:     1,
 			setupMock: func(m *mocks.MockUserRepository) {
-				// Return a valid refresh token
 				m.On("GetRefreshToken", mock.Anything, "valid-refresh-token").Return(&domain.RefreshToken{
 					Token:     "valid-refresh-token",
 					UserID:    1,
-					ExpiresAt: time.Now().Add(24 * time.Hour), // Valid for 24 hours
+					ExpiresAt: time.Now().Add(24 * time.Hour),
 				}, nil)
-				// Return the associated user
 				m.On("FindByID", mock.Anything, uint(1)).Return(&domain.User{
 					ID:       1,
 					Username: "testuser",
 				}, nil)
-				// Delete old refresh token (strict rotation)
 				m.On("DeleteRefreshToken", mock.Anything, "valid-refresh-token").Return(nil)
-				// Save new refresh token
 				m.On("SaveRefreshToken", mock.Anything, mock.AnythingOfType("*domain.RefreshToken")).Return(nil)
 			},
 			expectedError: nil,
 		},
 		{
-			name:     "Error: refresh token inválido/no encontrado",
+			name:     "Error: refresh token invalido",
 			refreshToken: "invalid-token",
 			userID:     1,
 			setupMock: func(m *mocks.MockUserRepository) {
@@ -248,7 +243,7 @@ func TestAuthService_RefreshTokens(t *testing.T) {
 				m.On("GetRefreshToken", mock.Anything, "expired-token").Return(&domain.RefreshToken{
 					Token:     "expired-token",
 					UserID:    1,
-					ExpiresAt: time.Now().Add(-1 * time.Hour), // Expired 1 hour ago
+					ExpiresAt: time.Now().Add(-1 * time.Hour),
 				}, nil)
 				m.On("DeleteRefreshToken", mock.Anything, "expired-token").Return(nil)
 			},
@@ -263,8 +258,9 @@ func TestAuthService_RefreshTokens(t *testing.T) {
 
 			mockRepo := mocks.NewMockUserRepository(t)
 			tt.setupMock(mockRepo)
+			mockRoleRepo := mocks.NewMockRoleRepository(t)
 
-			service := application.NewAuthService(mockRepo, jwtSecret, enc)
+			service := application.NewAuthService(mockRepo, mockRoleRepo, jwtSecret, enc)
 			ctx := context.Background()
 
 			_, _, err := service.RefreshTokens(ctx, tt.refreshToken)
@@ -278,4 +274,3 @@ func TestAuthService_RefreshTokens(t *testing.T) {
 		})
 	}
 }
-

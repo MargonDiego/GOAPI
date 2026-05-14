@@ -60,6 +60,14 @@ func (m *mockRoleRepository) FindAllPermissions(ctx context.Context) ([]domain.P
 	return args.Get(0).([]domain.Permission), args.Error(1)
 }
 
+func (m *mockRoleRepository) FindPermissionByName(ctx context.Context, name string) (*domain.Permission, error) {
+	args := m.Called(ctx, name)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.Permission), args.Error(1)
+}
+
 func (m *mockRoleRepository) FindRolesByIDs(ctx context.Context, ids []uint) ([]domain.Role, error) {
 	args := m.Called(ctx, ids)
 	if args.Get(0) == nil {
@@ -194,8 +202,8 @@ func TestRoleService_CreatePermission(t *testing.T) {
 			name:     "Permiso creado exitosamente",
 			permName: "read:users",
 			setupMock: func(m *mockRoleRepository) {
-				// El servicio primero verifica unicidad con FindAllPermissions.
-				m.On("FindAllPermissions", mock.Anything).Return([]domain.Permission{}, nil)
+				// FindPermissionByName retorna ErrPermissionNotFound cuando el permiso no existe.
+				m.On("FindPermissionByName", mock.Anything, "read:users").Return(nil, domain.ErrPermissionNotFound)
 				m.On("CreatePermission", mock.Anything, "read:users").Return(nil)
 			},
 			expectedError: nil,
@@ -212,9 +220,9 @@ func TestRoleService_CreatePermission(t *testing.T) {
 			name:     "Falla por permiso duplicado",
 			permName: "read:users",
 			setupMock: func(m *mockRoleRepository) {
-				// FindAllPermissions retorna el permiso ya existente.
-				m.On("FindAllPermissions", mock.Anything).Return(
-					[]domain.Permission{{ID: 1, Name: "read:users"}}, nil,
+				// FindPermissionByName retorna el permiso existente → duplicado.
+				m.On("FindPermissionByName", mock.Anything, "read:users").Return(
+					&domain.Permission{ID: 1, Name: "read:users"}, nil,
 				)
 			},
 			expectedError: domain.ErrPermissionAlreadyExists,
