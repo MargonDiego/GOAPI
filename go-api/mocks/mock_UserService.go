@@ -215,24 +215,22 @@ func (_c *MockUserService_DeleteUser_Call) RunAndReturn(run func(context.Context
 }
 
 // GetAllUsers provides a mock function with given fields: ctx, page, size
-func (_m *MockUserService) GetAllUsers(ctx context.Context, page int, size int) ([]domain.User, error) {
+func (_m *MockUserService) GetAllUsers(ctx context.Context, page int, size int) (domain.PaginatedResult[domain.User], error) {
 	ret := _m.Called(ctx, page, size)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetAllUsers")
 	}
 
-	var r0 []domain.User
+	var r0 domain.PaginatedResult[domain.User]
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, int, int) ([]domain.User, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int, int) (domain.PaginatedResult[domain.User], error)); ok {
 		return rf(ctx, page, size)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, int, int) []domain.User); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int, int) domain.PaginatedResult[domain.User]); ok {
 		r0 = rf(ctx, page, size)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]domain.User)
-		}
+		r0 = ret.Get(0).(domain.PaginatedResult[domain.User])
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, int, int) error); ok {
@@ -264,12 +262,12 @@ func (_c *MockUserService_GetAllUsers_Call) Run(run func(ctx context.Context, pa
 	return _c
 }
 
-func (_c *MockUserService_GetAllUsers_Call) Return(_a0 []domain.User, _a1 error) *MockUserService_GetAllUsers_Call {
+func (_c *MockUserService_GetAllUsers_Call) Return(_a0 domain.PaginatedResult[domain.User], _a1 error) *MockUserService_GetAllUsers_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockUserService_GetAllUsers_Call) RunAndReturn(run func(context.Context, int, int) ([]domain.User, error)) *MockUserService_GetAllUsers_Call {
+func (_c *MockUserService_GetAllUsers_Call) RunAndReturn(run func(context.Context, int, int) (domain.PaginatedResult[domain.User], error)) *MockUserService_GetAllUsers_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -498,24 +496,22 @@ func (_c *MockUserService_RestoreUser_Call) RunAndReturn(run func(context.Contex
 }
 
 // SearchUsers provides a mock function with given fields: ctx, query, roleName, page, size
-func (_m *MockUserService) SearchUsers(ctx context.Context, query string, roleName string, page int, size int) ([]domain.User, error) {
+func (_m *MockUserService) SearchUsers(ctx context.Context, query string, roleName string, page int, size int) (domain.PaginatedResult[domain.User], error) {
 	ret := _m.Called(ctx, query, roleName, page, size)
 
 	if len(ret) == 0 {
 		panic("no return value specified for SearchUsers")
 	}
 
-	var r0 []domain.User
+	var r0 domain.PaginatedResult[domain.User]
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, int, int) ([]domain.User, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, int, int) (domain.PaginatedResult[domain.User], error)); ok {
 		return rf(ctx, query, roleName, page, size)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, string, string, int, int) []domain.User); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, int, int) domain.PaginatedResult[domain.User]); ok {
 		r0 = rf(ctx, query, roleName, page, size)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]domain.User)
-		}
+		r0 = ret.Get(0).(domain.PaginatedResult[domain.User])
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, string, string, int, int) error); ok {
@@ -549,12 +545,12 @@ func (_c *MockUserService_SearchUsers_Call) Run(run func(ctx context.Context, qu
 	return _c
 }
 
-func (_c *MockUserService_SearchUsers_Call) Return(_a0 []domain.User, _a1 error) *MockUserService_SearchUsers_Call {
+func (_c *MockUserService_SearchUsers_Call) Return(_a0 domain.PaginatedResult[domain.User], _a1 error) *MockUserService_SearchUsers_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockUserService_SearchUsers_Call) RunAndReturn(run func(context.Context, string, string, int, int) ([]domain.User, error)) *MockUserService_SearchUsers_Call {
+func (_c *MockUserService_SearchUsers_Call) RunAndReturn(run func(context.Context, string, string, int, int) (domain.PaginatedResult[domain.User], error)) *MockUserService_SearchUsers_Call {
 	_c.Call.Return(run)
 	return _c
 }

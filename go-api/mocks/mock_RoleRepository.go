@@ -22,6 +22,175 @@ func (_m *MockRoleRepository) EXPECT() *MockRoleRepository_Expecter {
 	return &MockRoleRepository_Expecter{mock: &_m.Mock}
 }
 
+// CountPermissions provides a mock function with given fields: ctx
+func (_m *MockRoleRepository) CountPermissions(ctx context.Context) (int64, error) {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CountPermissions")
+	}
+
+	var r0 int64
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) (int64, error)); ok {
+		return rf(ctx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) int64); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockRoleRepository_CountPermissions_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CountPermissions'
+type MockRoleRepository_CountPermissions_Call struct {
+	*mock.Call
+}
+
+// CountPermissions is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *MockRoleRepository_Expecter) CountPermissions(ctx interface{}) *MockRoleRepository_CountPermissions_Call {
+	return &MockRoleRepository_CountPermissions_Call{Call: _e.mock.On("CountPermissions", ctx)}
+}
+
+func (_c *MockRoleRepository_CountPermissions_Call) Run(run func(ctx context.Context)) *MockRoleRepository_CountPermissions_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *MockRoleRepository_CountPermissions_Call) Return(_a0 int64, _a1 error) *MockRoleRepository_CountPermissions_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockRoleRepository_CountPermissions_Call) RunAndReturn(run func(context.Context) (int64, error)) *MockRoleRepository_CountPermissions_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// CountRoles provides a mock function with given fields: ctx
+func (_m *MockRoleRepository) CountRoles(ctx context.Context) (int64, error) {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CountRoles")
+	}
+
+	var r0 int64
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) (int64, error)); ok {
+		return rf(ctx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) int64); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockRoleRepository_CountRoles_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CountRoles'
+type MockRoleRepository_CountRoles_Call struct {
+	*mock.Call
+}
+
+// CountRoles is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *MockRoleRepository_Expecter) CountRoles(ctx interface{}) *MockRoleRepository_CountRoles_Call {
+	return &MockRoleRepository_CountRoles_Call{Call: _e.mock.On("CountRoles", ctx)}
+}
+
+func (_c *MockRoleRepository_CountRoles_Call) Run(run func(ctx context.Context)) *MockRoleRepository_CountRoles_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *MockRoleRepository_CountRoles_Call) Return(_a0 int64, _a1 error) *MockRoleRepository_CountRoles_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockRoleRepository_CountRoles_Call) RunAndReturn(run func(context.Context) (int64, error)) *MockRoleRepository_CountRoles_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// CountRolesByScope provides a mock function with given fields: ctx, scope
+func (_m *MockRoleRepository) CountRolesByScope(ctx context.Context, scope string) (int64, error) {
+	ret := _m.Called(ctx, scope)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CountRolesByScope")
+	}
+
+	var r0 int64
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (int64, error)); ok {
+		return rf(ctx, scope)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) int64); ok {
+		r0 = rf(ctx, scope)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, scope)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockRoleRepository_CountRolesByScope_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CountRolesByScope'
+type MockRoleRepository_CountRolesByScope_Call struct {
+	*mock.Call
+}
+
+// CountRolesByScope is a helper method to define mock.On call
+//   - ctx context.Context
+//   - scope string
+func (_e *MockRoleRepository_Expecter) CountRolesByScope(ctx interface{}, scope interface{}) *MockRoleRepository_CountRolesByScope_Call {
+	return &MockRoleRepository_CountRolesByScope_Call{Call: _e.mock.On("CountRolesByScope", ctx, scope)}
+}
+
+func (_c *MockRoleRepository_CountRolesByScope_Call) Run(run func(ctx context.Context, scope string)) *MockRoleRepository_CountRolesByScope_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *MockRoleRepository_CountRolesByScope_Call) Return(_a0 int64, _a1 error) *MockRoleRepository_CountRolesByScope_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockRoleRepository_CountRolesByScope_Call) RunAndReturn(run func(context.Context, string) (int64, error)) *MockRoleRepository_CountRolesByScope_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Create provides a mock function with given fields: ctx, role
 func (_m *MockRoleRepository) Create(ctx context.Context, role *domain.Role) error {
 	ret := _m.Called(ctx, role)
@@ -680,6 +849,64 @@ func (_c *MockRoleRepository_FindAllPermissionsPaginated_Call) Return(_a0 []doma
 }
 
 func (_c *MockRoleRepository_FindAllPermissionsPaginated_Call) RunAndReturn(run func(context.Context, int, int) ([]domain.Permission, error)) *MockRoleRepository_FindAllPermissionsPaginated_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// FindAllPermissionsPaginatedWithTotal provides a mock function with given fields: ctx, page, size
+func (_m *MockRoleRepository) FindAllPermissionsPaginatedWithTotal(ctx context.Context, page int, size int) (domain.PaginatedResult[domain.Permission], error) {
+	ret := _m.Called(ctx, page, size)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FindAllPermissionsPaginatedWithTotal")
+	}
+
+	var r0 domain.PaginatedResult[domain.Permission]
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, int) (domain.PaginatedResult[domain.Permission], error)); ok {
+		return rf(ctx, page, size)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int, int) domain.PaginatedResult[domain.Permission]); ok {
+		r0 = rf(ctx, page, size)
+	} else {
+		r0 = ret.Get(0).(domain.PaginatedResult[domain.Permission])
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, int, int) error); ok {
+		r1 = rf(ctx, page, size)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockRoleRepository_FindAllPermissionsPaginatedWithTotal_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindAllPermissionsPaginatedWithTotal'
+type MockRoleRepository_FindAllPermissionsPaginatedWithTotal_Call struct {
+	*mock.Call
+}
+
+// FindAllPermissionsPaginatedWithTotal is a helper method to define mock.On call
+//   - ctx context.Context
+//   - page int
+//   - size int
+func (_e *MockRoleRepository_Expecter) FindAllPermissionsPaginatedWithTotal(ctx interface{}, page interface{}, size interface{}) *MockRoleRepository_FindAllPermissionsPaginatedWithTotal_Call {
+	return &MockRoleRepository_FindAllPermissionsPaginatedWithTotal_Call{Call: _e.mock.On("FindAllPermissionsPaginatedWithTotal", ctx, page, size)}
+}
+
+func (_c *MockRoleRepository_FindAllPermissionsPaginatedWithTotal_Call) Run(run func(ctx context.Context, page int, size int)) *MockRoleRepository_FindAllPermissionsPaginatedWithTotal_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(int), args[2].(int))
+	})
+	return _c
+}
+
+func (_c *MockRoleRepository_FindAllPermissionsPaginatedWithTotal_Call) Return(_a0 domain.PaginatedResult[domain.Permission], _a1 error) *MockRoleRepository_FindAllPermissionsPaginatedWithTotal_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockRoleRepository_FindAllPermissionsPaginatedWithTotal_Call) RunAndReturn(run func(context.Context, int, int) (domain.PaginatedResult[domain.Permission], error)) *MockRoleRepository_FindAllPermissionsPaginatedWithTotal_Call {
 	_c.Call.Return(run)
 	return _c
 }

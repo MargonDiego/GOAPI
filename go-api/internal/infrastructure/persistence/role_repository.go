@@ -287,6 +287,48 @@ func (r *roleRepository) FindAllPermissionsPaginated(ctx context.Context, page, 
 	return toDomainPermissions(dbPerms), nil
 }
 
+// FindAllPermissionsPaginatedWithTotal retorna permisos paginados con metadatos.
+func (r *roleRepository) FindAllPermissionsPaginatedWithTotal(ctx context.Context, page, size int) (domain.PaginatedResult[domain.Permission], error) {
+	var total int64
+	if err := r.db.WithContext(ctx).Model(&Permission{}).Count(&total).Error; err != nil {
+		return domain.PaginatedResult[domain.Permission]{}, err
+	}
+
+	perms, err := r.FindAllPermissionsPaginated(ctx, page, size)
+	if err != nil {
+		return domain.PaginatedResult[domain.Permission]{}, err
+	}
+
+	return domain.NewPaginatedResult(perms, page, size, int(total)), nil
+}
+
+// CountRoles retorna el total de roles activos.
+func (r *roleRepository) CountRoles(ctx context.Context) (int64, error) {
+	var count int64
+	if err := r.db.WithContext(ctx).Model(&Role{}).Count(&count).Error; err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+// CountRolesByScope retorna el total de roles activos filtrados por scope.
+func (r *roleRepository) CountRolesByScope(ctx context.Context, scope string) (int64, error) {
+	var count int64
+	if err := r.db.WithContext(ctx).Model(&Role{}).Where("scope = ? OR scope = ''", scope).Count(&count).Error; err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+// CountPermissions retorna el total de permisos activos.
+func (r *roleRepository) CountPermissions(ctx context.Context) (int64, error) {
+	var count int64
+	if err := r.db.WithContext(ctx).Model(&Permission{}).Count(&count).Error; err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
 // FindAllByScope retorna roles filtrados por scope (incluyendo scope vacío).
 func (r *roleRepository) FindAllByScope(ctx context.Context, scope string) ([]domain.Role, error) {
 	var dbRoles []Role

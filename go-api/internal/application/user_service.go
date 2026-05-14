@@ -19,9 +19,9 @@ type UserService interface {
 	// Retorna domain.ErrUserNotFound si no existe.
 	GetUserByUsername(ctx context.Context, username string) (*domain.User, error)
 
-	// GetAllUsers retorna una página de usuarios ordenados por ID ascendente.
+	// GetAllUsers retorna una página de usuarios ordenados por ID ascendente con metadatos de paginación.
 	// page empieza en 1; size se normaliza al rango [1, 100].
-	GetAllUsers(ctx context.Context, page, size int) ([]domain.User, error)
+	GetAllUsers(ctx context.Context, page, size int) (domain.PaginatedResult[domain.User], error)
 
 	// GetUserByID busca un usuario por su ID primario.
 	// Retorna domain.ErrUserNotFound si no existe.
@@ -42,10 +42,10 @@ type UserService interface {
 	// Retorna domain.ErrUserNotFound si el usuario no existe.
 	DeleteUser(ctx context.Context, userID uint) error
 
-	// SearchUsers busca usuarios por username/email y filtra por rol.
+	// SearchUsers busca usuarios por username/email y filtra por rol con metadatos de paginación.
 	// query: búsqueda por username o email (case-insensitive). Vacío = todos.
 	// roleName: filtra por nombre de rol. Vacío = sin filtro.
-	SearchUsers(ctx context.Context, query, roleName string, page, size int) ([]domain.User, error)
+	SearchUsers(ctx context.Context, query, roleName string, page, size int) (domain.PaginatedResult[domain.User], error)
 
 	// GetDeletedUsers retorna todos los usuarios soft-deleted.
 	GetDeletedUsers(ctx context.Context) ([]domain.User, error)
@@ -91,7 +91,7 @@ func (s *userService) GetUserByUsername(ctx context.Context, username string) (*
 // GetAllUsers normaliza la paginación y delega al repositorio.
 // page < 1 se corrige a 1; size fuera de (0, 100] se corrige a 10.
 // Respeta el scoping del actor.
-func (s *userService) GetAllUsers(ctx context.Context, page, size int) ([]domain.User, error) {
+func (s *userService) GetAllUsers(ctx context.Context, page, size int) (domain.PaginatedResult[domain.User], error) {
 	if page < 1 {
 		page = 1
 	}
@@ -101,17 +101,26 @@ func (s *userService) GetAllUsers(ctx context.Context, page, size int) ([]domain
 
 	actorScope, hasScope := ScopeFromContext(ctx)
 	var users []domain.User
+	var total int64
 	var err error
 
 	if hasScope && actorScope != "" {
 		users, err = s.repo.FindAllByScope(ctx, actorScope, page, size)
+		if err != nil {
+			return domain.PaginatedResult[domain.User]{}, fmt.Errorf("failed to list users: %w", err)
+		}
+		total, err = s.repo.CountUsersByScope(ctx, actorScope)
 	} else {
 		users, err = s.repo.FindAll(ctx, page, size)
+		if err != nil {
+			return domain.PaginatedResult[domain.User]{}, fmt.Errorf("failed to list users: %w", err)
+		}
+		total, err = s.repo.CountUsers(ctx)
 	}
 	if err != nil {
-		return nil, fmt.Errorf("failed to list users: %w", err)
+		return domain.PaginatedResult[domain.User]{}, fmt.Errorf("failed to count users: %w", err)
 	}
-	return users, nil
+	return domain.NewPaginatedResult(users, page, size, int(total)), nil
 }
 
 // AssignRolesToUser valida la existencia del usuario y de cada role antes de aplicar el reemplazo.
@@ -304,7 +313,7 @@ func (s *userService) DeleteUser(ctx context.Context, userID uint) error {
 
 // SearchUsers busca usuarios por username/email y filtra por rol.
 // Respeta el scoping del actor.
-func (s *userService) SearchUsers(ctx context.Context, query, roleName string, page, size int) ([]domain.User, error) {
+func (s *userService) SearchUsers(ctx context.Context, query, roleName string, page, size int) (domain.PaginatedResult[domain.User], error) {
 	if page < 1 {
 		page = 1
 	}
@@ -313,17 +322,26 @@ func (s *userService) SearchUsers(ctx context.Context, query, roleName string, p
 	}
 	actorScope, hasScope := ScopeFromContext(ctx)
 	var users []domain.User
+	var total int64
 	var err error
 
 	if hasScope && actorScope != "" {
 		users, err = s.repo.SearchUsersByScope(ctx, query, roleName, actorScope, page, size)
+		if err != nil {
+			return domain.PaginatedResult[domain.User]{}, fmt.Errorf("failed to search users: %w", err)
+		}
+		total, err = s.repo.CountSearchUsersByScope(ctx, query, roleName, actorScope)
 	} else {
 		users, err = s.repo.SearchUsers(ctx, query, roleName, page, size)
+		if err != nil {
+			return domain.PaginatedResult[domain.User]{}, fmt.Errorf("failed to search users: %w", err)
+		}
+		total, err = s.repo.CountSearchUsers(ctx, query, roleName)
 	}
 	if err != nil {
-		return nil, fmt.Errorf("failed to search users: %w", err)
+		return domain.PaginatedResult[domain.User]{}, fmt.Errorf("failed to count search users: %w", err)
 	}
-	return users, nil
+	return domain.NewPaginatedResult(users, page, size, int(total)), nil
 }
 
 // GetDeletedUsers retorna todos los usuarios soft-deleted.

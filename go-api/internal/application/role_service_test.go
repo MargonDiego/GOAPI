@@ -141,6 +141,29 @@ func (m *mockRoleRepository) FindAllPermissionsPaginated(ctx context.Context, pa
 	return args.Get(0).([]domain.Permission), args.Error(1)
 }
 
+func (m *mockRoleRepository) FindAllPermissionsPaginatedWithTotal(ctx context.Context, page, size int) (domain.PaginatedResult[domain.Permission], error) {
+	args := m.Called(ctx, page, size)
+	if args.Get(0) == nil {
+		return domain.PaginatedResult[domain.Permission]{}, args.Error(1)
+	}
+	return args.Get(0).(domain.PaginatedResult[domain.Permission]), args.Error(1)
+}
+
+func (m *mockRoleRepository) CountRoles(ctx context.Context) (int64, error) {
+	args := m.Called(ctx)
+	return args.Get(0).(int64), args.Error(1)
+}
+
+func (m *mockRoleRepository) CountRolesByScope(ctx context.Context, scope string) (int64, error) {
+	args := m.Called(ctx, scope)
+	return args.Get(0).(int64), args.Error(1)
+}
+
+func (m *mockRoleRepository) CountPermissions(ctx context.Context) (int64, error) {
+	args := m.Called(ctx)
+	return args.Get(0).(int64), args.Error(1)
+}
+
 func (m *mockRoleRepository) FindAllByScope(ctx context.Context, scope string) ([]domain.Role, error) {
 	args := m.Called(ctx, scope)
 	if args.Get(0) == nil {

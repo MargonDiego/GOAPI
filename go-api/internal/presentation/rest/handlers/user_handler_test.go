@@ -105,7 +105,7 @@ func TestUserHandler_GetAll(t *testing.T) {
 			query: "?page=2&size=5",
 			setupMock: func(m *mocks.MockUserService) {
 				users := []domain.User{{ID: 1, Username: "u1"}}
-				m.On("GetAllUsers", mock.Anything, 2, 5).Return(users, nil)
+				m.On("GetAllUsers", mock.Anything, 2, 5).Return(domain.NewPaginatedResult(users, 2, 5, 10), nil)
 			},
 			expectedStatus: http.StatusOK,
 			expectedBody:   "u1",
@@ -115,7 +115,7 @@ func TestUserHandler_GetAll(t *testing.T) {
 			query: "?page=invalid&size=-1",
 			setupMock: func(m *mocks.MockUserService) {
 				users := []domain.User{{ID: 2, Username: "u2"}}
-				m.On("GetAllUsers", mock.Anything, 1, 10).Return(users, nil)
+				m.On("GetAllUsers", mock.Anything, 1, 10).Return(domain.NewPaginatedResult(users, 1, 10, 1), nil)
 			},
 			expectedStatus: http.StatusOK,
 			expectedBody:   "u2",
@@ -124,7 +124,7 @@ func TestUserHandler_GetAll(t *testing.T) {
 			name:  "Error de BD",
 			query: "",
 			setupMock: func(m *mocks.MockUserService) {
-				m.On("GetAllUsers", mock.Anything, 1, 10).Return(nil, errors.New("db error"))
+				m.On("GetAllUsers", mock.Anything, 1, 10).Return(domain.PaginatedResult[domain.User]{}, errors.New("db error"))
 			},
 			expectedStatus: http.StatusInternalServerError,
 			expectedBody:   "failed to list users",

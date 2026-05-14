@@ -85,12 +85,12 @@ func TestUserService_GetAllUsers(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name          string
-		page          int
-		size          int
-		setupMock     func(m *mocks.MockUserRepository)
-		expectedUsers []domain.User
-		expectedError error
+		name            string
+		page            int
+		size            int
+		setupMock       func(m *mocks.MockUserRepository)
+		expectedResult  domain.PaginatedResult[domain.User]
+		expectedError   error
 	}{
 		{
 			name: "Éxito con paginación válida",
@@ -99,9 +99,10 @@ func TestUserService_GetAllUsers(t *testing.T) {
 			setupMock: func(m *mocks.MockUserRepository) {
 				users := []domain.User{{ID: 1, Username: "user1"}, {ID: 2, Username: "user2"}}
 				m.On("FindAll", mock.Anything, 2, 5).Return(users, nil)
+				m.On("CountUsers", mock.Anything).Return(int64(12), nil)
 			},
-			expectedUsers: []domain.User{{ID: 1, Username: "user1"}, {ID: 2, Username: "user2"}},
-			expectedError: nil,
+			expectedResult: domain.NewPaginatedResult([]domain.User{{ID: 1, Username: "user1"}, {ID: 2, Username: "user2"}}, 2, 5, 12),
+			expectedError:  nil,
 		},
 		{
 			name: "Sanitización de página inválida y tamaño inválido",
@@ -110,9 +111,10 @@ func TestUserService_GetAllUsers(t *testing.T) {
 			setupMock: func(m *mocks.MockUserRepository) {
 				// El servicio debe sobreescribir page=-5 a page=1 y size=200 a size=10
 				m.On("FindAll", mock.Anything, 1, 10).Return([]domain.User{}, nil)
+				m.On("CountUsers", mock.Anything).Return(int64(0), nil)
 			},
-			expectedUsers: []domain.User{},
-			expectedError: nil,
+			expectedResult: domain.NewPaginatedResult([]domain.User{}, 1, 10, 0),
+			expectedError:  nil,
 		},
 		{
 			name: "Error en base de datos al listar",
@@ -121,8 +123,8 @@ func TestUserService_GetAllUsers(t *testing.T) {
 			setupMock: func(m *mocks.MockUserRepository) {
 				m.On("FindAll", mock.Anything, 1, 10).Return(nil, errors.New("db timeout"))
 			},
-			expectedUsers: nil,
-			expectedError: errors.New("failed to list users: db timeout"),
+			expectedResult: domain.PaginatedResult[domain.User]{},
+			expectedError:  errors.New("failed to list users: db timeout"),
 		},
 	}
 
@@ -140,15 +142,15 @@ func TestUserService_GetAllUsers(t *testing.T) {
 			service := application.NewUserService(mockUserRepo, mockRoleRepo, enc, nil, nil)
 			ctx := application.WithScope(context.Background(), "")
 
-			users, err := service.GetAllUsers(ctx, tt.page, tt.size)
+			result, err := service.GetAllUsers(ctx, tt.page, tt.size)
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)
 				assert.Contains(t, err.Error(), tt.expectedError.Error())
-				assert.Nil(t, users)
+				assert.Empty(t, result.Data)
 			} else {
 				assert.NoError(t, err)
-				assert.Equal(t, tt.expectedUsers, users)
+				assert.Equal(t, tt.expectedResult, result)
 			}
 		})
 	}

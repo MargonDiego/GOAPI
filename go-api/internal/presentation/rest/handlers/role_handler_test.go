@@ -105,7 +105,7 @@ func TestRoleHandler_GetRoles(t *testing.T) {
 				m.On("GetRoles", mock.Anything).Return([]domain.Role{}, nil)
 			},
 			expectedStatus: http.StatusOK,
-			expectedBody:   "[]",
+			expectedBody:   `"data":[]`,
 		},
 		{
 			name: "Éxito con roles",

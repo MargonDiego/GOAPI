@@ -19,8 +19,8 @@ type RoleService interface {
 	// GetRoles retorna todos los roles del sistema con sus permisos asociados.
 	GetRoles(ctx context.Context) ([]domain.Role, error)
 
-	// GetRolesPaginated retorna una página de roles.
-	GetRolesPaginated(ctx context.Context, page, size int) ([]domain.Role, error)
+	// GetRolesPaginated retorna una página de roles con metadatos de paginación.
+	GetRolesPaginated(ctx context.Context, page, size int) (domain.PaginatedResult[domain.Role], error)
 
 	// SearchRoles busca roles por nombre (case-insensitive).
 	SearchRoles(ctx context.Context, query string) ([]domain.Role, error)
@@ -38,8 +38,8 @@ type RoleService interface {
 	// GetPermissions retorna todos los permisos disponibles en el sistema.
 	GetPermissions(ctx context.Context) ([]domain.Permission, error)
 
-	// GetPermissionsPaginated retorna una página de permisos.
-	GetPermissionsPaginated(ctx context.Context, page, size int) ([]domain.Permission, error)
+	// GetPermissionsPaginated retorna una página de permisos con metadatos.
+	GetPermissionsPaginated(ctx context.Context, page, size int) (domain.PaginatedResult[domain.Permission], error)
 
 	// CreatePermission crea un nuevo permiso con nombre y descripción.
 	// Retorna domain.ErrInvalidInput si el nombre está vacío.
@@ -286,9 +286,9 @@ func (s *roleService) DeleteRole(ctx context.Context, roleID uint) error {
 	return nil
 }
 
-// GetRolesPaginated retorna una página de roles con sus permisos.
+// GetRolesPaginated retorna una página de roles con sus permisos y metadatos de paginación.
 // Respeta el scoping del actor.
-func (s *roleService) GetRolesPaginated(ctx context.Context, page, size int) ([]domain.Role, error) {
+func (s *roleService) GetRolesPaginated(ctx context.Context, page, size int) (domain.PaginatedResult[domain.Role], error) {
 	if page < 1 {
 		page = 1
 	}
@@ -297,17 +297,26 @@ func (s *roleService) GetRolesPaginated(ctx context.Context, page, size int) ([]
 	}
 	actorScope, hasScope := ScopeFromContext(ctx)
 	var roles []domain.Role
+	var total int64
 	var err error
 
 	if hasScope && actorScope != "" {
 		roles, err = s.repo.FindAllPaginatedByScope(ctx, actorScope, page, size)
+		if err != nil {
+			return domain.PaginatedResult[domain.Role]{}, fmt.Errorf("failed to retrieve roles: %w", err)
+		}
+		total, err = s.repo.CountRolesByScope(ctx, actorScope)
 	} else {
 		roles, err = s.repo.FindAllPaginated(ctx, page, size)
+		if err != nil {
+			return domain.PaginatedResult[domain.Role]{}, fmt.Errorf("failed to retrieve roles: %w", err)
+		}
+		total, err = s.repo.CountRoles(ctx)
 	}
 	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve roles: %w", err)
+		return domain.PaginatedResult[domain.Role]{}, fmt.Errorf("failed to count roles: %w", err)
 	}
-	return roles, nil
+	return domain.NewPaginatedResult(roles, page, size, int(total)), nil
 }
 
 // SearchRoles busca roles por nombre (case-insensitive).
@@ -358,19 +367,19 @@ func (s *roleService) RestoreRole(ctx context.Context, roleID uint) error {
 	return nil
 }
 
-// GetPermissionsPaginated retorna una página de permisos.
-func (s *roleService) GetPermissionsPaginated(ctx context.Context, page, size int) ([]domain.Permission, error) {
+// GetPermissionsPaginated retorna una página de permisos con metadatos de paginación.
+func (s *roleService) GetPermissionsPaginated(ctx context.Context, page, size int) (domain.PaginatedResult[domain.Permission], error) {
 	if page < 1 {
 		page = 1
 	}
 	if size <= 0 || size > 100 {
 		size = 10
 	}
-	perms, err := s.repo.FindAllPermissionsPaginated(ctx, page, size)
+	result, err := s.repo.FindAllPermissionsPaginatedWithTotal(ctx, page, size)
 	if err != nil {
-		return nil, fmt.Errorf("failed to retrieve permissions: %w", err)
+		return domain.PaginatedResult[domain.Permission]{}, fmt.Errorf("failed to retrieve permissions: %w", err)
 	}
-	return perms, nil
+	return result, nil
 }
 
 // UpdatePermission actualiza nombre y descripción de un permiso.

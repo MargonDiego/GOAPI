@@ -84,6 +84,15 @@ func (h *RoleHandler) CreateRole(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
+// PaginatedRoleResponse es la respuesta paginada de roles.
+type PaginatedRoleResponse struct {
+	Data       []RoleResponse `json:"data"`
+	Page       int            `json:"page"`
+	Size       int            `json:"size"`
+	Total      int            `json:"total"`
+	TotalPages int            `json:"total_pages"`
+}
+
 // GetRoles lista todos los roles, con soporte opcional de paginación y búsqueda.
 //
 // @Summary      Listar roles
@@ -94,7 +103,7 @@ func (h *RoleHandler) CreateRole(w http.ResponseWriter, r *http.Request) {
 // @Param        size query int false "Tamaño de página" default(10)
 // @Param        search query string false "Buscar por nombre"
 // @Security     BearerAuth
-// @Success      200 {array} RoleResponse
+// @Success      200 {object} PaginatedRoleResponse
 // @Failure      401 {object} ErrorResponse
 // @Failure      403 {object} ErrorResponse
 // @Failure      500 {object} ErrorResponse
@@ -104,25 +113,36 @@ func (h *RoleHandler) GetRoles(w http.ResponseWriter, r *http.Request) {
 	page := parseQueryInt(r, "page", 0)
 	size := parseQueryInt(r, "size", 0)
 
-	var roles []domain.Role
+	var result domain.PaginatedResult[domain.Role]
 	var err error
 
 	if search != "" {
-		roles, err = h.roleService.SearchRoles(r.Context(), search)
+		roles, err := h.roleService.SearchRoles(r.Context(), search)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to search roles")
+			RespondError(w, http.StatusInternalServerError, "failed to search roles")
+			return
+		}
+		result = domain.NewPaginatedResult(roles, 1, len(roles), len(roles))
 	} else if page > 0 && size > 0 {
-		roles, err = h.roleService.GetRolesPaginated(r.Context(), page, size)
+		result, err = h.roleService.GetRolesPaginated(r.Context(), page, size)
+		if err != nil {
+			log.Error().Err(err).Msg("failed to get roles paginated")
+			RespondError(w, http.StatusInternalServerError, "failed to get roles")
+			return
+		}
 	} else {
-		roles, err = h.roleService.GetRoles(r.Context())
+		roles, err := h.roleService.GetRoles(r.Context())
+		if err != nil {
+			log.Error().Err(err).Msg("failed to get roles")
+			RespondError(w, http.StatusInternalServerError, "failed to get roles")
+			return
+		}
+		result = domain.NewPaginatedResult(roles, 1, len(roles), len(roles))
 	}
 
-	if err != nil {
-		log.Error().Err(err).Msg("failed to get roles")
-		RespondError(w, http.StatusInternalServerError, "failed to get roles")
-		return
-	}
-
-	res := make([]RoleResponse, 0, len(roles))
-	for _, role := range roles {
+	res := make([]RoleResponse, 0, len(result.Data))
+	for _, role := range result.Data {
 		// Inicializar como slice vacío para serializar [] en vez de null cuando no hay permisos.
 		perms := make([]PermissionResponse, 0, len(role.Permissions))
 		for _, p := range role.Permissions {
@@ -136,35 +156,71 @@ func (h *RoleHandler) GetRoles(w http.ResponseWriter, r *http.Request) {
 		})
 	}
 
-	RespondJSON(w, http.StatusOK, res)
+	RespondJSON(w, http.StatusOK, PaginatedRoleResponse{
+		Data:       res,
+		Page:       result.Page,
+		Size:       result.Size,
+		Total:      result.Total,
+		TotalPages: result.TotalPages,
+	})
 }
 
-// GetPermissions lista todos los permisos.
+// GetPermissions lista permisos, con soporte opcional de paginación.
 //
 // @Summary      Listar permisos
-// @Description  Obtiene todos los permisos disponibles en el sistema
+// @Description  Obtiene todos los permisos disponibles. Soporta paginación (?page=&size=).
 // @Tags         roles
 // @Produce      json
+// @Param        page query int false "Número de página" default(1)
+// @Param        size query int false "Tamaño de página" default(10)
 // @Security     BearerAuth
-// @Success      200 {array} PermissionResponse
+// @Success      200 {object} PaginatedPermissionResponse
 // @Failure      401 {object} ErrorResponse
 // @Failure      403 {object} ErrorResponse
 // @Failure      500 {object} ErrorResponse
 // @Router       /permissions [get]
 func (h *RoleHandler) GetPermissions(w http.ResponseWriter, r *http.Request) {
-	perms, err := h.roleService.GetPermissions(r.Context())
+	page := parseQueryInt(r, "page", 0)
+	size := parseQueryInt(r, "size", 0)
+
+	var result domain.PaginatedResult[domain.Permission]
+	var err error
+
+	if page > 0 && size > 0 {
+		result, err = h.roleService.GetPermissionsPaginated(r.Context(), page, size)
+	} else {
+		var perms []domain.Permission
+		perms, err = h.roleService.GetPermissions(r.Context())
+		result = domain.NewPaginatedResult(perms, 1, len(perms), len(perms))
+	}
+
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get permissions")
 		RespondError(w, http.StatusInternalServerError, "failed to get permissions")
 		return
 	}
 
-	res := make([]PermissionResponse, 0, len(perms))
-	for _, p := range perms {
-		res = append(res, PermissionResponse{ID: p.ID, Name: p.Name})
+	res := make([]PermissionResponse, 0, len(result.Data))
+	for _, p := range result.Data {
+		res = append(res, PermissionResponse{ID: p.ID, Name: p.Name, Description: p.Description})
 	}
 
-	RespondJSON(w, http.StatusOK, res)
+	RespondJSON(w, http.StatusOK, map[string]any{
+		"data":        res,
+		"page":        result.Page,
+		"size":        result.Size,
+		"total":       result.Total,
+		"total_pages": result.TotalPages,
+	})
+}
+
+// PaginatedPermissionResponse es la respuesta paginada de permisos.
+type PaginatedPermissionResponse struct {
+	Data        []PermissionResponse `json:"data"`
+	Page        int                  `json:"page"`
+	Size        int                  `json:"size"`
+	Total       int                  `json:"total"`
+	TotalPages  int                  `json:"total_pages"`
 }
 
 // AssignPermissions asigna permisos a un rol.

@@ -26,6 +26,12 @@ type UserReader interface {
 	// Token version queries
 	GetTokenVersion(ctx context.Context, userID uint) (int, error)
 	FindUserIDsByRoleID(ctx context.Context, roleID uint) ([]uint, error)
+
+	// Contadores para metadatos de paginación
+	CountUsers(ctx context.Context) (int64, error)
+	CountUsersByScope(ctx context.Context, scope string) (int64, error)
+	CountSearchUsers(ctx context.Context, query, roleName string) (int64, error)
+	CountSearchUsersByScope(ctx context.Context, query, roleName, scope string) (int64, error)
 }
 
 // UserWriter agrupa las operaciones de mutación sobre usuarios.

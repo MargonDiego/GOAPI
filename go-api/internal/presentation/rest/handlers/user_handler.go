@@ -58,6 +58,15 @@ func (h *UserHandler) GetMe(w http.ResponseWriter, r *http.Request) {
 	RespondJSON(w, http.StatusOK, toUserResponse(*user))
 }
 
+// PaginatedUserResponse es la respuesta paginada de usuarios.
+type PaginatedUserResponse struct {
+	Data       []UserResponse `json:"data"`
+	Page       int            `json:"page"`
+	Size       int            `json:"size"`
+	Total      int            `json:"total"`
+	TotalPages int            `json:"total_pages"`
+}
+
 // GetAll lista usuarios paginados, con soporte de búsqueda y filtro por rol.
 //
 // @Summary      Listar usuarios
@@ -68,7 +77,7 @@ func (h *UserHandler) GetMe(w http.ResponseWriter, r *http.Request) {
 // @Param        size query int false "Tamaño de página" default(10)
 // @Param        search query string false "Buscar por username/email"
 // @Param        role query string false "Filtrar por nombre de rol"
-// @Success      200 {array}  UserResponse
+// @Success      200 {object} PaginatedUserResponse
 // @Failure      401 {object} ErrorResponse
 // @Failure      403 {object} ErrorResponse
 // @Failure      500 {object} ErrorResponse
@@ -80,13 +89,13 @@ func (h *UserHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 	search := r.URL.Query().Get("search")
 	roleName := r.URL.Query().Get("role")
 
-	var users []domain.User
+	var result domain.PaginatedResult[domain.User]
 	var err error
 
 	if search != "" || roleName != "" {
-		users, err = h.userService.SearchUsers(r.Context(), search, roleName, page, size)
+		result, err = h.userService.SearchUsers(r.Context(), search, roleName, page, size)
 	} else {
-		users, err = h.userService.GetAllUsers(r.Context(), page, size)
+		result, err = h.userService.GetAllUsers(r.Context(), page, size)
 	}
 
 	if err != nil {
@@ -95,8 +104,8 @@ func (h *UserHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	response := make([]UserResponse, 0, len(users))
-	for _, u := range users {
+	response := make([]UserResponse, 0, len(result.Data))
+	for _, u := range result.Data {
 		response = append(response, toUserResponse(u))
 	}
 
@@ -104,7 +113,13 @@ func (h *UserHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 		response = []UserResponse{}
 	}
 
-	RespondJSON(w, http.StatusOK, response)
+	RespondJSON(w, http.StatusOK, PaginatedUserResponse{
+		Data:       response,
+		Page:       result.Page,
+		Size:       result.Size,
+		Total:      result.Total,
+		TotalPages: result.TotalPages,
+	})
 }
 
 // AssignRolesRequest es el DTO para asignar roles a un usuario.

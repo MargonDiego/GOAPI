@@ -342,24 +342,22 @@ func (_c *MockRoleService_GetPermissions_Call) RunAndReturn(run func(context.Con
 }
 
 // GetPermissionsPaginated provides a mock function with given fields: ctx, page, size
-func (_m *MockRoleService) GetPermissionsPaginated(ctx context.Context, page int, size int) ([]domain.Permission, error) {
+func (_m *MockRoleService) GetPermissionsPaginated(ctx context.Context, page int, size int) (domain.PaginatedResult[domain.Permission], error) {
 	ret := _m.Called(ctx, page, size)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetPermissionsPaginated")
 	}
 
-	var r0 []domain.Permission
+	var r0 domain.PaginatedResult[domain.Permission]
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, int, int) ([]domain.Permission, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int, int) (domain.PaginatedResult[domain.Permission], error)); ok {
 		return rf(ctx, page, size)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, int, int) []domain.Permission); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int, int) domain.PaginatedResult[domain.Permission]); ok {
 		r0 = rf(ctx, page, size)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]domain.Permission)
-		}
+		r0 = ret.Get(0).(domain.PaginatedResult[domain.Permission])
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, int, int) error); ok {
@@ -391,12 +389,12 @@ func (_c *MockRoleService_GetPermissionsPaginated_Call) Run(run func(ctx context
 	return _c
 }
 
-func (_c *MockRoleService_GetPermissionsPaginated_Call) Return(_a0 []domain.Permission, _a1 error) *MockRoleService_GetPermissionsPaginated_Call {
+func (_c *MockRoleService_GetPermissionsPaginated_Call) Return(_a0 domain.PaginatedResult[domain.Permission], _a1 error) *MockRoleService_GetPermissionsPaginated_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockRoleService_GetPermissionsPaginated_Call) RunAndReturn(run func(context.Context, int, int) ([]domain.Permission, error)) *MockRoleService_GetPermissionsPaginated_Call {
+func (_c *MockRoleService_GetPermissionsPaginated_Call) RunAndReturn(run func(context.Context, int, int) (domain.PaginatedResult[domain.Permission], error)) *MockRoleService_GetPermissionsPaginated_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -519,24 +517,22 @@ func (_c *MockRoleService_GetRoles_Call) RunAndReturn(run func(context.Context) 
 }
 
 // GetRolesPaginated provides a mock function with given fields: ctx, page, size
-func (_m *MockRoleService) GetRolesPaginated(ctx context.Context, page int, size int) ([]domain.Role, error) {
+func (_m *MockRoleService) GetRolesPaginated(ctx context.Context, page int, size int) (domain.PaginatedResult[domain.Role], error) {
 	ret := _m.Called(ctx, page, size)
 
 	if len(ret) == 0 {
 		panic("no return value specified for GetRolesPaginated")
 	}
 
-	var r0 []domain.Role
+	var r0 domain.PaginatedResult[domain.Role]
 	var r1 error
-	if rf, ok := ret.Get(0).(func(context.Context, int, int) ([]domain.Role, error)); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int, int) (domain.PaginatedResult[domain.Role], error)); ok {
 		return rf(ctx, page, size)
 	}
-	if rf, ok := ret.Get(0).(func(context.Context, int, int) []domain.Role); ok {
+	if rf, ok := ret.Get(0).(func(context.Context, int, int) domain.PaginatedResult[domain.Role]); ok {
 		r0 = rf(ctx, page, size)
 	} else {
-		if ret.Get(0) != nil {
-			r0 = ret.Get(0).([]domain.Role)
-		}
+		r0 = ret.Get(0).(domain.PaginatedResult[domain.Role])
 	}
 
 	if rf, ok := ret.Get(1).(func(context.Context, int, int) error); ok {
@@ -568,12 +564,12 @@ func (_c *MockRoleService_GetRolesPaginated_Call) Run(run func(ctx context.Conte
 	return _c
 }
 
-func (_c *MockRoleService_GetRolesPaginated_Call) Return(_a0 []domain.Role, _a1 error) *MockRoleService_GetRolesPaginated_Call {
+func (_c *MockRoleService_GetRolesPaginated_Call) Return(_a0 domain.PaginatedResult[domain.Role], _a1 error) *MockRoleService_GetRolesPaginated_Call {
 	_c.Call.Return(_a0, _a1)
 	return _c
 }
 
-func (_c *MockRoleService_GetRolesPaginated_Call) RunAndReturn(run func(context.Context, int, int) ([]domain.Role, error)) *MockRoleService_GetRolesPaginated_Call {
+func (_c *MockRoleService_GetRolesPaginated_Call) RunAndReturn(run func(context.Context, int, int) (domain.PaginatedResult[domain.Role], error)) *MockRoleService_GetRolesPaginated_Call {
 	_c.Call.Return(run)
 	return _c
 }

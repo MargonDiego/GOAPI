@@ -326,6 +326,66 @@ func (r *userRepository) FindAllByScope(ctx context.Context, scope string, page,
 	return dUsers, nil
 }
 
+// CountUsers retorna el total de usuarios activos.
+func (r *userRepository) CountUsers(ctx context.Context) (int64, error) {
+	var count int64
+	if err := r.db.WithContext(ctx).Model(&User{}).Count(&count).Error; err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+// CountUsersByScope retorna el total de usuarios activos filtrados por scope.
+func (r *userRepository) CountUsersByScope(ctx context.Context, scope string) (int64, error) {
+	var count int64
+	if err := r.db.WithContext(ctx).Model(&User{}).Where("scope = ? OR scope = ''", scope).Count(&count).Error; err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+// CountSearchUsers retorna el total de usuarios que coinciden con los criterios de búsqueda.
+func (r *userRepository) CountSearchUsers(ctx context.Context, query, roleName string) (int64, error) {
+	db := r.db.WithContext(ctx).Model(&User{})
+
+	if query != "" {
+		db = db.Where("username ILIKE ? OR email_hash ILIKE ?", "%"+query+"%", "%"+query+"%")
+	}
+
+	if roleName != "" {
+		db = db.Joins("JOIN user_roles ON user_roles.user_id = users.id").
+			Joins("JOIN roles ON roles.id = user_roles.role_id").
+			Where("roles.name = ?", roleName)
+	}
+
+	var count int64
+	if err := db.Count(&count).Error; err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
+// CountSearchUsersByScope retorna el total de usuarios que coinciden con los criterios de búsqueda filtrados por scope.
+func (r *userRepository) CountSearchUsersByScope(ctx context.Context, query, roleName, scope string) (int64, error) {
+	db := r.db.WithContext(ctx).Model(&User{}).Where("users.scope = ? OR users.scope = ''", scope)
+
+	if query != "" {
+		db = db.Where("username ILIKE ? OR email_hash ILIKE ?", "%"+query+"%", "%"+query+"%")
+	}
+
+	if roleName != "" {
+		db = db.Joins("JOIN user_roles ON user_roles.user_id = users.id").
+			Joins("JOIN roles ON roles.id = user_roles.role_id").
+			Where("roles.name = ?", roleName)
+	}
+
+	var count int64
+	if err := db.Count(&count).Error; err != nil {
+		return 0, err
+	}
+	return count, nil
+}
+
 // FindAllDeleted retorna todos los usuarios soft-deleted.
 func (r *userRepository) FindAllDeleted(ctx context.Context) ([]domain.User, error) {
 	var users []User

@@ -22,6 +22,236 @@ func (_m *MockUserRepository) EXPECT() *MockUserRepository_Expecter {
 	return &MockUserRepository_Expecter{mock: &_m.Mock}
 }
 
+// CountSearchUsers provides a mock function with given fields: ctx, query, roleName
+func (_m *MockUserRepository) CountSearchUsers(ctx context.Context, query string, roleName string) (int64, error) {
+	ret := _m.Called(ctx, query, roleName)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CountSearchUsers")
+	}
+
+	var r0 int64
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) (int64, error)); ok {
+		return rf(ctx, query, roleName)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) int64); ok {
+		r0 = rf(ctx, query, roleName)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, query, roleName)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockUserRepository_CountSearchUsers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CountSearchUsers'
+type MockUserRepository_CountSearchUsers_Call struct {
+	*mock.Call
+}
+
+// CountSearchUsers is a helper method to define mock.On call
+//   - ctx context.Context
+//   - query string
+//   - roleName string
+func (_e *MockUserRepository_Expecter) CountSearchUsers(ctx interface{}, query interface{}, roleName interface{}) *MockUserRepository_CountSearchUsers_Call {
+	return &MockUserRepository_CountSearchUsers_Call{Call: _e.mock.On("CountSearchUsers", ctx, query, roleName)}
+}
+
+func (_c *MockUserRepository_CountSearchUsers_Call) Run(run func(ctx context.Context, query string, roleName string)) *MockUserRepository_CountSearchUsers_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(string))
+	})
+	return _c
+}
+
+func (_c *MockUserRepository_CountSearchUsers_Call) Return(_a0 int64, _a1 error) *MockUserRepository_CountSearchUsers_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockUserRepository_CountSearchUsers_Call) RunAndReturn(run func(context.Context, string, string) (int64, error)) *MockUserRepository_CountSearchUsers_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// CountSearchUsersByScope provides a mock function with given fields: ctx, query, roleName, scope
+func (_m *MockUserRepository) CountSearchUsersByScope(ctx context.Context, query string, roleName string, scope string) (int64, error) {
+	ret := _m.Called(ctx, query, roleName, scope)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CountSearchUsersByScope")
+	}
+
+	var r0 int64
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) (int64, error)); ok {
+		return rf(ctx, query, roleName, scope)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string) int64); ok {
+		r0 = rf(ctx, query, roleName, scope)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string) error); ok {
+		r1 = rf(ctx, query, roleName, scope)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockUserRepository_CountSearchUsersByScope_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CountSearchUsersByScope'
+type MockUserRepository_CountSearchUsersByScope_Call struct {
+	*mock.Call
+}
+
+// CountSearchUsersByScope is a helper method to define mock.On call
+//   - ctx context.Context
+//   - query string
+//   - roleName string
+//   - scope string
+func (_e *MockUserRepository_Expecter) CountSearchUsersByScope(ctx interface{}, query interface{}, roleName interface{}, scope interface{}) *MockUserRepository_CountSearchUsersByScope_Call {
+	return &MockUserRepository_CountSearchUsersByScope_Call{Call: _e.mock.On("CountSearchUsersByScope", ctx, query, roleName, scope)}
+}
+
+func (_c *MockUserRepository_CountSearchUsersByScope_Call) Run(run func(ctx context.Context, query string, roleName string, scope string)) *MockUserRepository_CountSearchUsersByScope_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string))
+	})
+	return _c
+}
+
+func (_c *MockUserRepository_CountSearchUsersByScope_Call) Return(_a0 int64, _a1 error) *MockUserRepository_CountSearchUsersByScope_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockUserRepository_CountSearchUsersByScope_Call) RunAndReturn(run func(context.Context, string, string, string) (int64, error)) *MockUserRepository_CountSearchUsersByScope_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// CountUsers provides a mock function with given fields: ctx
+func (_m *MockUserRepository) CountUsers(ctx context.Context) (int64, error) {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CountUsers")
+	}
+
+	var r0 int64
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) (int64, error)); ok {
+		return rf(ctx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) int64); ok {
+		r0 = rf(ctx)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockUserRepository_CountUsers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CountUsers'
+type MockUserRepository_CountUsers_Call struct {
+	*mock.Call
+}
+
+// CountUsers is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *MockUserRepository_Expecter) CountUsers(ctx interface{}) *MockUserRepository_CountUsers_Call {
+	return &MockUserRepository_CountUsers_Call{Call: _e.mock.On("CountUsers", ctx)}
+}
+
+func (_c *MockUserRepository_CountUsers_Call) Run(run func(ctx context.Context)) *MockUserRepository_CountUsers_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *MockUserRepository_CountUsers_Call) Return(_a0 int64, _a1 error) *MockUserRepository_CountUsers_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockUserRepository_CountUsers_Call) RunAndReturn(run func(context.Context) (int64, error)) *MockUserRepository_CountUsers_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// CountUsersByScope provides a mock function with given fields: ctx, scope
+func (_m *MockUserRepository) CountUsersByScope(ctx context.Context, scope string) (int64, error) {
+	ret := _m.Called(ctx, scope)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CountUsersByScope")
+	}
+
+	var r0 int64
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) (int64, error)); ok {
+		return rf(ctx, scope)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) int64); ok {
+		r0 = rf(ctx, scope)
+	} else {
+		r0 = ret.Get(0).(int64)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, scope)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockUserRepository_CountUsersByScope_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CountUsersByScope'
+type MockUserRepository_CountUsersByScope_Call struct {
+	*mock.Call
+}
+
+// CountUsersByScope is a helper method to define mock.On call
+//   - ctx context.Context
+//   - scope string
+func (_e *MockUserRepository_Expecter) CountUsersByScope(ctx interface{}, scope interface{}) *MockUserRepository_CountUsersByScope_Call {
+	return &MockUserRepository_CountUsersByScope_Call{Call: _e.mock.On("CountUsersByScope", ctx, scope)}
+}
+
+func (_c *MockUserRepository_CountUsersByScope_Call) Run(run func(ctx context.Context, scope string)) *MockUserRepository_CountUsersByScope_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *MockUserRepository_CountUsersByScope_Call) Return(_a0 int64, _a1 error) *MockUserRepository_CountUsersByScope_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockUserRepository_CountUsersByScope_Call) RunAndReturn(run func(context.Context, string) (int64, error)) *MockUserRepository_CountUsersByScope_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Create provides a mock function with given fields: ctx, u
 func (_m *MockUserRepository) Create(ctx context.Context, u *domain.User) error {
 	ret := _m.Called(ctx, u)
