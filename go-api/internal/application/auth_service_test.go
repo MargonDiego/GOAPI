@@ -13,6 +13,7 @@ import (
 	"github.com/diego/go-api/internal/domain"
 	appcrypto "github.com/diego/go-api/internal/infrastructure/crypto"
 	"github.com/diego/go-api/mocks"
+	"golang.org/x/crypto/bcrypt"
 )
 
 func setupTestEncryptor(t *testing.T) *appcrypto.Encryptor {
@@ -270,6 +271,153 @@ func TestAuthService_RefreshTokens(t *testing.T) {
 				assert.ErrorIs(t, err, tt.expectedError)
 			} else {
 				assert.NoError(t, err)
+			}
+		})
+	}
+}
+
+func TestAuthService_Login(t *testing.T) {
+	t.Parallel()
+
+	jwtSecret := []byte("super_secret_key_for_testing_32bytes!")
+	enc := setupTestEncryptor(t)
+
+	// Hash de contraseña válida para tests (bcrypt.GenerateFromPassword es determinista por salt aleatorio,
+	// así que generamos una por cada test case que lo necesite).
+	validHash, _ := bcrypt.GenerateFromPassword([]byte("validpassword123"), bcrypt.DefaultCost)
+
+	tests := []struct {
+		name          string
+		username      string
+		password      string
+		setupUserMock func(m *mocks.MockUserRepository)
+		setupRoleMock func(m *mocks.MockRoleRepository)
+		wantErr       error
+		wantTokens    bool // true si esperamos tokens válidos
+	}{
+		{
+			name:     "Login exitoso con Fat JWT y refresh token",
+			username: "testuser",
+			password: "validpassword123",
+			setupUserMock: func(m *mocks.MockUserRepository) {
+				m.On("FindByUsername", mock.Anything, "testuser").Return(&domain.User{
+					ID:           1,
+					Username:     "testuser",
+					PasswordHash: string(validHash),
+					TokenVersion: 1,
+				}, nil)
+				// ResetFailedAttempts → Update
+				m.On("Update", mock.Anything, mock.MatchedBy(func(u *domain.User) bool {
+					return u.ID == 1 && u.FailedAttempts == 0 && u.LockedUntil == nil
+				})).Return(nil)
+				// SaveRefreshToken
+				m.On("SaveRefreshToken", mock.Anything, mock.AnythingOfType("*domain.RefreshToken")).Return(nil)
+			},
+			setupRoleMock: func(m *mocks.MockRoleRepository) {},
+			wantErr:       nil,
+			wantTokens:    true,
+		},
+		{
+			name:     "Credenciales invalidas: contrasena incorrecta",
+			username: "testuser",
+			password: "wrongpassword",
+			setupUserMock: func(m *mocks.MockUserRepository) {
+				m.On("FindByUsername", mock.Anything, "testuser").Return(&domain.User{
+					ID:           1,
+					Username:     "testuser",
+					PasswordHash: string(validHash),
+				}, nil)
+				// RecordFailedAttempt → Update
+				m.On("Update", mock.Anything, mock.AnythingOfType("*domain.User")).Return(nil)
+			},
+			setupRoleMock: func(m *mocks.MockRoleRepository) {},
+			wantErr:       domain.ErrInvalidCreds,
+			wantTokens:    false,
+		},
+		{
+			name:     "Usuario no encontrado",
+			username: "ghost",
+			password: "validpassword123",
+			setupUserMock: func(m *mocks.MockUserRepository) {
+				m.On("FindByUsername", mock.Anything, "ghost").Return(nil, domain.ErrUserNotFound)
+			},
+			setupRoleMock: func(m *mocks.MockRoleRepository) {},
+			wantErr:       domain.ErrInvalidCreds,
+			wantTokens:    false,
+		},
+		{
+			name:     "Cuenta bloqueada: LockedUntil en el futuro",
+			username: "lockeduser",
+			password: "validpassword123",
+			setupUserMock: func(m *mocks.MockUserRepository) {
+				lockedUntil := time.Now().Add(10 * time.Minute)
+				m.On("FindByUsername", mock.Anything, "lockeduser").Return(&domain.User{
+					ID:           2,
+					Username:     "lockeduser",
+					PasswordHash: string(validHash),
+					LockedUntil:  &lockedUntil,
+				}, nil)
+			},
+			setupRoleMock: func(m *mocks.MockRoleRepository) {},
+			wantErr:       domain.ErrAccountLocked,
+			wantTokens:    false,
+		},
+		{
+			name:     "Bloqueo tras alcanzar MaxFailedAttempts",
+			username: "bruteforce",
+			password: "wrongpassword",
+			setupUserMock: func(m *mocks.MockUserRepository) {
+				m.On("FindByUsername", mock.Anything, "bruteforce").Return(&domain.User{
+					ID:             3,
+					Username:       "bruteforce",
+					PasswordHash:   string(validHash),
+					FailedAttempts: 4, // Ya tiene 4, este es el 5to → bloqueo
+				}, nil)
+				m.On("Update", mock.Anything, mock.AnythingOfType("*domain.User")).Return(nil)
+			},
+			setupRoleMock: func(m *mocks.MockRoleRepository) {},
+			wantErr:       domain.ErrAccountLocked,
+			wantTokens:    false,
+		},
+		{
+			name:     "DoS prevention: contrasena > 72 caracteres",
+			username: "testuser",
+			password: "this_is_a_very_long_password_that_exceeds_72_characters_to_test_dos_prevention_xxxxxxxxx",
+			setupUserMock: func(m *mocks.MockUserRepository) {
+				// No debe llamar a BD — se rechaza antes
+			},
+			setupRoleMock: func(m *mocks.MockRoleRepository) {},
+			wantErr:       domain.ErrInvalidCreds,
+			wantTokens:    false,
+		},
+	}
+
+	for _, tt := range tests {
+		tt := tt
+		t.Run(tt.name, func(t *testing.T) {
+			t.Parallel()
+
+			mockUserRepo := mocks.NewMockUserRepository(t)
+			mockRoleRepo := mocks.NewMockRoleRepository(t)
+			tt.setupUserMock(mockUserRepo)
+			tt.setupRoleMock(mockRoleRepo)
+
+			service := application.NewAuthService(mockUserRepo, mockRoleRepo, jwtSecret, enc)
+			ctx := context.Background()
+
+			accessToken, refreshToken, err := service.Login(ctx, tt.username, tt.password)
+
+			if tt.wantErr != nil {
+				assert.Error(t, err)
+				assert.ErrorIs(t, err, tt.wantErr)
+				assert.Empty(t, accessToken)
+				assert.Empty(t, refreshToken)
+			} else {
+				assert.NoError(t, err)
+				if tt.wantTokens {
+					assert.NotEmpty(t, accessToken)
+					assert.NotEmpty(t, refreshToken)
+				}
 			}
 		})
 	}
