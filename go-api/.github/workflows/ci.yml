@@ -1,0 +1,76 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+          cache: true
+
+      - name: golangci-lint
+        uses: golangci/golangci-lint-action@v7
+        with:
+          version: latest
+          args: --timeout=3m
+
+  test:
+    name: Test
+    runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:16-alpine
+        env:
+          POSTGRES_DB: goapi_test
+          POSTGRES_USER: goapi_user
+          POSTGRES_PASSWORD: goapi_pass
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
+
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+          cache: true
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: unit tests
+        run: go test ./... -count=1 -short -timeout 60s
+        env:
+          DB_DSN: "postgresql://goapi_user:goapi_pass@localhost:5432/goapi_test?sslmode=disable"
+          MIGRATION_DSN: "postgresql://goapi_user:goapi_pass@localhost:5432/goapi_test?sslmode=disable"
+          JWT_SECRET: "ci-test-secret-key-do-not-use-in-production-64chars"
+          EMAIL_ENCRYPTION_KEY: "ci-test-32-bytes-key-for-tests!"
+
+  build:
+    name: Build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.25"
+          cache: true
+
+      - name: build binary
+        run: CGO_ENABLED=0 go build -ldflags="-s -w" -o api ./cmd/api/

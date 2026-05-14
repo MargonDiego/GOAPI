@@ -1,0 +1,48 @@
+# golangci-lint configuration for Go API
+# Docs: https://golangci-lint.run/usage/configuration/
+
+run:
+  timeout: 3m
+  tests: true
+
+linters:
+  enable:
+    - errcheck      # check unchecked errors
+    - gosimple      # simplify code
+    - govet         # go vet
+    - ineffassign   # detect ineffectual assignments
+    - staticcheck   # static analysis
+    - unused        # check unused code
+    - gocyclo       # cyclomatic complexity
+    - gofmt         # code formatting
+    - goimports     # import formatting
+    - misspell      # spelling mistakes
+    - unconvert     # remove unnecessary type conversions
+    - unparam       # unused function parameters
+    - bodyclose     # check HTTP response bodies closed
+    - nilerr        # find nil error returns
+    - noctx         # find HTTP requests without context
+    - prealloc      # find slice preallocation opportunities
+
+linters-settings:
+  gocyclo:
+    min-complexity: 20
+
+  misspell:
+    locale: US
+
+  goimports:
+    local-prefixes: github.com/diego/go-api
+
+issues:
+  exclude-rules:
+    # Exclude some linters from running on tests files
+    - path: _test\.go
+      linters:
+        - gocyclo
+        - errcheck
+        - unparam
+    # Exclude mocks from linting
+    - path: mocks/
+      linters:
+        - all
