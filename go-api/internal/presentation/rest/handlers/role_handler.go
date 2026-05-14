@@ -16,7 +16,7 @@ type RoleCreateRequest struct {
 
 // AssignPermissionsRequest es el DTO para asignar permisos a un rol.
 type AssignPermissionsRequest struct {
-	PermissionIDs []uint `json:"permission_ids" validate:"required" example:"1,2,3"`
+	PermissionIDs []uint `json:"permission_ids" validate:"required,dive,gt=0" example:"1,2,3"`
 }
 
 // PermissionResponse es la respuesta de un Permiso.
@@ -240,7 +240,7 @@ func (h *RoleHandler) GetRoleByID(w http.ResponseWriter, r *http.Request) {
 
 // RoleUpdateRequest es el DTO para actualizar un rol.
 type RoleUpdateRequest struct {
-	Name string `json:"name,omitempty" validate:"required,min=2,max=50" example:"Editor"`
+	Name string `json:"name" validate:"required,min=2,max=50" example:"Editor"`
 }
 
 // UpdateRole actualiza un rol existente.

@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 	"strconv"
@@ -98,7 +97,7 @@ func (h *UserHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 
 // AssignRolesRequest es el DTO para asignar roles a un usuario.
 type AssignRolesRequest struct {
-	RoleIDs []uint `json:"role_ids" example:"1,2"`
+	RoleIDs []uint `json:"role_ids" validate:"required,dive,gt=0" example:"1,2"`
 }
 
 // AssignRoles asigna uno o más roles a un usuario.
@@ -126,8 +125,8 @@ func (h *UserHandler) AssignRoles(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req AssignRolesRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		RespondError(w, http.StatusBadRequest, "invalid json payload")
+	if errs := DecodeAndValidate(r, &req); len(errs) > 0 {
+		RespondJSON(w, http.StatusBadRequest, map[string]interface{}{"errors": errs})
 		return
 	}
 
