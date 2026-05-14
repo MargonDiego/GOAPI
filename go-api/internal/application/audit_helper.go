@@ -44,6 +44,14 @@ func (a *auditService) log(ctx context.Context, action, targetType string, targe
 		NewValue:   newJSON,
 	}
 
+	// Enriquecer con metadatos del request si están disponibles.
+	if ip, ok := IPFromContext(ctx); ok {
+		log.IPAddress = ip
+	}
+	if ua, ok := UserAgentFromContext(ctx); ok {
+		log.UserAgent = ua
+	}
+
 	// Ignorar error de auditoría para no interrumpir la operación principal.
 	_ = a.auditRepo.Log(ctx, log)
 }
