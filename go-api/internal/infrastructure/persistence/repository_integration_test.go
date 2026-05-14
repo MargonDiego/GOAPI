@@ -32,6 +32,15 @@ func TestUserRepository_Integration(t *testing.T) {
 
 	ctx := context.Background()
 
+	// Verificar que Docker esté disponible antes de intentar levantar el contenedor.
+	// Si no hay Docker, el test hace skip (no falla) — esto permite correr
+	// la suite completa sin Docker sin que explote.
+	dockerClient, err := testcontainers.NewDockerClientWithOpts(ctx)
+	if err != nil {
+		t.Skipf("Docker no disponible, saltando test de integración: %v", err)
+	}
+	defer dockerClient.Close()
+
 	// 1. Levantar PostgreSQL en un contenedor Docker
 	pgContainer, err := postgres.Run(ctx,
 		"postgres:16-alpine",

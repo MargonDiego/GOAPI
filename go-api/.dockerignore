@@ -1,0 +1,40 @@
+# Git
+.git/
+.gitignore
+
+# Binarios
+*.exe
+*.exe~
+*.dll
+*.so
+*.dylib
+api.exe
+
+# Tests y coverage
+*.test
+*.out
+coverage.out
+
+# Dependencias (se instalan en el build)
+vendor/
+
+# Entorno local (NO va en la imagen)
+.env
+.env.*
+
+# IDEs
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Documentación (no necesaria en runtime)
+docs/
+README.md
+
+# Mocks (no necesarios en producción)
+mocks/
+
+# Scripts locales
+scripts/
+Makefile

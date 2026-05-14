@@ -1,0 +1,52 @@
+# ============================================================
+# docker-compose.yml — Entorno de desarrollo local
+# ============================================================
+# Levanta la API Go + PostgreSQL con un solo comando:
+#   docker compose up -d
+#
+# La API se recompila automáticamente al hacer:
+#   docker compose up -d --build
+# ============================================================
+
+services:
+  # --- PostgreSQL ---
+  postgres:
+    image: postgres:16-alpine
+    container_name: goapi-postgres
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: goapi
+      POSTGRES_USER: goapi_user
+      POSTGRES_PASSWORD: goapi_pass_2024!
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U goapi_user -d goapi"]
+      interval: 5s
+      timeout: 3s
+      retries: 5
+
+  # --- API Go ---
+  api:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: goapi-server
+    restart: unless-stopped
+    ports:
+      - "8080:8080"
+    environment:
+      APP_ENV: production
+      PORT: "8080"
+      JWT_SECRET: "change-me-in-production-use-64-char-random-string-here"
+      DB_DSN: "postgresql://goapi_user:goapi_pass_2024!@postgres:5432/goapi?sslmode=disable"
+      MIGRATION_DSN: "postgresql://goapi_user:goapi_pass_2024!@postgres:5432/goapi?sslmode=disable"
+      EMAIL_ENCRYPTION_KEY: "change-me-32-bytes-exactly-here!"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata:
