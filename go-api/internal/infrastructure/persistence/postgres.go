@@ -36,6 +36,26 @@ func NewPostgresDB(dsn, migrationDSN string) (*gorm.DB, error) {
 	return db, nil
 }
 
+// ConnectPostgres abre una conexión a PostgreSQL sin ejecutar migraciones.
+// Útil para tests de integración donde el schema se crea por separado
+// (ej: testcontainers) o para tools de diagnóstico.
+func ConnectPostgres(dsn string) (*gorm.DB, error) {
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	if err != nil {
+		return nil, err
+	}
+
+	sqlDB, err := db.DB()
+	if err != nil {
+		return nil, err
+	}
+	sqlDB.SetMaxOpenConns(5)
+	sqlDB.SetMaxIdleConns(2)
+	sqlDB.SetConnMaxLifetime(5 * time.Minute)
+
+	return db, nil
+}
+
 // runMigrations aplica todas las migraciones pendientes desde el directorio /migrations.
 // ErrNoChange no es un error — significa que el schema ya está al día.
 func runMigrations(dsn string) error {

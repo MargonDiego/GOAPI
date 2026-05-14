@@ -64,8 +64,37 @@ func TestUserRepository_Integration(t *testing.T) {
 	connStr, err := pgContainer.ConnectionString(ctx, "sslmode=disable")
 	require.NoError(t, err)
 
-	// 3. Conectar usando la misma función de infraestructura (sin migraciones)
-	db, err := persistence.NewPostgresDB(connStr, connStr)
+	// 3. Conectar sin migraciones (ConnectPostgres no busca el directorio migrations/)
+	db, err := persistence.ConnectPostgres(connStr)
+	require.NoError(t, err)
+
+	// Crear schema mínimo para los tests (tablas necesarias para el repositorio)
+	err = db.Exec(`
+		CREATE TABLE IF NOT EXISTS users (
+			id bigserial PRIMARY KEY, created_at timestamptz, updated_at timestamptz, deleted_at timestamptz,
+			username text NOT NULL UNIQUE, password text NOT NULL,
+			email_encrypted text NOT NULL DEFAULT '', email_hash text NOT NULL DEFAULT '',
+			failed_attempts int NOT NULL DEFAULT 0, locked_until timestamptz, token_version int NOT NULL DEFAULT 1
+		);
+		CREATE TABLE IF NOT EXISTS roles (
+			id bigserial PRIMARY KEY, created_at timestamptz, updated_at timestamptz, deleted_at timestamptz,
+			name text NOT NULL UNIQUE
+		);
+		CREATE TABLE IF NOT EXISTS permissions (
+			id bigserial PRIMARY KEY, created_at timestamptz, updated_at timestamptz, deleted_at timestamptz,
+			name text NOT NULL UNIQUE
+		);
+		CREATE TABLE IF NOT EXISTS user_roles (
+			user_id bigint NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+			role_id bigint NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
+			PRIMARY KEY (user_id, role_id)
+		);
+		CREATE TABLE IF NOT EXISTS role_permissions (
+			role_id bigint NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
+			permission_id bigint NOT NULL REFERENCES permissions(id) ON DELETE CASCADE,
+			PRIMARY KEY (role_id, permission_id)
+		)
+	`).Error
 	require.NoError(t, err)
 
 	repo := persistence.NewUserRepository(db)
