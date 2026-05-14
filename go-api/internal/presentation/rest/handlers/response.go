@@ -10,12 +10,47 @@ import (
 	"strings"
 
 	"github.com/diego/go-api/internal/application"
+	"github.com/diego/go-api/internal/domain"
 	"github.com/diego/go-api/internal/presentation/rest/middleware"
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
+	"github.com/rs/zerolog/log"
 )
 
 var validate = validator.New()
+
+// --- Envelope de respuesta unificado ---
+
+// APIResponse es el wrapper estándar para TODAS las respuestas HTTP de la API.
+// Garantiza consistencia en el contrato JSON para cualquier cliente.
+type APIResponse struct {
+	Success bool        `json:"success"`
+	Data    interface{} `json:"data,omitempty"`
+	Error   string      `json:"error,omitempty"`
+	Code    string      `json:"code,omitempty"` // Código de error de dominio (ej: "USER_NOT_FOUND")
+	Meta    *APIMeta    `json:"meta,omitempty"`
+}
+
+// APIMeta contiene metadatos de paginación. nil = respuesta sin paginar.
+type APIMeta struct {
+	Page       int `json:"page,omitempty"`
+	Size       int `json:"size,omitempty"`
+	Total      int `json:"total,omitempty"`
+	TotalPages int `json:"total_pages,omitempty"`
+}
+
+// --- Mapeo de errores de dominio a HTTP ---
+
+// MapDomainError extrae el código HTTP de un AppError del dominio.
+// Si el error no es un AppError (ej: error de BD, red), retorna 500.
+// Usa errors.As para atravesar la cadena de wrapping (fmt.Errorf con %w).
+func MapDomainError(err error) int {
+	var appErr *domain.AppError
+	if errors.As(err, &appErr) {
+		return appErr.Status
+	}
+	return http.StatusInternalServerError
+}
 
 // DecodeAndValidate decodifica el body JSON en el DTO y ejecuta validación.
 // Retorna un slice de mensajes de error si la validación falla.
@@ -52,20 +87,75 @@ func formatValidationError(e validator.FieldError) string {
 	}
 }
 
-// RespondJSON es un helper para serializar respuestas exitosas
-func RespondJSON(w http.ResponseWriter, status int, payload interface{}) {
+// RespondJSON serializa respuestas exitosas con el envelope unificado APIResponse.
+func RespondJSON(w http.ResponseWriter, status int, data interface{}) {
+	writeJSON(w, status, APIResponse{Success: true, Data: data})
+}
+
+// RespondError emite errores de cliente/servidor con el envelope unificado.
+// Para errores de dominio con código, usar RenderError que incluye el campo "code".
+func RespondError(w http.ResponseWriter, status int, message string) {
+	writeJSON(w, status, APIResponse{Success: false, Error: message})
+}
+
+// RespondPaginated serializa una respuesta paginada con metadatos en APIResponse.
+func RespondPaginated(w http.ResponseWriter, data interface{}, page, size, total int) {
+	meta := &APIMeta{
+		Page:  page,
+		Size:  size,
+		Total: total,
+	}
+	if size > 0 {
+		meta.TotalPages = total / size
+		if total%size > 0 {
+			meta.TotalPages++
+		}
+	}
+	writeJSON(w, http.StatusOK, APIResponse{Success: true, Data: data, Meta: meta})
+}
+
+// RenderError extrae el AppError del dominio (si existe), lo loguea si es 5xx,
+// y emite la respuesta con código de error y mensaje estructurado.
+// Reemplaza el patrón repetitivo "if errors.Is(...) { RespondError(...) }" en cada handler.
+func RenderError(w http.ResponseWriter, r *http.Request, err error) {
+	var appErr *domain.AppError
+	if errors.As(err, &appErr) {
+		// Error de dominio conocido: incluye el campo "code" en la respuesta.
+		writeJSON(w, appErr.Status, APIResponse{
+			Success: false,
+			Error:   appErr.Message,
+			Code:    appErr.Code,
+		})
+		return
+	}
+
+	// Error inesperado (BD, red, etc.): 500 sin exponer detalles al cliente.
+	log.Error().
+		Err(err).
+		Str("method", r.Method).
+		Str("path", r.URL.Path).
+		Str("request_id", middleware.GetRequestID(r.Context())).
+		Msg("internal error")
+	RespondError(w, http.StatusInternalServerError, "internal server error")
+}
+
+// RenderValidationError emite errores de validación con código 400.
+func RenderValidationError(w http.ResponseWriter, errs []string) {
+	writeJSON(w, http.StatusBadRequest, APIResponse{
+		Success: false,
+		Error:   "validation failed",
+		Data:    errs,
+	})
+}
+
+// writeJSON es el helper de más bajo nivel que escribe el JSON al wire.
+// NUNCA debe llamarse fuera de este archivo — usar los helpers públicos.
+func writeJSON(w http.ResponseWriter, status int, payload interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
 	if err := json.NewEncoder(w).Encode(payload); err != nil {
-		// En un sistema real con contexto, aquí se usaría el logger inyectado
-		// para registrar la falla al escribir en el socket.
-		http.Error(w, "internal encoding error", http.StatusInternalServerError)
+		log.Error().Err(err).Msg("failed to encode JSON response")
 	}
-}
-
-// RespondError es un helper estandarizado para emitir errores de cliente controlados
-func RespondError(w http.ResponseWriter, status int, message string) {
-	RespondJSON(w, status, map[string]string{"error": message})
 }
 
 // getIDFromURL extrae un ID entero positivo de los parámetros de ruta de mux.Router.

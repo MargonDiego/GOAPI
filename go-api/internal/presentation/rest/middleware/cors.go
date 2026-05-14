@@ -5,14 +5,13 @@ import (
 )
 
 // CORS retorna un middleware que aplica cabeceras CORS restrictivas.
-// Recibe los orígenes permitidos como parámetros. En producción, pasar los dominios
-// exactos del frontend (ej: "https://miapp.com"). Nunca usar wildcard con credentials.
+// Recibe los orígenes permitidos como parámetros (desde configuración).
+// En producción, pasar los dominios exactos del frontend (ej: "https://miapp.com").
+// Nunca usar wildcard con credentials.
 //
 // Ejemplo: r.Use(middleware.CORS("http://localhost:3000", "https://miapp.com"))
 func CORS(allowedOrigins ...string) func(http.Handler) http.Handler {
-	allowed := map[string]bool{
-		"http://localhost:3000": true, // desarrollo local por defecto
-	}
+	allowed := make(map[string]bool, len(allowedOrigins))
 	for _, o := range allowedOrigins {
 		allowed[o] = true
 	}

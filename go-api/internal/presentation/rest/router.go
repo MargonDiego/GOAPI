@@ -16,10 +16,20 @@ func NewRouter(
 	roleHandler *handlers.RoleHandler,
 	healthHandler *handlers.HealthHandler,
 	authMw *middleware.AuthMiddleware,
+	appEnv string,
+	corsOrigins []string,
 ) *mux.Router {
 	r := mux.NewRouter()
 
-	r.Use(middleware.CORS())
+	// Middlewares globales — orden importa:
+	// 1. PanicRecovery DEBE ser el más externo
+	r.Use(middleware.PanicRecovery)
+	// 2. RequestID para trazabilidad
+	r.Use(middleware.RequestID)
+	// 3. Security headers
+	r.Use(middleware.SecurityHeaders(appEnv))
+	// 4. CORS con orígenes configurables
+	r.Use(middleware.CORS(corsOrigins...))
 
 	// Swagger UI — disponible en /swagger/index.html
 	r.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)

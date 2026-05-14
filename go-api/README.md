@@ -1,6 +1,40 @@
 # Go API Server — Clean Architecture RBAC Enterprise
 
+[![CI](https://github.com/diego/go-api/actions/workflows/ci.yml/badge.svg)](https://github.com/diego/go-api/actions/workflows/ci.yml)
+![Go Version](https://img.shields.io/badge/Go-1.25-00ADD8?logo=go)
+[![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
+
 API REST de alta disponibilidad construida en Go con **Clean Architecture**, **RBAC dinámico enterprise**, **auditoría forense**, y **scoping administrativo**.
+
+## 🚀 Quickstart
+
+```bash
+# 1. Clonar y configurar
+git clone https://github.com/diego/go-api.git && cd go-api
+cp .env.example .env          # Editar .env con tus valores
+
+# 2. Levantar con Docker (recomendado)
+docker compose up -d --build
+
+# 3. Probar
+curl http://localhost:8080/health/liveness
+#   → OK
+
+curl -X POST http://localhost:8080/api/v1/register \
+  -H "Content-Type: application/json" \
+  -d '{"username":"admin","password":"admin1234","email":"admin@example.com"}'
+#   → {"success":true,"data":{"message":"user registered successfully"}}
+```
+
+> **Swagger UI**: `http://localhost:8080/swagger/index.html`
+
+### Sin Docker
+
+```bash
+# Requiere PostgreSQL corriendo en localhost:5432
+go mod tidy
+go run cmd/api/main.go
+```
 
 ## Características Principales
 
@@ -100,9 +134,46 @@ docs/                                    # Swagger/OpenAPI generado por swaggo
 | `MIGRATION_DSN` | ✅ | DSN para golang-migrate (puede ser igual a DB_DSN) |
 | `EMAIL_ENCRYPTION_KEY` | ✅ | Clave AES-256 (exactamente 32 bytes) |
 | `PORT` | ➖ | Default: `8080` |
-| `APP_ENV` | ➖ | Default: `development` |
+| `APP_ENV` | ➖ | Default: `development`. En `production` activa HSTS. |
+| `CORS_ORIGINS` | ➖ | Default: `http://localhost:3000`. Orígenes separados por coma. |
 
 La app hace **fail-fast** en startup si falta alguna variable requerida.
+
+---
+
+## Formato de Respuesta
+
+Todas las respuestas usan un envelope unificado:
+
+```json
+// Éxito (cualquier 2xx)
+{
+  "success": true,
+  "data": { ... }
+}
+
+// Éxito paginado
+{
+  "success": true,
+  "data": [ ... ],
+  "meta": { "page": 1, "size": 10, "total": 42, "total_pages": 5 }
+}
+
+// Error (4xx / 5xx)
+{
+  "success": false,
+  "error": "descripción del error"
+}
+
+// Error de validación
+{
+  "success": false,
+  "error": "validation failed",
+  "data": ["username is required", "password must be at least 8 characters"]
+}
+```
+
+---
 
 ---
 
@@ -200,6 +271,22 @@ make swag
 Los mocks en `mocks/` son generados automáticamente por [mockery](https://github.com/vektra/mockery). No editar manualmente.
 
 ---
+
+---
+
+## Middleware Stack
+
+Los middlewares se ejecutan en orden — del más externo al más interno:
+
+| # | Middleware | Propósito |
+|---|-----------|-----------|
+| 1 | `PanicRecovery` | Captura panics, loguea stack trace, retorna 500 |
+| 2 | `RequestID` | UUID por request. Acepta `X-Request-ID` del cliente |
+| 3 | `SecurityHeaders` | `X-Content-Type-Options`, `X-Frame-Options`, HSTS (prod), CSP |
+| 4 | `CORS` | Orígenes configurables vía `CORS_ORIGINS` |
+| 5 | `RequestLogger` | Log estructurado: método, path, status, duración, request_id |
+| 6 | `IPRateLimiter` | Token bucket por IP (10 req/s global, 1 req/s en auth) |
+| 7 | `AuthMiddleware` | JWT + validación `token_version` + permisos en memoria |
 
 ## Seguridad: Scoping Administrativo
 

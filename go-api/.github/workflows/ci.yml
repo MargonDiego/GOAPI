@@ -16,10 +16,9 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: "1.25"
-          cache: true
 
       - name: golangci-lint
-        uses: golangci/golangci-lint-action@v7
+        uses: golangci/golangci-lint-action@v6
         with:
           version: latest
           args: --timeout=3m
@@ -32,8 +31,8 @@ jobs:
         image: postgres:16-alpine
         env:
           POSTGRES_DB: goapi_test
-          POSTGRES_USER: goapi_user
-          POSTGRES_PASSWORD: goapi_pass
+          POSTGRES_USER: goapi_test
+          POSTGRES_PASSWORD: test_pass
         ports:
           - 5432:5432
         options: >-
@@ -41,25 +40,21 @@ jobs:
           --health-interval 10s
           --health-timeout 5s
           --health-retries 5
-
     steps:
       - uses: actions/checkout@v4
 
       - uses: actions/setup-go@v5
         with:
           go-version: "1.25"
-          cache: true
 
-      - name: go vet
-        run: go vet ./...
-
-      - name: unit tests
-        run: go test ./... -count=1 -short -timeout 60s
+      - name: Run tests
         env:
-          DB_DSN: "postgresql://goapi_user:goapi_pass@localhost:5432/goapi_test?sslmode=disable"
-          MIGRATION_DSN: "postgresql://goapi_user:goapi_pass@localhost:5432/goapi_test?sslmode=disable"
-          JWT_SECRET: "ci-test-secret-key-do-not-use-in-production-64chars"
-          EMAIL_ENCRYPTION_KEY: "ci-test-32-bytes-key-for-tests!"
+          DB_DSN: "postgresql://goapi_test:test_pass@localhost:5432/goapi_test?sslmode=disable"
+          MIGRATION_DSN: "postgresql://goapi_test:test_pass@localhost:5432/goapi_test?sslmode=disable"
+          JWT_SECRET: "test-jwt-secret-not-for-production-use-only-ci-64-chars"
+          EMAIL_ENCRYPTION_KEY: "test-key-exactly-32-bytes-here!"
+          APP_ENV: "test"
+        run: go test -v -race -count=1 ./...
 
   build:
     name: Build
@@ -70,7 +65,6 @@ jobs:
       - uses: actions/setup-go@v5
         with:
           go-version: "1.25"
-          cache: true
 
-      - name: build binary
-        run: CGO_ENABLED=0 go build -ldflags="-s -w" -o api ./cmd/api/
+      - name: Build
+        run: CGO_ENABLED=0 go build -ldflags="-s -w" -o /dev/null ./cmd/api/

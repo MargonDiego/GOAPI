@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"strings"
 
 	"github.com/joho/godotenv"
 	"github.com/rs/zerolog/log"
@@ -17,6 +18,7 @@ type Config struct {
 	MigrationDsn       string
 	JWTSecret          []byte
 	EmailEncryptionKey []byte
+	CORSOrigins        []string // Orígenes permitidos para CORS, separados por coma en env
 }
 
 // Load lee, valida y retorna la configuración de la aplicación.
@@ -30,6 +32,16 @@ func Load() (*Config, error) {
 	cfg := &Config{
 		AppEnv: getEnv("APP_ENV", "development"),
 		Port:   getEnv("PORT", "8080"),
+	}
+
+	// CORS: orígenes separados por coma. Default: localhost:3000 para desarrollo.
+	corsRaw := getEnv("CORS_ORIGINS", "http://localhost:3000")
+	if corsRaw != "" {
+		for _, o := range strings.Split(corsRaw, ",") {
+			if trimmed := strings.TrimSpace(o); trimmed != "" {
+				cfg.CORSOrigins = append(cfg.CORSOrigins, trimmed)
+			}
+		}
 	}
 
 	dsn := os.Getenv("DB_DSN")

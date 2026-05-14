@@ -143,7 +143,7 @@ func initServer(cfg *config.Config, services *appServices, infra *infraDeps) *ht
 	healthHandler := handlers.NewHealthHandler(infra.sqlDB)
 	authMw := middleware.NewAuthMiddleware(cfg.JWTSecret, infra.userRepo, infra.versionCache)
 
-	router := rest.NewRouter(authHandler, userHandler, roleHandler, healthHandler, authMw)
+	router := rest.NewRouter(authHandler, userHandler, roleHandler, healthHandler, authMw, cfg.AppEnv, cfg.CORSOrigins)
 	router.Use(middleware.RequestLogger())
 
 	log.Info().Str("port", cfg.Port).Msg("Starting API server")
