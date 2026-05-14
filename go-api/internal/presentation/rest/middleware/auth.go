@@ -23,6 +23,7 @@ type UserSession struct {
 	Username    string
 	Permissions map[string]bool
 	UserID      uint
+	Scope       string // Scoping administrativo: "" = global/super-admin
 }
 
 func GetSessionFromContext(ctx context.Context) (UserSession, bool) {
@@ -139,13 +140,16 @@ func (m *AuthMiddleware) RequireAuth() func(http.Handler) http.Handler {
 				}
 			}
 
-			session := UserSession{
-				Username:    sub,
-				UserID:      userID,
-				Permissions: permsMap,
-			}
+		scopeClaim, _ := claims["scope"].(string)
 
-			ctx := context.WithValue(r.Context(), userSessionKey, session)
+		session := UserSession{
+			Username:    sub,
+			UserID:      userID,
+			Scope:       scopeClaim,
+			Permissions: permsMap,
+		}
+
+		ctx := context.WithValue(r.Context(), userSessionKey, session)
 			ctx = context.WithValue(ctx, userIDKey, userID)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})

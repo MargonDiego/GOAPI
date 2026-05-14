@@ -270,6 +270,67 @@ func (_c *MockUserRepository_FindAll_Call) RunAndReturn(run func(context.Context
 	return _c
 }
 
+// FindAllByScope provides a mock function with given fields: ctx, scope, page, size
+func (_m *MockUserRepository) FindAllByScope(ctx context.Context, scope string, page int, size int) ([]domain.User, error) {
+	ret := _m.Called(ctx, scope, page, size)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FindAllByScope")
+	}
+
+	var r0 []domain.User
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, int, int) ([]domain.User, error)); ok {
+		return rf(ctx, scope, page, size)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, int, int) []domain.User); ok {
+		r0 = rf(ctx, scope, page, size)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]domain.User)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, int, int) error); ok {
+		r1 = rf(ctx, scope, page, size)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockUserRepository_FindAllByScope_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindAllByScope'
+type MockUserRepository_FindAllByScope_Call struct {
+	*mock.Call
+}
+
+// FindAllByScope is a helper method to define mock.On call
+//   - ctx context.Context
+//   - scope string
+//   - page int
+//   - size int
+func (_e *MockUserRepository_Expecter) FindAllByScope(ctx interface{}, scope interface{}, page interface{}, size interface{}) *MockUserRepository_FindAllByScope_Call {
+	return &MockUserRepository_FindAllByScope_Call{Call: _e.mock.On("FindAllByScope", ctx, scope, page, size)}
+}
+
+func (_c *MockUserRepository_FindAllByScope_Call) Run(run func(ctx context.Context, scope string, page int, size int)) *MockUserRepository_FindAllByScope_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(int), args[3].(int))
+	})
+	return _c
+}
+
+func (_c *MockUserRepository_FindAllByScope_Call) Return(_a0 []domain.User, _a1 error) *MockUserRepository_FindAllByScope_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockUserRepository_FindAllByScope_Call) RunAndReturn(run func(context.Context, string, int, int) ([]domain.User, error)) *MockUserRepository_FindAllByScope_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // FindAllDeleted provides a mock function with given fields: ctx
 func (_m *MockUserRepository) FindAllDeleted(ctx context.Context) ([]domain.User, error) {
 	ret := _m.Called(ctx)
@@ -324,6 +385,65 @@ func (_c *MockUserRepository_FindAllDeleted_Call) Return(_a0 []domain.User, _a1 
 }
 
 func (_c *MockUserRepository_FindAllDeleted_Call) RunAndReturn(run func(context.Context) ([]domain.User, error)) *MockUserRepository_FindAllDeleted_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// FindAllDeletedByScope provides a mock function with given fields: ctx, scope
+func (_m *MockUserRepository) FindAllDeletedByScope(ctx context.Context, scope string) ([]domain.User, error) {
+	ret := _m.Called(ctx, scope)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FindAllDeletedByScope")
+	}
+
+	var r0 []domain.User
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) ([]domain.User, error)); ok {
+		return rf(ctx, scope)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) []domain.User); ok {
+		r0 = rf(ctx, scope)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]domain.User)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, scope)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockUserRepository_FindAllDeletedByScope_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindAllDeletedByScope'
+type MockUserRepository_FindAllDeletedByScope_Call struct {
+	*mock.Call
+}
+
+// FindAllDeletedByScope is a helper method to define mock.On call
+//   - ctx context.Context
+//   - scope string
+func (_e *MockUserRepository_Expecter) FindAllDeletedByScope(ctx interface{}, scope interface{}) *MockUserRepository_FindAllDeletedByScope_Call {
+	return &MockUserRepository_FindAllDeletedByScope_Call{Call: _e.mock.On("FindAllDeletedByScope", ctx, scope)}
+}
+
+func (_c *MockUserRepository_FindAllDeletedByScope_Call) Run(run func(ctx context.Context, scope string)) *MockUserRepository_FindAllDeletedByScope_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *MockUserRepository_FindAllDeletedByScope_Call) Return(_a0 []domain.User, _a1 error) *MockUserRepository_FindAllDeletedByScope_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockUserRepository_FindAllDeletedByScope_Call) RunAndReturn(run func(context.Context, string) ([]domain.User, error)) *MockUserRepository_FindAllDeletedByScope_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -889,6 +1009,69 @@ func (_c *MockUserRepository_SearchUsers_Call) Return(_a0 []domain.User, _a1 err
 }
 
 func (_c *MockUserRepository_SearchUsers_Call) RunAndReturn(run func(context.Context, string, string, int, int) ([]domain.User, error)) *MockUserRepository_SearchUsers_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// SearchUsersByScope provides a mock function with given fields: ctx, query, roleName, scope, page, size
+func (_m *MockUserRepository) SearchUsersByScope(ctx context.Context, query string, roleName string, scope string, page int, size int) ([]domain.User, error) {
+	ret := _m.Called(ctx, query, roleName, scope, page, size)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SearchUsersByScope")
+	}
+
+	var r0 []domain.User
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, int, int) ([]domain.User, error)); ok {
+		return rf(ctx, query, roleName, scope, page, size)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, string, int, int) []domain.User); ok {
+		r0 = rf(ctx, query, roleName, scope, page, size)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]domain.User)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, string, int, int) error); ok {
+		r1 = rf(ctx, query, roleName, scope, page, size)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockUserRepository_SearchUsersByScope_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SearchUsersByScope'
+type MockUserRepository_SearchUsersByScope_Call struct {
+	*mock.Call
+}
+
+// SearchUsersByScope is a helper method to define mock.On call
+//   - ctx context.Context
+//   - query string
+//   - roleName string
+//   - scope string
+//   - page int
+//   - size int
+func (_e *MockUserRepository_Expecter) SearchUsersByScope(ctx interface{}, query interface{}, roleName interface{}, scope interface{}, page interface{}, size interface{}) *MockUserRepository_SearchUsersByScope_Call {
+	return &MockUserRepository_SearchUsersByScope_Call{Call: _e.mock.On("SearchUsersByScope", ctx, query, roleName, scope, page, size)}
+}
+
+func (_c *MockUserRepository_SearchUsersByScope_Call) Run(run func(ctx context.Context, query string, roleName string, scope string, page int, size int)) *MockUserRepository_SearchUsersByScope_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(string), args[4].(int), args[5].(int))
+	})
+	return _c
+}
+
+func (_c *MockUserRepository_SearchUsersByScope_Call) Return(_a0 []domain.User, _a1 error) *MockUserRepository_SearchUsersByScope_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockUserRepository_SearchUsersByScope_Call) RunAndReturn(run func(context.Context, string, string, string, int, int) ([]domain.User, error)) *MockUserRepository_SearchUsersByScope_Call {
 	_c.Call.Return(run)
 	return _c
 }

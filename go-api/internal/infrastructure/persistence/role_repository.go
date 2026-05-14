@@ -48,6 +48,8 @@ func (r *roleRepository) FindAll(ctx context.Context) ([]domain.Role, error) {
 			ID:          dbRole.ID,
 			Name:        dbRole.Name,
 			Description: dbRole.Description,
+			IsSystem:    dbRole.IsSystem,
+			Scope:       dbRole.Scope,
 			Permissions: perms,
 		})
 	}
@@ -74,6 +76,8 @@ func (r *roleRepository) FindByID(ctx context.Context, id uint) (*domain.Role, e
 		ID:          dbRole.ID,
 		Name:        dbRole.Name,
 		Description: dbRole.Description,
+		IsSystem:    dbRole.IsSystem,
+		Scope:       dbRole.Scope,
 		Permissions: perms,
 	}, nil
 }
@@ -166,6 +170,8 @@ func (r *roleRepository) FindRolesByIDs(ctx context.Context, ids []uint) ([]doma
 			ID:          dbRole.ID,
 			Name:        dbRole.Name,
 			Description: dbRole.Description,
+			IsSystem:    dbRole.IsSystem,
+			Scope:       dbRole.Scope,
 			Permissions: perms,
 		})
 	}
@@ -192,6 +198,8 @@ func (r *roleRepository) FindByName(ctx context.Context, name string) (*domain.R
 		ID:          dbRole.ID,
 		Name:        dbRole.Name,
 		Description: dbRole.Description,
+		IsSystem:    dbRole.IsSystem,
+		Scope:       dbRole.Scope,
 		Permissions: perms,
 	}, nil
 }
@@ -279,6 +287,47 @@ func (r *roleRepository) FindAllPermissionsPaginated(ctx context.Context, page, 
 	return toDomainPermissions(dbPerms), nil
 }
 
+// FindAllByScope retorna roles filtrados por scope (incluyendo scope vacío).
+func (r *roleRepository) FindAllByScope(ctx context.Context, scope string) ([]domain.Role, error) {
+	var dbRoles []Role
+	if err := r.db.WithContext(ctx).Preload("Permissions").
+		Where("scope = ? OR scope = ''", scope).Find(&dbRoles).Error; err != nil {
+		return nil, err
+	}
+	return toDomainRoles(dbRoles), nil
+}
+
+// FindAllPaginatedByScope retorna una página de roles filtrados por scope.
+func (r *roleRepository) FindAllPaginatedByScope(ctx context.Context, scope string, page, size int) ([]domain.Role, error) {
+	var dbRoles []Role
+	offset := (page - 1) * size
+	if err := r.db.WithContext(ctx).Preload("Permissions").
+		Where("scope = ? OR scope = ''", scope).Offset(offset).Limit(size).Find(&dbRoles).Error; err != nil {
+		return nil, err
+	}
+	return toDomainRoles(dbRoles), nil
+}
+
+// SearchByNameAndScope busca roles por nombre filtrados por scope.
+func (r *roleRepository) SearchByNameAndScope(ctx context.Context, query, scope string) ([]domain.Role, error) {
+	var dbRoles []Role
+	if err := r.db.WithContext(ctx).Preload("Permissions").
+		Where("(scope = ? OR scope = '') AND name ILIKE ?", scope, "%"+query+"%").Find(&dbRoles).Error; err != nil {
+		return nil, err
+	}
+	return toDomainRoles(dbRoles), nil
+}
+
+// FindAllDeletedByScope retorna roles soft-deleted filtrados por scope.
+func (r *roleRepository) FindAllDeletedByScope(ctx context.Context, scope string) ([]domain.Role, error) {
+	var dbRoles []Role
+	if err := r.db.WithContext(ctx).Unscoped().
+		Where("deleted_at IS NOT NULL AND (scope = ? OR scope = '')", scope).Find(&dbRoles).Error; err != nil {
+		return nil, err
+	}
+	return toDomainRoles(dbRoles), nil
+}
+
 // toDomainRoles convierte un slice de modelos DB a dominio.
 func toDomainRoles(dbRoles []Role) []domain.Role {
 	roles := make([]domain.Role, 0, len(dbRoles))
@@ -291,6 +340,8 @@ func toDomainRoles(dbRoles []Role) []domain.Role {
 			ID:          dbRole.ID,
 			Name:        dbRole.Name,
 			Description: dbRole.Description,
+			IsSystem:    dbRole.IsSystem,
+			Scope:       dbRole.Scope,
 			Permissions: perms,
 		})
 	}

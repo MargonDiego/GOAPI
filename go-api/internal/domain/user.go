@@ -18,6 +18,7 @@ type User struct {
 	FailedAttempts int        // Contador de intentos fallidos consecutivos
 	LockedUntil    *time.Time // nil = no bloqueado; not nil = bloqueado hasta esa hora
 	TokenVersion   int        // Versión del token: se incrementa al cambiar roles/permisos
+	Scope          string     // Dominio/organización al que pertenece el usuario
 	Roles          []Role
 }
 

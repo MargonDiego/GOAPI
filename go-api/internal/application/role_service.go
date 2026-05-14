@@ -102,8 +102,17 @@ func (s *roleService) CreateRole(ctx context.Context, name, description string) 
 }
 
 // GetRoles retorna todos los roles con sus permisos pre-cargados.
+// Respeta el scoping del actor: solo retorna roles de su scope o scope vacío.
 func (s *roleService) GetRoles(ctx context.Context) ([]domain.Role, error) {
-	roles, err := s.repo.FindAll(ctx)
+	actorScope, hasScope := ScopeFromContext(ctx)
+	var roles []domain.Role
+	var err error
+
+	if hasScope && actorScope != "" {
+		roles, err = s.repo.FindAllByScope(ctx, actorScope)
+	} else {
+		roles, err = s.repo.FindAll(ctx)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve roles: %w", err)
 	}
@@ -221,6 +230,7 @@ func (s *roleService) CreatePermission(ctx context.Context, name, description st
 
 // UpdateRole valida el nuevo nombre y reemplaza el campo en la base de datos.
 // No modifica los permisos del rol — usar AssignPermissionsToRole para eso.
+// Los roles de sistema (IsSystem) solo permiten cambiar descripción, NO nombre.
 func (s *roleService) UpdateRole(ctx context.Context, roleID uint, name, description string) error {
 	if name == "" {
 		return fmt.Errorf("%w: role name cannot be empty", domain.ErrInvalidInput)
@@ -231,7 +241,16 @@ func (s *roleService) UpdateRole(ctx context.Context, roleID uint, name, descrip
 		return fmt.Errorf("failed to find role: %w", err)
 	}
 
+	if err := assertScopeAccess(ctx, role.Scope); err != nil {
+		return err
+	}
+
 	oldRole := map[string]any{"name": role.Name, "description": role.Description}
+
+	if role.IsSystem && role.Name != name {
+		return domain.ErrRoleImmutable
+	}
+
 	role.Name = name
 	role.Description = description
 	if err := s.repo.Update(ctx, role); err != nil {
@@ -243,10 +262,19 @@ func (s *roleService) UpdateRole(ctx context.Context, roleID uint, name, descrip
 }
 
 // DeleteRole elimina el rol del sistema. Propaga ErrRoleNotFound si no existe.
+// Rechaza ErrRoleImmutable si el rol es de sistema (Admin, User).
 func (s *roleService) DeleteRole(ctx context.Context, roleID uint) error {
 	role, err := s.repo.FindByID(ctx, roleID)
 	if err != nil {
 		return fmt.Errorf("failed to find role: %w", err)
+	}
+
+	if role.IsSystem {
+		return domain.ErrRoleImmutable
+	}
+
+	if err := assertScopeAccess(ctx, role.Scope); err != nil {
+		return err
 	}
 
 	if err := s.repo.Delete(ctx, roleID); err != nil {
@@ -259,6 +287,7 @@ func (s *roleService) DeleteRole(ctx context.Context, roleID uint) error {
 }
 
 // GetRolesPaginated retorna una página de roles con sus permisos.
+// Respeta el scoping del actor.
 func (s *roleService) GetRolesPaginated(ctx context.Context, page, size int) ([]domain.Role, error) {
 	if page < 1 {
 		page = 1
@@ -266,7 +295,15 @@ func (s *roleService) GetRolesPaginated(ctx context.Context, page, size int) ([]
 	if size <= 0 || size > 100 {
 		size = 10
 	}
-	roles, err := s.repo.FindAllPaginated(ctx, page, size)
+	actorScope, hasScope := ScopeFromContext(ctx)
+	var roles []domain.Role
+	var err error
+
+	if hasScope && actorScope != "" {
+		roles, err = s.repo.FindAllPaginatedByScope(ctx, actorScope, page, size)
+	} else {
+		roles, err = s.repo.FindAllPaginated(ctx, page, size)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve roles: %w", err)
 	}
@@ -274,11 +311,20 @@ func (s *roleService) GetRolesPaginated(ctx context.Context, page, size int) ([]
 }
 
 // SearchRoles busca roles por nombre (case-insensitive).
+// Respeta el scoping del actor.
 func (s *roleService) SearchRoles(ctx context.Context, query string) ([]domain.Role, error) {
 	if query == "" {
 		return s.GetRoles(ctx)
 	}
-	roles, err := s.repo.SearchByName(ctx, query)
+	actorScope, hasScope := ScopeFromContext(ctx)
+	var roles []domain.Role
+	var err error
+
+	if hasScope && actorScope != "" {
+		roles, err = s.repo.SearchByNameAndScope(ctx, query, actorScope)
+	} else {
+		roles, err = s.repo.SearchByName(ctx, query)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to search roles: %w", err)
 	}
@@ -286,8 +332,17 @@ func (s *roleService) SearchRoles(ctx context.Context, query string) ([]domain.R
 }
 
 // GetDeletedRoles retorna todos los roles soft-deleted.
+// Respeta el scoping del actor.
 func (s *roleService) GetDeletedRoles(ctx context.Context) ([]domain.Role, error) {
-	roles, err := s.repo.FindAllDeleted(ctx)
+	actorScope, hasScope := ScopeFromContext(ctx)
+	var roles []domain.Role
+	var err error
+
+	if hasScope && actorScope != "" {
+		roles, err = s.repo.FindAllDeletedByScope(ctx, actorScope)
+	} else {
+		roles, err = s.repo.FindAllDeleted(ctx)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve deleted roles: %w", err)
 	}

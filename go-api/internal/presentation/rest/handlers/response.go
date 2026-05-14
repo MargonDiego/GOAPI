@@ -86,11 +86,13 @@ func getIDFromURL(r *http.Request, param string) (int, error) {
 	return id, nil
 }
 
-// withActor extrae el userID de la sesión JWT y lo inyecta en el contexto
-// para que los servicios puedan registrar auditoría. Si no hay sesión, retorna el contexto original.
+// withActor extrae el userID y scope de la sesión JWT y los inyecta en el contexto
+// para que los servicios puedan registrar auditoría y aplicar scoping.
+// Si no hay sesión, retorna el contexto original.
 func withActor(r *http.Request) context.Context {
 	if session, ok := middleware.GetSessionFromContext(r.Context()); ok {
-		return application.WithActor(r.Context(), session.UserID)
+		ctx := application.WithActor(r.Context(), session.UserID)
+		return application.WithScope(ctx, session.Scope)
 	}
 	return r.Context()
 }

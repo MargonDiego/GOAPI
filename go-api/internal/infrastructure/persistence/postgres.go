@@ -91,11 +91,17 @@ func runMigrations(dsn string) error {
 }
 
 func seedDefaults(db *gorm.DB) {
-	adminRole := Role{Name: "Admin"}
+	adminRole := Role{Name: "Admin", IsSystem: true}
 	db.FirstOrCreate(&adminRole, Role{Name: "Admin"})
+	if !adminRole.IsSystem {
+		db.Model(&adminRole).Update("is_system", true)
+	}
 
-	userRole := Role{Name: "User"}
+	userRole := Role{Name: "User", IsSystem: true}
 	db.FirstOrCreate(&userRole, Role{Name: "User"})
+	if !userRole.IsSystem {
+		db.Model(&userRole).Update("is_system", true)
+	}
 
 	readPerm := Permission{Name: "read:users"}
 	db.FirstOrCreate(&readPerm, Permission{Name: "read:users"})

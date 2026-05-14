@@ -60,3 +60,28 @@ func marshalAuditValue(v any) (string, error) {
 	}
 	return string(b), nil
 }
+
+// --- Scoping helpers ---
+
+// canAccessScope verifica si el actor tiene acceso a un recurso del scope dado.
+// Reglas:
+//   - Actor con scope vacío ("") = super-admin, accede a todo.
+//   - Actor con scope no vacío = solo accede a recursos de su scope o scope vacío.
+func canAccessScope(actorScope, resourceScope string) bool {
+	if actorScope == "" {
+		return true // super-admin
+	}
+	return resourceScope == "" || resourceScope == actorScope
+}
+
+// assertScopeAccess devuelve ErrScopeMismatch si el actor no tiene acceso al scope del recurso.
+func assertScopeAccess(ctx context.Context, resourceScope string) error {
+	actorScope, ok := ScopeFromContext(ctx)
+	if !ok {
+		return domain.ErrScopeMismatch // Sin scope en contexto = no autorizado
+	}
+	if !canAccessScope(actorScope, resourceScope) {
+		return domain.ErrScopeMismatch
+	}
+	return nil
+}

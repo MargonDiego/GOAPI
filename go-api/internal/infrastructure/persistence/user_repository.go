@@ -281,11 +281,71 @@ func (r *userRepository) SearchUsers(ctx context.Context, query, roleName string
 	return dUsers, nil
 }
 
+// SearchUsersByScope busca usuarios filtrados por scope del actor.
+func (r *userRepository) SearchUsersByScope(ctx context.Context, query, roleName, scope string, page, size int) ([]domain.User, error) {
+	var users []User
+	db := r.db.WithContext(ctx).Preload("Roles.Permissions").
+		Where("users.scope = ? OR users.scope = ''", scope)
+
+	if query != "" {
+		db = db.Where("username ILIKE ? OR email_hash ILIKE ?", "%"+query+"%", "%"+query+"%")
+	}
+
+	if roleName != "" {
+		db = db.Joins("JOIN user_roles ON user_roles.user_id = users.id").
+			Joins("JOIN roles ON roles.id = user_roles.role_id").
+			Where("roles.name = ?", roleName)
+	}
+
+	offset := (page - 1) * size
+	if err := db.Offset(offset).Limit(size).Find(&users).Error; err != nil {
+		return nil, fmt.Errorf("database search user by scope error: %w", err)
+	}
+
+	var dUsers []domain.User
+	for _, u := range users {
+		dUsers = append(dUsers, *toDomainUser(&u))
+	}
+	return dUsers, nil
+}
+
+// FindAllByScope retorna usuarios paginados filtrados por scope.
+func (r *userRepository) FindAllByScope(ctx context.Context, scope string, page, size int) ([]domain.User, error) {
+	var users []User
+	offset := (page - 1) * size
+
+	if err := r.db.WithContext(ctx).Preload("Roles.Permissions").
+		Where("scope = ? OR scope = ''", scope).Offset(offset).Limit(size).Find(&users).Error; err != nil {
+		return nil, fmt.Errorf("database list user by scope error: %w", err)
+	}
+
+	var dUsers []domain.User
+	for _, u := range users {
+		dUsers = append(dUsers, *toDomainUser(&u))
+	}
+	return dUsers, nil
+}
+
 // FindAllDeleted retorna todos los usuarios soft-deleted.
 func (r *userRepository) FindAllDeleted(ctx context.Context) ([]domain.User, error) {
 	var users []User
 	if err := r.db.WithContext(ctx).Unscoped().Where("deleted_at IS NOT NULL").Preload("Roles.Permissions").Find(&users).Error; err != nil {
 		return nil, fmt.Errorf("database list deleted users error: %w", err)
+	}
+
+	var dUsers []domain.User
+	for _, u := range users {
+		dUsers = append(dUsers, *toDomainUser(&u))
+	}
+	return dUsers, nil
+}
+
+// FindAllDeletedByScope retorna usuarios soft-deleted filtrados por scope.
+func (r *userRepository) FindAllDeletedByScope(ctx context.Context, scope string) ([]domain.User, error) {
+	var users []User
+	if err := r.db.WithContext(ctx).Unscoped().
+		Where("deleted_at IS NOT NULL AND (scope = ? OR scope = '')", scope).Preload("Roles.Permissions").Find(&users).Error; err != nil {
+		return nil, fmt.Errorf("database list deleted users by scope error: %w", err)
 	}
 
 	var dUsers []domain.User

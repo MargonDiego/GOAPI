@@ -141,6 +141,38 @@ func (m *mockRoleRepository) FindAllPermissionsPaginated(ctx context.Context, pa
 	return args.Get(0).([]domain.Permission), args.Error(1)
 }
 
+func (m *mockRoleRepository) FindAllByScope(ctx context.Context, scope string) ([]domain.Role, error) {
+	args := m.Called(ctx, scope)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]domain.Role), args.Error(1)
+}
+
+func (m *mockRoleRepository) FindAllPaginatedByScope(ctx context.Context, scope string, page, size int) ([]domain.Role, error) {
+	args := m.Called(ctx, scope, page, size)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]domain.Role), args.Error(1)
+}
+
+func (m *mockRoleRepository) SearchByNameAndScope(ctx context.Context, query, scope string) ([]domain.Role, error) {
+	args := m.Called(ctx, query, scope)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]domain.Role), args.Error(1)
+}
+
+func (m *mockRoleRepository) FindAllDeletedByScope(ctx context.Context, scope string) ([]domain.Role, error) {
+	args := m.Called(ctx, scope)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]domain.Role), args.Error(1)
+}
+
 func TestRoleService_CreateRole(t *testing.T) {
 	t.Parallel()
 
@@ -213,7 +245,7 @@ func TestRoleService_CreateRole(t *testing.T) {
 			tt.setupMock(mockRepo)
 
 			service := application.NewRoleService(mockRepo, nil, nil, nil)
-			ctx := context.Background()
+			ctx := application.WithScope(context.Background(), "")
 
 			// Act
 			got, err := service.CreateRole(ctx, tt.roleName, "")
@@ -286,7 +318,7 @@ func TestRoleService_CreatePermission(t *testing.T) {
 			tt.setupMock(mockRepo)
 
 			service := application.NewRoleService(mockRepo, nil, nil, nil)
-			ctx := context.Background()
+			ctx := application.WithScope(context.Background(), "")
 
 			err := service.CreatePermission(ctx, tt.permName, "")
 
@@ -340,7 +372,7 @@ func TestRoleService_GetRoleByID(t *testing.T) {
 			tt.setupMock(mockRepo)
 
 			service := application.NewRoleService(mockRepo, nil, nil, nil)
-			ctx := context.Background()
+			ctx := application.WithScope(context.Background(), "")
 
 			role, err := service.GetRoleByID(ctx, tt.roleID)
 
@@ -407,7 +439,7 @@ func TestRoleService_UpdateRole(t *testing.T) {
 			tt.setupMock(mockRepo)
 
 			service := application.NewRoleService(mockRepo, nil, nil, nil)
-			ctx := context.Background()
+			ctx := application.WithScope(context.Background(), "")
 
 			err := service.UpdateRole(ctx, tt.roleID, tt.newName, "")
 
@@ -460,7 +492,7 @@ func TestRoleService_DeleteRole(t *testing.T) {
 			tt.setupMock(mockRepo)
 
 			service := application.NewRoleService(mockRepo, nil, nil, nil)
-			ctx := context.Background()
+			ctx := application.WithScope(context.Background(), "")
 
 			err := service.DeleteRole(ctx, tt.roleID)
 

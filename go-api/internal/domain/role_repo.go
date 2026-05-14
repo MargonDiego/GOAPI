@@ -5,13 +5,17 @@ import "context"
 type RoleRepository interface {
 	Create(ctx context.Context, role *Role) error
 	FindAll(ctx context.Context) ([]Role, error)
+	FindAllByScope(ctx context.Context, scope string) ([]Role, error)
 	FindAllPaginated(ctx context.Context, page, size int) ([]Role, error)
+	FindAllPaginatedByScope(ctx context.Context, scope string, page, size int) ([]Role, error)
 	FindByID(ctx context.Context, id uint) (*Role, error)
 	FindByName(ctx context.Context, name string) (*Role, error)
 	SearchByName(ctx context.Context, query string) ([]Role, error)
+	SearchByNameAndScope(ctx context.Context, query, scope string) ([]Role, error)
 	Update(ctx context.Context, role *Role) error
 	Delete(ctx context.Context, id uint) error
 	FindAllDeleted(ctx context.Context) ([]Role, error)
+	FindAllDeletedByScope(ctx context.Context, scope string) ([]Role, error)
 	Restore(ctx context.Context, id uint) error
 	CreatePermission(ctx context.Context, name string) error
 	CreatePermissionWithDescription(ctx context.Context, name, description string) error

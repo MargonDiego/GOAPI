@@ -57,6 +57,11 @@ type UserService interface {
 	// Pasar un slice vacío elimina todos sus roles.
 	// Retorna domain.ErrInvalidInput si algún roleID no existe en la base de datos.
 	AssignRolesToUser(ctx context.Context, userID uint, roleIDs []uint) error
+
+	// BulkAssignRolesToUsers asigna roles a múltiples usuarios en una operación atómica.
+	// Retorna domain.ErrInvalidInput si algún userID o roleID no existe.
+	// Respeta scoping: solo afecta usuarios del scope del actor.
+	BulkAssignRolesToUsers(ctx context.Context, userIDs, roleIDs []uint) error
 }
 
 type userService struct {
@@ -85,6 +90,7 @@ func (s *userService) GetUserByUsername(ctx context.Context, username string) (*
 
 // GetAllUsers normaliza la paginación y delega al repositorio.
 // page < 1 se corrige a 1; size fuera de (0, 100] se corrige a 10.
+// Respeta el scoping del actor.
 func (s *userService) GetAllUsers(ctx context.Context, page, size int) ([]domain.User, error) {
 	if page < 1 {
 		page = 1
@@ -93,7 +99,15 @@ func (s *userService) GetAllUsers(ctx context.Context, page, size int) ([]domain
 		size = 10
 	}
 
-	users, err := s.repo.FindAll(ctx, page, size)
+	actorScope, hasScope := ScopeFromContext(ctx)
+	var users []domain.User
+	var err error
+
+	if hasScope && actorScope != "" {
+		users, err = s.repo.FindAllByScope(ctx, actorScope, page, size)
+	} else {
+		users, err = s.repo.FindAll(ctx, page, size)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to list users: %w", err)
 	}
@@ -289,6 +303,7 @@ func (s *userService) DeleteUser(ctx context.Context, userID uint) error {
 }
 
 // SearchUsers busca usuarios por username/email y filtra por rol.
+// Respeta el scoping del actor.
 func (s *userService) SearchUsers(ctx context.Context, query, roleName string, page, size int) ([]domain.User, error) {
 	if page < 1 {
 		page = 1
@@ -296,7 +311,15 @@ func (s *userService) SearchUsers(ctx context.Context, query, roleName string, p
 	if size <= 0 || size > 100 {
 		size = 10
 	}
-	users, err := s.repo.SearchUsers(ctx, query, roleName, page, size)
+	actorScope, hasScope := ScopeFromContext(ctx)
+	var users []domain.User
+	var err error
+
+	if hasScope && actorScope != "" {
+		users, err = s.repo.SearchUsersByScope(ctx, query, roleName, actorScope, page, size)
+	} else {
+		users, err = s.repo.SearchUsers(ctx, query, roleName, page, size)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to search users: %w", err)
 	}
@@ -304,8 +327,17 @@ func (s *userService) SearchUsers(ctx context.Context, query, roleName string, p
 }
 
 // GetDeletedUsers retorna todos los usuarios soft-deleted.
+// Respeta el scoping del actor.
 func (s *userService) GetDeletedUsers(ctx context.Context) ([]domain.User, error) {
-	users, err := s.repo.FindAllDeleted(ctx)
+	actorScope, hasScope := ScopeFromContext(ctx)
+	var users []domain.User
+	var err error
+
+	if hasScope && actorScope != "" {
+		users, err = s.repo.FindAllDeletedByScope(ctx, actorScope)
+	} else {
+		users, err = s.repo.FindAllDeleted(ctx)
+	}
 	if err != nil {
 		return nil, fmt.Errorf("failed to retrieve deleted users: %w", err)
 	}
@@ -318,5 +350,56 @@ func (s *userService) RestoreUser(ctx context.Context, userID uint) error {
 		return fmt.Errorf("failed to restore user: %w", err)
 	}
 	s.audit.log(ctx, "restore_user", "user", userID, nil, nil)
+	return nil
+}
+
+// BulkAssignRolesToUsers asigna roles a múltiples usuarios validando existencia y scoping.
+func (s *userService) BulkAssignRolesToUsers(ctx context.Context, userIDs, roleIDs []uint) error {
+	if len(userIDs) == 0 || len(roleIDs) == 0 {
+		return fmt.Errorf("%w: userIDs and roleIDs are required", domain.ErrInvalidInput)
+	}
+
+	// Validar que todos los roles existan.
+	roles, err := s.roleRepo.FindRolesByIDs(ctx, roleIDs)
+	if err != nil {
+		return fmt.Errorf("failed to retrieve roles: %w", err)
+	}
+	if len(roles) != len(roleIDs) {
+		return fmt.Errorf("%w: some roles were not found", domain.ErrInvalidInput)
+	}
+
+	// Validar scoping en roles.
+	for _, r := range roles {
+		if err := assertScopeAccess(ctx, r.Scope); err != nil {
+			return fmt.Errorf("%w: role %s is out of scope", domain.ErrScopeMismatch, r.Name)
+		}
+	}
+
+	// Validar que todos los usuarios existan y estén en scope.
+	for _, uid := range userIDs {
+		user, err := s.repo.FindByID(ctx, uid)
+		if err != nil {
+			return fmt.Errorf("failed to find user %d: %w", uid, err)
+		}
+		if err := assertScopeAccess(ctx, user.Scope); err != nil {
+			return fmt.Errorf("%w: user %d is out of scope", domain.ErrScopeMismatch, uid)
+		}
+	}
+
+	// Asignar roles a cada usuario.
+	for _, uid := range userIDs {
+		if err := s.repo.UpdateRoles(ctx, uid, roles); err != nil {
+			return fmt.Errorf("failed to update roles for user %d: %w", uid, err)
+		}
+		// Invalidar tokens del usuario.
+		if _, err := s.repo.IncrementTokenVersion(ctx, uid); err != nil {
+			return fmt.Errorf("failed to invalidate tokens for user %d: %w", uid, err)
+		}
+		if s.versionCache != nil {
+			s.versionCache.Invalidate(uid)
+		}
+		s.audit.log(ctx, "bulk_assign_roles", "user", uid, nil, map[string]any{"role_ids": roleIDs})
+	}
+
 	return nil
 }

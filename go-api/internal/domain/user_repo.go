@@ -17,8 +17,11 @@ type UserReader interface {
 	FindByID(ctx context.Context, id uint) (*User, error)
 	FindByEmailHash(ctx context.Context, emailHash string) (*User, error)
 	FindAll(ctx context.Context, page, size int) ([]User, error)
+	FindAllByScope(ctx context.Context, scope string, page, size int) ([]User, error)
 	SearchUsers(ctx context.Context, query string, roleName string, page, size int) ([]User, error)
+	SearchUsersByScope(ctx context.Context, query, roleName, scope string, page, size int) ([]User, error)
 	FindAllDeleted(ctx context.Context) ([]User, error)
+	FindAllDeletedByScope(ctx context.Context, scope string) ([]User, error)
 
 	// Token version queries
 	GetTokenVersion(ctx context.Context, userID uint) (int, error)

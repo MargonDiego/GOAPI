@@ -1,0 +1,5 @@
+DROP INDEX IF EXISTS idx_roles_scope_name;
+DROP INDEX IF EXISTS idx_users_scope;
+ALTER TABLE roles DROP COLUMN IF EXISTS is_system;
+ALTER TABLE roles DROP COLUMN IF EXISTS scope;
+ALTER TABLE users DROP COLUMN IF EXISTS scope;

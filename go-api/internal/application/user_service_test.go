@@ -64,7 +64,7 @@ func TestUserService_GetUserByUsername(t *testing.T) {
 			tt.setupMock(mockUserRepo)
 
 			service := application.NewUserService(mockUserRepo, mockRoleRepo, enc, nil, nil)
-			ctx := context.Background()
+			ctx := application.WithScope(context.Background(), "")
 
 			user, err := service.GetUserByUsername(ctx, tt.username)
 
@@ -138,7 +138,7 @@ func TestUserService_GetAllUsers(t *testing.T) {
 			enc := setupTestEncryptorForUserService(t)
 
 			service := application.NewUserService(mockUserRepo, mockRoleRepo, enc, nil, nil)
-			ctx := context.Background()
+			ctx := application.WithScope(context.Background(), "")
 
 			users, err := service.GetAllUsers(ctx, tt.page, tt.size)
 
@@ -237,7 +237,7 @@ func TestUserService_AssignRolesToUser(t *testing.T) {
 			tt.setupRoleMock(mockRoleRepo)
 
 			service := application.NewUserService(mockUserRepo, mockRoleRepo, enc, nil, nil)
-			ctx := context.Background()
+			ctx := application.WithScope(context.Background(), "")
 
 			err := service.AssignRolesToUser(ctx, tt.userID, tt.roleIDs)
 
@@ -298,7 +298,7 @@ func TestUserService_GetUserByID(t *testing.T) {
 			tt.setupMock(mockUserRepo)
 
 			service := application.NewUserService(mockUserRepo, mockRoleRepo, enc, nil, nil)
-			ctx := context.Background()
+			ctx := application.WithScope(context.Background(), "")
 
 			user, err := service.GetUserByID(ctx, tt.userID)
 
@@ -363,7 +363,7 @@ func TestUserService_CreateUser(t *testing.T) {
 			tt.setupMock(mockUserRepo, mockRoleRepo)
 
 			service := application.NewUserService(mockUserRepo, mockRoleRepo, enc, nil, nil)
-			ctx := context.Background()
+			ctx := application.WithScope(context.Background(), "")
 
 			err := service.CreateUser(ctx, tt.username, tt.password, tt.email)
 
@@ -420,7 +420,7 @@ func TestUserService_UpdateUser(t *testing.T) {
 			tt.setupMock(mockUserRepo)
 
 			service := application.NewUserService(mockUserRepo, mockRoleRepo, enc, nil, nil)
-			ctx := context.Background()
+			ctx := application.WithScope(context.Background(), "")
 
 			err := service.UpdateUser(ctx, tt.userID, tt.newUsername, "")
 
@@ -475,7 +475,7 @@ func TestUserService_DeleteUser(t *testing.T) {
 			tt.setupMock(mockUserRepo)
 
 			service := application.NewUserService(mockUserRepo, mockRoleRepo, enc, nil, nil)
-			ctx := context.Background()
+			ctx := application.WithScope(context.Background(), "")
 
 			err := service.DeleteUser(ctx, tt.userID)
 

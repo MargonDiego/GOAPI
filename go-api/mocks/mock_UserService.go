@@ -70,6 +70,54 @@ func (_c *MockUserService_AssignRolesToUser_Call) RunAndReturn(run func(context.
 	return _c
 }
 
+// BulkAssignRolesToUsers provides a mock function with given fields: ctx, userIDs, roleIDs
+func (_m *MockUserService) BulkAssignRolesToUsers(ctx context.Context, userIDs []uint, roleIDs []uint) error {
+	ret := _m.Called(ctx, userIDs, roleIDs)
+
+	if len(ret) == 0 {
+		panic("no return value specified for BulkAssignRolesToUsers")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, []uint, []uint) error); ok {
+		r0 = rf(ctx, userIDs, roleIDs)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MockUserService_BulkAssignRolesToUsers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'BulkAssignRolesToUsers'
+type MockUserService_BulkAssignRolesToUsers_Call struct {
+	*mock.Call
+}
+
+// BulkAssignRolesToUsers is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userIDs []uint
+//   - roleIDs []uint
+func (_e *MockUserService_Expecter) BulkAssignRolesToUsers(ctx interface{}, userIDs interface{}, roleIDs interface{}) *MockUserService_BulkAssignRolesToUsers_Call {
+	return &MockUserService_BulkAssignRolesToUsers_Call{Call: _e.mock.On("BulkAssignRolesToUsers", ctx, userIDs, roleIDs)}
+}
+
+func (_c *MockUserService_BulkAssignRolesToUsers_Call) Run(run func(ctx context.Context, userIDs []uint, roleIDs []uint)) *MockUserService_BulkAssignRolesToUsers_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].([]uint), args[2].([]uint))
+	})
+	return _c
+}
+
+func (_c *MockUserService_BulkAssignRolesToUsers_Call) Return(_a0 error) *MockUserService_BulkAssignRolesToUsers_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockUserService_BulkAssignRolesToUsers_Call) RunAndReturn(run func(context.Context, []uint, []uint) error) *MockUserService_BulkAssignRolesToUsers_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // CreateUser provides a mock function with given fields: ctx, username, password, email
 func (_m *MockUserService) CreateUser(ctx context.Context, username string, password string, email string) error {
 	ret := _m.Called(ctx, username, password, email)

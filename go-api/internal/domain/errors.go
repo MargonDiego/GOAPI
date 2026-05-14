@@ -30,4 +30,6 @@ var (
 	ErrPermissionAlreadyExists = errors.New("permission already exists")
 	ErrInvalidToken            = errors.New("invalid or expired refresh token")
 	ErrAccountLocked           = errors.New("account temporarily locked due to multiple failed attempts")
+	ErrRoleImmutable           = errors.New("system role cannot be modified or deleted")
+	ErrScopeMismatch           = errors.New("operation not allowed for this scope")
 )

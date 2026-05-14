@@ -18,6 +18,7 @@ type User struct {
 	// TokenVersion se incrementa cada vez que cambian los roles/permisos del usuario.
 	// El JWT embebe esta versión como claim "ver"; el middleware la valida en cada request.
 	TokenVersion   int        `gorm:"column:token_version;not null;default:1"`
+	Scope          string     `gorm:"index;default:''"`
 	Roles          []Role     `gorm:"many2many:user_roles;"`
 }
 
@@ -25,6 +26,8 @@ type Role struct {
 	gorm.Model
 	Name        string       `gorm:"uniqueIndex;not null"`
 	Description string       `gorm:"type:text"`
+	IsSystem    bool         `gorm:"not null;default:false"`
+	Scope       string       `gorm:"index;default:''"`
 	Permissions []Permission `gorm:"many2many:role_permissions;"`
 }
 
@@ -69,6 +72,7 @@ func toDomainUser(u *User) *domain.User {
 		FailedAttempts: u.FailedAttempts,
 		LockedUntil:    u.LockedUntil,
 		TokenVersion:   u.TokenVersion,
+		Scope:          u.Scope,
 		Roles:          make([]domain.Role, 0, len(u.Roles)),
 	}
 
@@ -99,6 +103,7 @@ func toDBUser(du *domain.User) *User {
 		FailedAttempts: du.FailedAttempts,
 		LockedUntil:    du.LockedUntil,
 		TokenVersion:   du.TokenVersion,
+		Scope:          du.Scope,
 		Roles:          make([]Role, 0, len(du.Roles)),
 	}
 	if du.ID != 0 {

@@ -57,6 +57,7 @@ func NewRouter(
 	usersRoute.Handle("/{id}", authMw.RequirePermission("manage:users")(http.HandlerFunc(userHandler.Delete))).Methods("DELETE")
 	usersRoute.Handle("/{id}/restore", authMw.RequirePermission("manage:users")(http.HandlerFunc(userHandler.RestoreUser))).Methods("POST")
 	usersRoute.Handle("/{id}/roles", authMw.RequirePermission("manage:roles")(http.HandlerFunc(userHandler.AssignRoles))).Methods("PUT")
+	usersRoute.Handle("/bulk/roles", authMw.RequirePermission("manage:roles")(http.HandlerFunc(userHandler.BulkAssignRoles))).Methods("POST")
 
 	// Rutas de Roles
 	rolesRoute := api.PathPrefix("/roles").Subrouter()

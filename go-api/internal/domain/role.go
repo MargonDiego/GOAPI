@@ -10,9 +10,13 @@ type Permission struct {
 }
 
 // Role agrupa permisos. Un usuario puede tener múltiples roles.
+// IsSystem = true indica roles críticos que NO se pueden eliminar (ej: Admin, User).
+// Scope restringe la visibilidad y gestión del rol a administradores de ese dominio.
 type Role struct {
 	ID          uint
 	Name        string
 	Description string
+	IsSystem    bool
+	Scope       string
 	Permissions []Permission
 }

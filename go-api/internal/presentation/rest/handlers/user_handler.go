@@ -112,6 +112,12 @@ type AssignRolesRequest struct {
 	RoleIDs []uint `json:"role_ids" validate:"required,dive,gt=0" example:"1,2"`
 }
 
+// BulkAssignRolesRequest es el DTO para asignar roles a múltiples usuarios.
+type BulkAssignRolesRequest struct {
+	UserIDs []uint `json:"user_ids" validate:"required,dive,gt=0" example:"1,2,3"`
+	RoleIDs []uint `json:"role_ids" validate:"required,dive,gt=0" example:"4,5"`
+}
+
 // AssignRoles asigna uno o más roles a un usuario.
 //
 // @Summary      Asignar roles a usuario
@@ -157,6 +163,45 @@ func (h *UserHandler) AssignRoles(w http.ResponseWriter, r *http.Request) {
 	}
 
 	RespondJSON(w, http.StatusOK, MessageResponse{Message: "roles assigned successfully"})
+}
+
+// BulkAssignRoles asigna roles a múltiples usuarios en una sola operación.
+//
+// @Summary      Asignar roles en bulk
+// @Description  Asigna los mismos roles a múltiples usuarios simultáneamente. Valida existencia y scoping.
+// @Tags         users
+// @Accept       json
+// @Produce      json
+// @Param        body body BulkAssignRolesRequest true "IDs de usuarios y roles"
+// @Security     BearerAuth
+// @Success      200 {object} MessageResponse
+// @Failure      400 {object} ErrorResponse
+// @Failure      401 {object} ErrorResponse
+// @Failure      403 {object} ErrorResponse
+// @Failure      500 {object} ErrorResponse
+// @Router       /users/bulk/roles [post]
+func (h *UserHandler) BulkAssignRoles(w http.ResponseWriter, r *http.Request) {
+	var req BulkAssignRolesRequest
+	if errs := DecodeAndValidate(r, &req); len(errs) > 0 {
+		RespondJSON(w, http.StatusBadRequest, map[string]interface{}{"errors": errs})
+		return
+	}
+
+	if err := h.userService.BulkAssignRolesToUsers(withActor(r), req.UserIDs, req.RoleIDs); err != nil {
+		if errors.Is(err, domain.ErrInvalidInput) {
+			RespondError(w, http.StatusBadRequest, err.Error())
+			return
+		}
+		if errors.Is(err, domain.ErrScopeMismatch) {
+			RespondError(w, http.StatusForbidden, err.Error())
+			return
+		}
+		log.Error().Err(err).Msg("failed to bulk assign roles")
+		RespondError(w, http.StatusInternalServerError, "failed to bulk assign roles")
+		return
+	}
+
+	RespondJSON(w, http.StatusOK, MessageResponse{Message: "roles assigned to users successfully"})
 }
 
 // CreateUserRequest es el DTO para crear usuario.

@@ -269,6 +269,65 @@ func (_c *MockRoleRepository_FindAll_Call) RunAndReturn(run func(context.Context
 	return _c
 }
 
+// FindAllByScope provides a mock function with given fields: ctx, scope
+func (_m *MockRoleRepository) FindAllByScope(ctx context.Context, scope string) ([]domain.Role, error) {
+	ret := _m.Called(ctx, scope)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FindAllByScope")
+	}
+
+	var r0 []domain.Role
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) ([]domain.Role, error)); ok {
+		return rf(ctx, scope)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) []domain.Role); ok {
+		r0 = rf(ctx, scope)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]domain.Role)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, scope)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockRoleRepository_FindAllByScope_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindAllByScope'
+type MockRoleRepository_FindAllByScope_Call struct {
+	*mock.Call
+}
+
+// FindAllByScope is a helper method to define mock.On call
+//   - ctx context.Context
+//   - scope string
+func (_e *MockRoleRepository_Expecter) FindAllByScope(ctx interface{}, scope interface{}) *MockRoleRepository_FindAllByScope_Call {
+	return &MockRoleRepository_FindAllByScope_Call{Call: _e.mock.On("FindAllByScope", ctx, scope)}
+}
+
+func (_c *MockRoleRepository_FindAllByScope_Call) Run(run func(ctx context.Context, scope string)) *MockRoleRepository_FindAllByScope_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *MockRoleRepository_FindAllByScope_Call) Return(_a0 []domain.Role, _a1 error) *MockRoleRepository_FindAllByScope_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockRoleRepository_FindAllByScope_Call) RunAndReturn(run func(context.Context, string) ([]domain.Role, error)) *MockRoleRepository_FindAllByScope_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // FindAllDeleted provides a mock function with given fields: ctx
 func (_m *MockRoleRepository) FindAllDeleted(ctx context.Context) ([]domain.Role, error) {
 	ret := _m.Called(ctx)
@@ -323,6 +382,65 @@ func (_c *MockRoleRepository_FindAllDeleted_Call) Return(_a0 []domain.Role, _a1 
 }
 
 func (_c *MockRoleRepository_FindAllDeleted_Call) RunAndReturn(run func(context.Context) ([]domain.Role, error)) *MockRoleRepository_FindAllDeleted_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// FindAllDeletedByScope provides a mock function with given fields: ctx, scope
+func (_m *MockRoleRepository) FindAllDeletedByScope(ctx context.Context, scope string) ([]domain.Role, error) {
+	ret := _m.Called(ctx, scope)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FindAllDeletedByScope")
+	}
+
+	var r0 []domain.Role
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) ([]domain.Role, error)); ok {
+		return rf(ctx, scope)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) []domain.Role); ok {
+		r0 = rf(ctx, scope)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]domain.Role)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, scope)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockRoleRepository_FindAllDeletedByScope_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindAllDeletedByScope'
+type MockRoleRepository_FindAllDeletedByScope_Call struct {
+	*mock.Call
+}
+
+// FindAllDeletedByScope is a helper method to define mock.On call
+//   - ctx context.Context
+//   - scope string
+func (_e *MockRoleRepository_Expecter) FindAllDeletedByScope(ctx interface{}, scope interface{}) *MockRoleRepository_FindAllDeletedByScope_Call {
+	return &MockRoleRepository_FindAllDeletedByScope_Call{Call: _e.mock.On("FindAllDeletedByScope", ctx, scope)}
+}
+
+func (_c *MockRoleRepository_FindAllDeletedByScope_Call) Run(run func(ctx context.Context, scope string)) *MockRoleRepository_FindAllDeletedByScope_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *MockRoleRepository_FindAllDeletedByScope_Call) Return(_a0 []domain.Role, _a1 error) *MockRoleRepository_FindAllDeletedByScope_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockRoleRepository_FindAllDeletedByScope_Call) RunAndReturn(run func(context.Context, string) ([]domain.Role, error)) *MockRoleRepository_FindAllDeletedByScope_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -383,6 +501,67 @@ func (_c *MockRoleRepository_FindAllPaginated_Call) Return(_a0 []domain.Role, _a
 }
 
 func (_c *MockRoleRepository_FindAllPaginated_Call) RunAndReturn(run func(context.Context, int, int) ([]domain.Role, error)) *MockRoleRepository_FindAllPaginated_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// FindAllPaginatedByScope provides a mock function with given fields: ctx, scope, page, size
+func (_m *MockRoleRepository) FindAllPaginatedByScope(ctx context.Context, scope string, page int, size int) ([]domain.Role, error) {
+	ret := _m.Called(ctx, scope, page, size)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FindAllPaginatedByScope")
+	}
+
+	var r0 []domain.Role
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, int, int) ([]domain.Role, error)); ok {
+		return rf(ctx, scope, page, size)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, int, int) []domain.Role); ok {
+		r0 = rf(ctx, scope, page, size)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]domain.Role)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, int, int) error); ok {
+		r1 = rf(ctx, scope, page, size)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockRoleRepository_FindAllPaginatedByScope_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindAllPaginatedByScope'
+type MockRoleRepository_FindAllPaginatedByScope_Call struct {
+	*mock.Call
+}
+
+// FindAllPaginatedByScope is a helper method to define mock.On call
+//   - ctx context.Context
+//   - scope string
+//   - page int
+//   - size int
+func (_e *MockRoleRepository_Expecter) FindAllPaginatedByScope(ctx interface{}, scope interface{}, page interface{}, size interface{}) *MockRoleRepository_FindAllPaginatedByScope_Call {
+	return &MockRoleRepository_FindAllPaginatedByScope_Call{Call: _e.mock.On("FindAllPaginatedByScope", ctx, scope, page, size)}
+}
+
+func (_c *MockRoleRepository_FindAllPaginatedByScope_Call) Run(run func(ctx context.Context, scope string, page int, size int)) *MockRoleRepository_FindAllPaginatedByScope_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(int), args[3].(int))
+	})
+	return _c
+}
+
+func (_c *MockRoleRepository_FindAllPaginatedByScope_Call) Return(_a0 []domain.Role, _a1 error) *MockRoleRepository_FindAllPaginatedByScope_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockRoleRepository_FindAllPaginatedByScope_Call) RunAndReturn(run func(context.Context, string, int, int) ([]domain.Role, error)) *MockRoleRepository_FindAllPaginatedByScope_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -902,6 +1081,66 @@ func (_c *MockRoleRepository_SearchByName_Call) Return(_a0 []domain.Role, _a1 er
 }
 
 func (_c *MockRoleRepository_SearchByName_Call) RunAndReturn(run func(context.Context, string) ([]domain.Role, error)) *MockRoleRepository_SearchByName_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// SearchByNameAndScope provides a mock function with given fields: ctx, query, scope
+func (_m *MockRoleRepository) SearchByNameAndScope(ctx context.Context, query string, scope string) ([]domain.Role, error) {
+	ret := _m.Called(ctx, query, scope)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SearchByNameAndScope")
+	}
+
+	var r0 []domain.Role
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) ([]domain.Role, error)); ok {
+		return rf(ctx, query, scope)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) []domain.Role); ok {
+		r0 = rf(ctx, query, scope)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]domain.Role)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string) error); ok {
+		r1 = rf(ctx, query, scope)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockRoleRepository_SearchByNameAndScope_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SearchByNameAndScope'
+type MockRoleRepository_SearchByNameAndScope_Call struct {
+	*mock.Call
+}
+
+// SearchByNameAndScope is a helper method to define mock.On call
+//   - ctx context.Context
+//   - query string
+//   - scope string
+func (_e *MockRoleRepository_Expecter) SearchByNameAndScope(ctx interface{}, query interface{}, scope interface{}) *MockRoleRepository_SearchByNameAndScope_Call {
+	return &MockRoleRepository_SearchByNameAndScope_Call{Call: _e.mock.On("SearchByNameAndScope", ctx, query, scope)}
+}
+
+func (_c *MockRoleRepository_SearchByNameAndScope_Call) Run(run func(ctx context.Context, query string, scope string)) *MockRoleRepository_SearchByNameAndScope_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(string))
+	})
+	return _c
+}
+
+func (_c *MockRoleRepository_SearchByNameAndScope_Call) Return(_a0 []domain.Role, _a1 error) *MockRoleRepository_SearchByNameAndScope_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockRoleRepository_SearchByNameAndScope_Call) RunAndReturn(run func(context.Context, string, string) ([]domain.Role, error)) *MockRoleRepository_SearchByNameAndScope_Call {
 	_c.Call.Return(run)
 	return _c
 }
