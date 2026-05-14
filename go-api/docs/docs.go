@@ -374,7 +374,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Obtiene todos los roles con sus permisos asociados",
+                "description": "Obtiene roles con sus permisos. Soporta paginación (?page=\u0026size=) y búsqueda (?search=).",
                 "produces": [
                     "application/json"
                 ],
@@ -382,6 +382,28 @@ const docTemplate = `{
                     "roles"
                 ],
                 "summary": "Listar roles",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Número de página",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Tamaño de página",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Buscar por nombre",
+                        "name": "search",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -467,6 +489,52 @@ const docTemplate = `{
                     },
                     "409": {
                         "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/roles/deleted": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Obtiene todos los roles que fueron soft-deleted",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "roles"
+                ],
+                "summary": "Listar roles eliminados",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/handlers.RoleResponse"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
                         "schema": {
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }
@@ -744,6 +812,70 @@ const docTemplate = `{
                 }
             }
         },
+        "/roles/{id}/restore": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Recupera un rol que fue soft-deleted",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "roles"
+                ],
+                "summary": "Restaurar rol",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Role ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.MessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/users": {
             "get": {
                 "security": [
@@ -751,7 +883,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Retorna la lista paginada de usuarios. Requiere permiso read:users",
+                "description": "Retorna la lista paginada de usuarios. Soporta búsqueda (?search=) y filtro por rol (?role=).",
                 "produces": [
                     "application/json"
                 ],
@@ -772,6 +904,18 @@ const docTemplate = `{
                         "default": 10,
                         "description": "Tamaño de página",
                         "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Buscar por username/email",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filtrar por nombre de rol",
+                        "name": "role",
                         "in": "query"
                     }
                 ],
@@ -860,6 +1004,115 @@ const docTemplate = `{
                     },
                     "409": {
                         "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/bulk/roles": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Asigna los mismos roles a múltiples usuarios simultáneamente. Valida existencia y scoping.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Asignar roles en bulk",
+                "parameters": [
+                    {
+                        "description": "IDs de usuarios y roles",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.BulkAssignRolesRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.MessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/users/deleted": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Obtiene todos los usuarios que fueron soft-deleted",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Listar usuarios eliminados",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/handlers.UserResponse"
+                            }
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
                         "schema": {
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }
@@ -1055,6 +1308,70 @@ const docTemplate = `{
                 }
             }
         },
+        "/users/{id}/restore": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Recupera un usuario que fue soft-deleted",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "users"
+                ],
+                "summary": "Restaurar usuario",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "User ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.MessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/users/{id}/roles": {
             "put": {
                 "security": [
@@ -1135,6 +1452,9 @@ const docTemplate = `{
     "definitions": {
         "handlers.AssignPermissionsRequest": {
             "type": "object",
+            "required": [
+                "permission_ids"
+            ],
             "properties": {
                 "permission_ids": {
                     "type": "array",
@@ -1151,6 +1471,9 @@ const docTemplate = `{
         },
         "handlers.AssignRolesRequest": {
             "type": "object",
+            "required": [
+                "role_ids"
+            ],
             "properties": {
                 "role_ids": {
                     "type": "array",
@@ -1166,18 +1489,25 @@ const docTemplate = `{
         },
         "handlers.AuthRequest": {
             "type": "object",
+            "required": [
+                "password",
+                "username"
+            ],
             "properties": {
                 "email": {
-                    "description": "Opcional. Se cifra con AES-256-GCM antes de persistir.",
                     "type": "string",
                     "example": "johndoe@example.com"
                 },
                 "password": {
                     "type": "string",
+                    "maxLength": 72,
+                    "minLength": 8,
                     "example": "secret1234"
                 },
                 "username": {
                     "type": "string",
+                    "maxLength": 50,
+                    "minLength": 3,
                     "example": "johndoe"
                 }
             }
@@ -1195,8 +1525,42 @@ const docTemplate = `{
                 }
             }
         },
+        "handlers.BulkAssignRolesRequest": {
+            "type": "object",
+            "required": [
+                "role_ids",
+                "user_ids"
+            ],
+            "properties": {
+                "role_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    },
+                    "example": [
+                        4,
+                        5
+                    ]
+                },
+                "user_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "integer"
+                    },
+                    "example": [
+                        1,
+                        2,
+                        3
+                    ]
+                }
+            }
+        },
         "handlers.CreateUserRequest": {
             "type": "object",
+            "required": [
+                "password",
+                "username"
+            ],
             "properties": {
                 "email": {
                     "type": "string",
@@ -1204,10 +1568,14 @@ const docTemplate = `{
                 },
                 "password": {
                     "type": "string",
+                    "maxLength": 72,
+                    "minLength": 8,
                     "example": "secret1234"
                 },
                 "username": {
                     "type": "string",
+                    "maxLength": 50,
+                    "minLength": 3,
                     "example": "johndoe"
                 }
             }
@@ -1232,9 +1600,19 @@ const docTemplate = `{
         },
         "handlers.PermissionCreateRequest": {
             "type": "object",
+            "required": [
+                "name"
+            ],
             "properties": {
+                "description": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "example": "Allows reading posts"
+                },
                 "name": {
                     "type": "string",
+                    "maxLength": 100,
+                    "minLength": 3,
                     "example": "read:posts"
                 }
             }
@@ -1242,6 +1620,9 @@ const docTemplate = `{
         "handlers.PermissionResponse": {
             "type": "object",
             "properties": {
+                "description": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "integer"
                 },
@@ -1252,18 +1633,32 @@ const docTemplate = `{
         },
         "handlers.RefreshRequest": {
             "type": "object",
+            "required": [
+                "refresh_token"
+            ],
             "properties": {
                 "refresh_token": {
                     "type": "string",
+                    "minLength": 1,
                     "example": "rand_base64_string"
                 }
             }
         },
         "handlers.RoleCreateRequest": {
             "type": "object",
+            "required": [
+                "name"
+            ],
             "properties": {
+                "description": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "example": "Can edit content"
+                },
                 "name": {
                     "type": "string",
+                    "maxLength": 50,
+                    "minLength": 2,
                     "example": "Editor"
                 }
             }
@@ -1271,6 +1666,9 @@ const docTemplate = `{
         "handlers.RoleResponse": {
             "type": "object",
             "properties": {
+                "description": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "integer"
                 },
@@ -1287,9 +1685,19 @@ const docTemplate = `{
         },
         "handlers.RoleUpdateRequest": {
             "type": "object",
+            "required": [
+                "name"
+            ],
             "properties": {
+                "description": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "example": "Can edit content"
+                },
                 "name": {
                     "type": "string",
+                    "maxLength": 50,
+                    "minLength": 2,
                     "example": "Editor"
                 }
             }
@@ -1303,6 +1711,8 @@ const docTemplate = `{
                 },
                 "username": {
                     "type": "string",
+                    "maxLength": 50,
+                    "minLength": 3,
                     "example": "johndoe"
                 }
             }
