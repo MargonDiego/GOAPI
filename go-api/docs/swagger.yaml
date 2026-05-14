@@ -1,4 +1,4 @@
-basePath: /api
+basePath: /api/v1
 definitions:
   handlers.AssignPermissionsRequest:
     properties:
@@ -256,7 +256,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: Crea un nuevo permiso en el sistema
+      description: Crea un nuevo permiso en el sistema. Retorna 409 si el nombre ya
+        existe.
       parameters:
       - description: Datos del permiso
         in: body
@@ -281,6 +282,10 @@ paths:
             $ref: '#/definitions/handlers.ErrorResponse'
         "403":
           description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "409":
+          description: Conflict
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
       security:
@@ -388,7 +393,7 @@ paths:
     post:
       consumes:
       - application/json
-      description: Crea un nuevo rol en el sistema
+      description: Crea un nuevo rol en el sistema. Retorna 409 si el nombre ya existe.
       parameters:
       - description: Datos del rol
         in: body
@@ -413,6 +418,10 @@ paths:
             $ref: '#/definitions/handlers.ErrorResponse'
         "403":
           description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "409":
+          description: Conflict
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
         "500":
@@ -476,6 +485,10 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/handlers.RoleResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
@@ -486,6 +499,10 @@ paths:
             $ref: '#/definitions/handlers.ErrorResponse'
         "404":
           description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
       security:
@@ -541,7 +558,8 @@ paths:
     put:
       consumes:
       - application/json
-      description: Actualiza los permisos asociados a un rol específico
+      description: Reemplaza completamente los permisos de un rol. Un array vacío
+        elimina todos los permisos.
       parameters:
       - description: Role ID
         in: path
@@ -571,6 +589,10 @@ paths:
             $ref: '#/definitions/handlers.ErrorResponse'
         "403":
           description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
         "500":
@@ -713,6 +735,10 @@ paths:
           description: OK
           schema:
             $ref: '#/definitions/handlers.UserResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
         "401":
           description: Unauthorized
           schema:
@@ -723,6 +749,10 @@ paths:
             $ref: '#/definitions/handlers.ErrorResponse'
         "404":
           description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "500":
+          description: Internal Server Error
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
       security:
@@ -778,7 +808,8 @@ paths:
     put:
       consumes:
       - application/json
-      description: Actualiza los roles asociados a un usuario específico
+      description: Actualiza los roles asociados a un usuario específico. Un array
+        vacío elimina todos los roles.
       parameters:
       - description: User ID
         in: path
@@ -808,6 +839,10 @@ paths:
             $ref: '#/definitions/handlers.ErrorResponse'
         "403":
           description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
         "500":

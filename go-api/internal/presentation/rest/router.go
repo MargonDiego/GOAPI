@@ -32,12 +32,12 @@ func NewRouter(
 	// 1 petición por segundo máximo, con ráfagas permitidas de hasta 5.
 	authLimiter := middleware.NewIPRateLimiter(1, 5)
 
-	r.Handle("/api/register", authLimiter.Middleware(http.HandlerFunc(authHandler.Register))).Methods("POST")
-	r.Handle("/api/login", authLimiter.Middleware(http.HandlerFunc(authHandler.Login))).Methods("POST")
-	r.Handle("/api/refresh", authLimiter.Middleware(http.HandlerFunc(authHandler.Refresh))).Methods("POST")
-	r.Handle("/api/logout", authLimiter.Middleware(http.HandlerFunc(authHandler.Logout))).Methods("POST")
+	r.Handle("/api/v1/register", authLimiter.Middleware(http.HandlerFunc(authHandler.Register))).Methods("POST")
+	r.Handle("/api/v1/login", authLimiter.Middleware(http.HandlerFunc(authHandler.Login))).Methods("POST")
+	r.Handle("/api/v1/refresh", authLimiter.Middleware(http.HandlerFunc(authHandler.Refresh))).Methods("POST")
+	r.Handle("/api/v1/logout", authLimiter.Middleware(http.HandlerFunc(authHandler.Logout))).Methods("POST")
 
-	api := r.PathPrefix("/api").Subrouter()
+	api := r.PathPrefix("/api/v1").Subrouter()
 	api.Use(authMw.RequireAuth())
 
 	api.HandleFunc("/me", userHandler.GetMe).Methods("GET")

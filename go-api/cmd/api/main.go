@@ -2,7 +2,7 @@
 // @version         1.0
 // @description     API REST con autenticación JWT y control de permisos basado en roles.
 // @host            localhost:8080
-// @BasePath        /api
+// @BasePath        /api/v1
 // @securityDefinitions.apikey BearerAuth
 // @in              header
 // @name            Authorization
