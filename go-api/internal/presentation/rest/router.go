@@ -28,18 +28,24 @@ func NewRouter(
 	r.HandleFunc("/health/liveness", healthHandler.Liveness).Methods("GET")
 	r.HandleFunc("/health/readiness", healthHandler.Readiness).Methods("GET")
 
+	// Rate limiting global para todas las rutas de la API (10 req/s, burst 20).
+	// Protege contra DoS por usuarios autenticados ejecutando operaciones masivas.
+	apiLimiter := middleware.NewIPRateLimiter(10, 20)
+
 	// Limitador estricto para rutas de autenticación (protege bcrypt):
 	// 1 petición por segundo máximo, con ráfagas permitidas de hasta 5.
 	authLimiter := middleware.NewIPRateLimiter(1, 5)
+
+	// Aplicar rate limiting global a todo /api/v1
+	api := r.PathPrefix("/api/v1").Subrouter()
+	api.Use(apiLimiter.Middleware)
+	api.Use(authMw.RequireAuth())
 
 	r.Handle("/api/v1/register", authLimiter.Middleware(http.HandlerFunc(authHandler.Register))).Methods("POST")
 	r.Handle("/api/v1/login", authLimiter.Middleware(http.HandlerFunc(authHandler.Login))).Methods("POST")
 	r.Handle("/api/v1/refresh", authLimiter.Middleware(http.HandlerFunc(authHandler.Refresh))).Methods("POST")
 
-	api := r.PathPrefix("/api/v1").Subrouter()
-	api.Use(authMw.RequireAuth())
-
-	// Logout requiere autenticación (necesita userID del contexto) + rate limiting
+	// Logout: requiere auth + rate limit estricto
 	api.Handle("/logout", authLimiter.Middleware(http.HandlerFunc(authHandler.Logout))).Methods("POST")
 
 	api.HandleFunc("/me", userHandler.GetMe).Methods("GET")
