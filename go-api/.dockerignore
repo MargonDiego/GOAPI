@@ -28,9 +28,10 @@ vendor/
 *.swp
 *.swo
 
-# Documentación (no necesaria en runtime)
-docs/
-README.md
+# Documentación (solo docs.go es necesario para compilar)
+docs/*.md
+docs/swagger.json
+docs/swagger.yaml
 
 # Mocks (no necesarios en producción)
 mocks/
