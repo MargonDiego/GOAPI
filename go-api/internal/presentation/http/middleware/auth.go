@@ -160,10 +160,18 @@ func (m *AuthMiddleware) RequireAuth() func(http.Handler) http.Handler {
 // Cuando AssignRolesToUser o AssignPermissionsToRole modifican un usuario,
 // el caller llama a versionCache.Invalidate(userID) para forzar re-lectura inmediata.
 func (m *AuthMiddleware) validateTokenVersion(ctx context.Context, userID uint, claims jwt.MapClaims) error {
+	// Guard defensivo: si el cache o repo no están configurados, fallar seguro (401).
+	if m.versionCache == nil {
+		return fmt.Errorf("token version cache not configured")
+	}
+
 	// 1. Intentar resolución desde cache.
 	currentVersion, cached := m.versionCache.Get(userID)
 	if !cached {
 		// 2. Cache miss: leer desde Postgres y cachear para futuros requests.
+		if m.userRepo == nil {
+			return fmt.Errorf("user repository not configured for token version validation")
+		}
 		var err error
 		currentVersion, err = m.userRepo.GetTokenVersion(ctx, userID)
 		if err != nil {

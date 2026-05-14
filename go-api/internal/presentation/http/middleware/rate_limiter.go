@@ -81,9 +81,7 @@ func (i *IPRateLimiter) Middleware(next http.Handler) http.Handler {
 		
 		// Si se excedió el límite, rechazamos con 429 Too Many Requests
 		if !limiter.Allow() {
-			w.Header().Set("Content-Type", "application/json")
-			w.WriteHeader(http.StatusTooManyRequests)
-			w.Write([]byte(`{"error": "too many requests, please slow down"}`))
+			respondError(w, http.StatusTooManyRequests, "too many requests, please slow down")
 			return
 		}
 

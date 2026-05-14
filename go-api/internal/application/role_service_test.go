@@ -157,7 +157,7 @@ func TestRoleService_CreateRole(t *testing.T) {
 			mockRepo := new(mockRoleRepository)
 			tt.setupMock(mockRepo)
 
-			service := application.NewRoleService(mockRepo)
+			service := application.NewRoleService(mockRepo, nil, nil)
 			ctx := context.Background()
 
 			// Act
@@ -229,7 +229,7 @@ func TestRoleService_CreatePermission(t *testing.T) {
 			mockRepo := new(mockRoleRepository)
 			tt.setupMock(mockRepo)
 
-			service := application.NewRoleService(mockRepo)
+			service := application.NewRoleService(mockRepo, nil, nil)
 			ctx := context.Background()
 
 			err := service.CreatePermission(ctx, tt.permName)
@@ -283,7 +283,7 @@ func TestRoleService_GetRoleByID(t *testing.T) {
 			mockRepo := new(mockRoleRepository)
 			tt.setupMock(mockRepo)
 
-			service := application.NewRoleService(mockRepo)
+			service := application.NewRoleService(mockRepo, nil, nil)
 			ctx := context.Background()
 
 			role, err := service.GetRoleByID(ctx, tt.roleID)
@@ -350,7 +350,7 @@ func TestRoleService_UpdateRole(t *testing.T) {
 			mockRepo := new(mockRoleRepository)
 			tt.setupMock(mockRepo)
 
-			service := application.NewRoleService(mockRepo)
+			service := application.NewRoleService(mockRepo, nil, nil)
 			ctx := context.Background()
 
 			err := service.UpdateRole(ctx, tt.roleID, tt.newName)
@@ -401,7 +401,7 @@ func TestRoleService_DeleteRole(t *testing.T) {
 			mockRepo := new(mockRoleRepository)
 			tt.setupMock(mockRepo)
 
-			service := application.NewRoleService(mockRepo)
+			service := application.NewRoleService(mockRepo, nil, nil)
 			ctx := context.Background()
 
 			err := service.DeleteRole(ctx, tt.roleID)

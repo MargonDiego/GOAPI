@@ -7,6 +7,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/diego/go-api/internal/infrastructure/cache"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/stretchr/testify/assert"
 )
@@ -34,7 +35,7 @@ func generateTestToken(username string, permissions []string, expired bool) stri
 func TestRequireAuth(t *testing.T) {
 	t.Parallel()
 
-	mw := NewAuthMiddleware(testSecret)
+	mw := NewAuthMiddleware(testSecret, nil, cache.NewTokenVersionCache(30*time.Second))
 
 	// Handler ficticio que simplemente retorna 200 OK si el middleware lo deja pasar
 	nextHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
@@ -112,7 +113,7 @@ func TestRequireAuth(t *testing.T) {
 func TestRequirePermission(t *testing.T) {
 	t.Parallel()
 
-	mw := NewAuthMiddleware(testSecret)
+	mw := NewAuthMiddleware(testSecret, nil, cache.NewTokenVersionCache(30*time.Second))
 
 	nextHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)

@@ -24,7 +24,7 @@ import (
 	"github.com/diego/go-api/internal/infrastructure/cache"
 	"github.com/diego/go-api/internal/infrastructure/crypto"
 	"github.com/diego/go-api/internal/infrastructure/database"
-	mypresentation "github.com/diego/go-api/internal/presentation/http"
+	apirouter "github.com/diego/go-api/internal/presentation/http"
 	"github.com/diego/go-api/internal/presentation/http/handlers"
 	"github.com/diego/go-api/internal/presentation/http/middleware"
 	"github.com/rs/zerolog"
@@ -61,8 +61,11 @@ func main() {
 		log.Fatal().Err(err).Msg("Failed to get underlying sql.DB")
 	}
 
-	// Encryptor para PII
-	enc, _ := crypto.NewEncryptor(cfg.EmailEncryptionKey)
+	// Encryptor para PII (AES-256-GCM + HMAC-SHA256)
+	enc, err := crypto.NewEncryptor(cfg.EmailEncryptionKey)
+	if err != nil {
+		log.Fatal().Err(err).Msg("Failed to initialize email encryptor")
+	}
 
 	// Cache en memoria para token_version: TTL de 30s reduce la ventana de stale-permissions
 	// de 15 minutos (vida del JWT) a 30 segundos sin hits extra a Postgres por request.
@@ -82,7 +85,7 @@ func main() {
 	authMw := middleware.NewAuthMiddleware(cfg.JWTSecret, userRepo, versionCache)
 
 	// Inicialización de Router con logging de requests
-	router := mypresentation.NewRouter(authHandler, userHandler, roleHandler, healthHandler, authMw)
+	router := apirouter.NewRouter(authHandler, userHandler, roleHandler, healthHandler, authMw)
 	router.Use(middleware.RequestLogger())
 
 	log.Info().Str("port", cfg.Port).Msg("Starting API server")
@@ -94,14 +97,14 @@ func main() {
 		IdleTimeout:  60 * time.Second,
 	}
 
-	// 4. Iniciar el servidor en una goroutine
+	// 6. Iniciar el servidor en una goroutine
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatal().Err(err).Msg("Server stopped abruptly")
 		}
 	}()
 
-	// 5. Graceful Shutdown (Apagado elegante)
+	// 7. Graceful Shutdown (Apagado elegante)
 	quit := make(chan os.Signal, 1)
 	// Escuchar SIGINT (Ctrl+C) y SIGTERM (Terminación de Kubernetes/Docker)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)

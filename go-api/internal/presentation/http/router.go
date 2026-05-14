@@ -19,7 +19,7 @@ func NewRouter(
 ) *mux.Router {
 	r := mux.NewRouter()
 
-	r.Use(middleware.CORS)
+	r.Use(middleware.CORS())
 
 	// Swagger UI — disponible en /swagger/index.html
 	r.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)

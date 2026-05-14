@@ -4,6 +4,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"net/mail"
 	"strings"
 
 	"github.com/diego/go-api/internal/application"
@@ -71,6 +72,12 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	req.Email = strings.ToLower(strings.TrimSpace(req.Email))
 	if req.Username == "" || req.Password == "" || req.Email == "" {
 		RespondError(w, http.StatusBadRequest, "username, password and email are required")
+		return
+	}
+
+	// Validación temprana de formato de email (net/mail.ParseAddress es robusto contra RFC 5322).
+	if _, err := mail.ParseAddress(req.Email); err != nil {
+		RespondError(w, http.StatusBadRequest, "invalid email format")
 		return
 	}
 

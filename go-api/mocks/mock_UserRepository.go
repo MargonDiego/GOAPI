@@ -457,6 +457,65 @@ func (_c *MockUserRepository_FindRoleByName_Call) RunAndReturn(run func(context.
 	return _c
 }
 
+// FindUserIDsByRoleID provides a mock function with given fields: ctx, roleID
+func (_m *MockUserRepository) FindUserIDsByRoleID(ctx context.Context, roleID uint) ([]uint, error) {
+	ret := _m.Called(ctx, roleID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FindUserIDsByRoleID")
+	}
+
+	var r0 []uint
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, uint) ([]uint, error)); ok {
+		return rf(ctx, roleID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, uint) []uint); ok {
+		r0 = rf(ctx, roleID)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]uint)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, uint) error); ok {
+		r1 = rf(ctx, roleID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockUserRepository_FindUserIDsByRoleID_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindUserIDsByRoleID'
+type MockUserRepository_FindUserIDsByRoleID_Call struct {
+	*mock.Call
+}
+
+// FindUserIDsByRoleID is a helper method to define mock.On call
+//   - ctx context.Context
+//   - roleID uint
+func (_e *MockUserRepository_Expecter) FindUserIDsByRoleID(ctx interface{}, roleID interface{}) *MockUserRepository_FindUserIDsByRoleID_Call {
+	return &MockUserRepository_FindUserIDsByRoleID_Call{Call: _e.mock.On("FindUserIDsByRoleID", ctx, roleID)}
+}
+
+func (_c *MockUserRepository_FindUserIDsByRoleID_Call) Run(run func(ctx context.Context, roleID uint)) *MockUserRepository_FindUserIDsByRoleID_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(uint))
+	})
+	return _c
+}
+
+func (_c *MockUserRepository_FindUserIDsByRoleID_Call) Return(_a0 []uint, _a1 error) *MockUserRepository_FindUserIDsByRoleID_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockUserRepository_FindUserIDsByRoleID_Call) RunAndReturn(run func(context.Context, uint) ([]uint, error)) *MockUserRepository_FindUserIDsByRoleID_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // GetRefreshToken provides a mock function with given fields: ctx, token
 func (_m *MockUserRepository) GetRefreshToken(ctx context.Context, token string) (*domain.RefreshToken, error) {
 	ret := _m.Called(ctx, token)
@@ -512,6 +571,120 @@ func (_c *MockUserRepository_GetRefreshToken_Call) Return(_a0 *domain.RefreshTok
 }
 
 func (_c *MockUserRepository_GetRefreshToken_Call) RunAndReturn(run func(context.Context, string) (*domain.RefreshToken, error)) *MockUserRepository_GetRefreshToken_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// GetTokenVersion provides a mock function with given fields: ctx, userID
+func (_m *MockUserRepository) GetTokenVersion(ctx context.Context, userID uint) (int, error) {
+	ret := _m.Called(ctx, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for GetTokenVersion")
+	}
+
+	var r0 int
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, uint) (int, error)); ok {
+		return rf(ctx, userID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, uint) int); ok {
+		r0 = rf(ctx, userID)
+	} else {
+		r0 = ret.Get(0).(int)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, uint) error); ok {
+		r1 = rf(ctx, userID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockUserRepository_GetTokenVersion_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'GetTokenVersion'
+type MockUserRepository_GetTokenVersion_Call struct {
+	*mock.Call
+}
+
+// GetTokenVersion is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID uint
+func (_e *MockUserRepository_Expecter) GetTokenVersion(ctx interface{}, userID interface{}) *MockUserRepository_GetTokenVersion_Call {
+	return &MockUserRepository_GetTokenVersion_Call{Call: _e.mock.On("GetTokenVersion", ctx, userID)}
+}
+
+func (_c *MockUserRepository_GetTokenVersion_Call) Run(run func(ctx context.Context, userID uint)) *MockUserRepository_GetTokenVersion_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(uint))
+	})
+	return _c
+}
+
+func (_c *MockUserRepository_GetTokenVersion_Call) Return(_a0 int, _a1 error) *MockUserRepository_GetTokenVersion_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockUserRepository_GetTokenVersion_Call) RunAndReturn(run func(context.Context, uint) (int, error)) *MockUserRepository_GetTokenVersion_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// IncrementTokenVersion provides a mock function with given fields: ctx, userID
+func (_m *MockUserRepository) IncrementTokenVersion(ctx context.Context, userID uint) (int, error) {
+	ret := _m.Called(ctx, userID)
+
+	if len(ret) == 0 {
+		panic("no return value specified for IncrementTokenVersion")
+	}
+
+	var r0 int
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, uint) (int, error)); ok {
+		return rf(ctx, userID)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, uint) int); ok {
+		r0 = rf(ctx, userID)
+	} else {
+		r0 = ret.Get(0).(int)
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, uint) error); ok {
+		r1 = rf(ctx, userID)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockUserRepository_IncrementTokenVersion_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'IncrementTokenVersion'
+type MockUserRepository_IncrementTokenVersion_Call struct {
+	*mock.Call
+}
+
+// IncrementTokenVersion is a helper method to define mock.On call
+//   - ctx context.Context
+//   - userID uint
+func (_e *MockUserRepository_Expecter) IncrementTokenVersion(ctx interface{}, userID interface{}) *MockUserRepository_IncrementTokenVersion_Call {
+	return &MockUserRepository_IncrementTokenVersion_Call{Call: _e.mock.On("IncrementTokenVersion", ctx, userID)}
+}
+
+func (_c *MockUserRepository_IncrementTokenVersion_Call) Run(run func(ctx context.Context, userID uint)) *MockUserRepository_IncrementTokenVersion_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(uint))
+	})
+	return _c
+}
+
+func (_c *MockUserRepository_IncrementTokenVersion_Call) Return(_a0 int, _a1 error) *MockUserRepository_IncrementTokenVersion_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockUserRepository_IncrementTokenVersion_Call) RunAndReturn(run func(context.Context, uint) (int, error)) *MockUserRepository_IncrementTokenVersion_Call {
 	_c.Call.Return(run)
 	return _c
 }

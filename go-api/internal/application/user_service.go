@@ -8,6 +8,7 @@ import (
 	"github.com/diego/go-api/internal/domain"
 	"github.com/diego/go-api/internal/infrastructure/cache"
 	appcrypto "github.com/diego/go-api/internal/infrastructure/crypto"
+	"golang.org/x/crypto/bcrypt"
 )
 
 // UserService define el contrato de la capa de aplicación para operaciones sobre usuarios.
@@ -138,7 +139,13 @@ func (s *userService) GetUserByID(ctx context.Context, id uint) (*domain.User, e
 
 // CreateUser verifica unicidad de username y email, hashea la contraseña,
 // asigna el rol por defecto "User" y persiste el nuevo usuario.
+// Retorna domain.ErrInvalidInput si la contraseña no cumple 8-72 caracteres.
 func (s *userService) CreateUser(ctx context.Context, username, password, email string) error {
+	// Validación de seguridad pre-bcrypt: previene CPU starvation por hashing de strings enormes.
+	if len(password) < 8 || len(password) > 72 {
+		return fmt.Errorf("%w: password length must be 8-72 characters", domain.ErrInvalidInput)
+	}
+
 	_, err := s.repo.FindByUsername(ctx, username)
 	if err == nil {
 		return fmt.Errorf("%w: username already exists", domain.ErrUserAlreadyExists)
@@ -164,7 +171,13 @@ func (s *userService) CreateUser(ctx context.Context, username, password, email 
 		return fmt.Errorf("failed to get default role: %w", err)
 	}
 
-	user, err := domain.NewUser(username, password, *defaultRole)
+	// Hashear la contraseña con bcrypt antes de crear la entidad de dominio.
+	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
+	if err != nil {
+		return fmt.Errorf("crypto hashing failure: %w", err)
+	}
+
+	user, err := domain.NewUser(username, string(hash), *defaultRole)
 	if err != nil {
 		return fmt.Errorf("failed to create user: %w", err)
 	}
