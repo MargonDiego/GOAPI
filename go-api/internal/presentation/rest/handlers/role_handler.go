@@ -1,7 +1,6 @@
 package handlers
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
 
@@ -12,12 +11,12 @@ import (
 
 // RoleCreateRequest es el DTO para crear un rol.
 type RoleCreateRequest struct {
-	Name string `json:"name" example:"Editor"`
+	Name string `json:"name" validate:"required,min=2,max=50" example:"Editor"`
 }
 
 // AssignPermissionsRequest es el DTO para asignar permisos a un rol.
 type AssignPermissionsRequest struct {
-	PermissionIDs []uint `json:"permission_ids" example:"1,2,3"`
+	PermissionIDs []uint `json:"permission_ids" validate:"required" example:"1,2,3"`
 }
 
 // PermissionResponse es la respuesta de un Permiso.
@@ -59,8 +58,8 @@ func NewRoleHandler(s application.RoleService) *RoleHandler {
 // @Router       /roles [post]
 func (h *RoleHandler) CreateRole(w http.ResponseWriter, r *http.Request) {
 	var req RoleCreateRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		RespondError(w, http.StatusBadRequest, "invalid json payload")
+	if errs := DecodeAndValidate(r, &req); len(errs) > 0 {
+		RespondJSON(w, http.StatusBadRequest, map[string]interface{}{"errors": errs})
 		return
 	}
 
@@ -171,8 +170,8 @@ func (h *RoleHandler) AssignPermissions(w http.ResponseWriter, r *http.Request) 
 	}
 
 	var req AssignPermissionsRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		RespondError(w, http.StatusBadRequest, "invalid json payload")
+	if errs := DecodeAndValidate(r, &req); len(errs) > 0 {
+		RespondJSON(w, http.StatusBadRequest, map[string]interface{}{"errors": errs})
 		return
 	}
 
@@ -241,7 +240,7 @@ func (h *RoleHandler) GetRoleByID(w http.ResponseWriter, r *http.Request) {
 
 // RoleUpdateRequest es el DTO para actualizar un rol.
 type RoleUpdateRequest struct {
-	Name string `json:"name,omitempty" example:"Editor"`
+	Name string `json:"name,omitempty" validate:"required,min=2,max=50" example:"Editor"`
 }
 
 // UpdateRole actualiza un rol existente.
@@ -268,13 +267,8 @@ func (h *RoleHandler) UpdateRole(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req RoleUpdateRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		RespondError(w, http.StatusBadRequest, "invalid json payload")
-		return
-	}
-
-	if req.Name == "" {
-		RespondError(w, http.StatusBadRequest, "role name is required")
+	if errs := DecodeAndValidate(r, &req); len(errs) > 0 {
+		RespondJSON(w, http.StatusBadRequest, map[string]interface{}{"errors": errs})
 		return
 	}
 
@@ -328,7 +322,7 @@ func (h *RoleHandler) DeleteRole(w http.ResponseWriter, r *http.Request) {
 
 // PermissionCreateRequest es el DTO para crear un permiso.
 type PermissionCreateRequest struct {
-	Name string `json:"name" example:"read:posts"`
+	Name string `json:"name" validate:"required,min=3,max=100" example:"read:posts"`
 }
 
 // CreatePermission crea un nuevo permiso.
@@ -348,13 +342,8 @@ type PermissionCreateRequest struct {
 // @Router       /permissions [post]
 func (h *RoleHandler) CreatePermission(w http.ResponseWriter, r *http.Request) {
 	var req PermissionCreateRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		RespondError(w, http.StatusBadRequest, "invalid json payload")
-		return
-	}
-
-	if req.Name == "" {
-		RespondError(w, http.StatusBadRequest, "permission name is required")
+	if errs := DecodeAndValidate(r, &req); len(errs) > 0 {
+		RespondJSON(w, http.StatusBadRequest, map[string]interface{}{"errors": errs})
 		return
 	}
 

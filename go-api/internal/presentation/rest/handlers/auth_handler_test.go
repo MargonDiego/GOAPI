@@ -40,7 +40,7 @@ func TestAuthHandler_Register(t *testing.T) {
 			},
 			setupMock:      func(m *mocks.MockAuthService) {},
 			expectedStatus: http.StatusBadRequest,
-			expectedBody:   "username, password and email are required",
+			expectedBody:   "password is required",
 		},
 		{
 			name: "Error en servicio: Email ya existe",

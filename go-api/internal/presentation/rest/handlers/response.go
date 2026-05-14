@@ -6,9 +6,48 @@ import (
 	"fmt"
 	"net/http"
 	"strconv"
+	"strings"
 
+	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
 )
+
+var validate = validator.New()
+
+// DecodeAndValidate decodifica el body JSON en el DTO y ejecuta validación.
+// Retorna un slice de mensajes de error si la validación falla.
+func DecodeAndValidate(r *http.Request, dto interface{}) []string {
+	if err := json.NewDecoder(r.Body).Decode(dto); err != nil {
+		return []string{"invalid json payload"}
+	}
+
+	if err := validate.Struct(dto); err != nil {
+		var errs []string
+		for _, e := range err.(validator.ValidationErrors) {
+			errs = append(errs, formatValidationError(e))
+		}
+		return errs
+	}
+
+	return nil
+}
+
+// formatValidationError traduce un error de validator a un mensaje legible.
+func formatValidationError(e validator.FieldError) string {
+	field := strings.ToLower(e.Field())
+	switch e.Tag() {
+	case "required":
+		return field + " is required"
+	case "min":
+		return field + " must be at least " + e.Param() + " characters"
+	case "max":
+		return field + " must be at most " + e.Param() + " characters"
+	case "email":
+		return field + " must be a valid email address"
+	default:
+		return field + " failed validation: " + e.Tag()
+	}
+}
 
 // RespondJSON es un helper para serializar respuestas exitosas
 func RespondJSON(w http.ResponseWriter, status int, payload interface{}) {

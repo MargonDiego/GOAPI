@@ -35,13 +35,13 @@ func TestRoleHandler_CreateRole(t *testing.T) {
 			expectedBody:   "invalid json payload",
 		},
 		{
-			name:    "Error de servicio (ej: nombre vacío)",
+			name: "Error de validacion: nombre vacio",
 			payload: handlers.RoleCreateRequest{Name: ""},
 			setupMock: func(m *mocks.MockRoleService) {
-				m.On("CreateRole", mock.Anything, "").Return((*domain.Role)(nil), domain.ErrInvalidInput)
+				// El validador rechaza antes de llegar al servicio
 			},
 			expectedStatus: http.StatusBadRequest,
-			expectedBody:   domain.ErrInvalidInput.Error(),
+			expectedBody:   "name is required",
 		},
 		{
 			name:    "Éxito al crear rol",

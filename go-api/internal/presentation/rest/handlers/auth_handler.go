@@ -1,10 +1,8 @@
 package handlers
 
 import (
-	"encoding/json"
 	"errors"
 	"net/http"
-	"net/mail"
 	"strings"
 
 	"github.com/diego/go-api/internal/application"
@@ -15,14 +13,14 @@ import (
 
 // AuthRequest es el DTO de entrada para registro y login.
 type AuthRequest struct {
-	Username string `json:"username" example:"johndoe"`
-	Password string `json:"password" example:"secret1234"`
-	Email    string `json:"email,omitempty" example:"johndoe@example.com"` // Opcional. Se cifra con AES-256-GCM antes de persistir.
+	Username string `json:"username" validate:"required,min=3,max=50" example:"johndoe"`
+	Password string `json:"password" validate:"required,min=8,max=72" example:"secret1234"`
+	Email    string `json:"email,omitempty" validate:"omitempty,email" example:"johndoe@example.com"`
 }
 
 // RefreshRequest es el DTO para solicitar un nuevo token.
 type RefreshRequest struct {
-	RefreshToken string `json:"refresh_token" example:"rand_base64_string"`
+	RefreshToken string `json:"refresh_token" validate:"required,min=1" example:"rand_base64_string"`
 }
 
 // AuthResponse es el DTO de respuesta para login exitoso.
@@ -54,23 +52,13 @@ func NewAuthHandler(s application.AuthService) *AuthHandler {
 // @Router       /register [post]
 func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 	var req AuthRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		RespondError(w, http.StatusBadRequest, "invalid json payload")
+	if errs := DecodeAndValidate(r, &req); len(errs) > 0 {
+		RespondJSON(w, http.StatusBadRequest, map[string]interface{}{"errors": errs})
 		return
 	}
 
 	req.Username = strings.TrimSpace(req.Username)
 	req.Email = strings.ToLower(strings.TrimSpace(req.Email))
-	if req.Username == "" || req.Password == "" || req.Email == "" {
-		RespondError(w, http.StatusBadRequest, "username, password and email are required")
-		return
-	}
-
-	// Validación temprana de formato de email (net/mail.ParseAddress es robusto contra RFC 5322).
-	if _, err := mail.ParseAddress(req.Email); err != nil {
-		RespondError(w, http.StatusBadRequest, "invalid email format")
-		return
-	}
 
 	err := h.authService.Register(r.Context(), req.Username, req.Password, req.Email)
 	if err != nil {
@@ -99,8 +87,8 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 // @Router       /login [post]
 func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	var req AuthRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		RespondError(w, http.StatusBadRequest, "invalid json payload")
+	if errs := DecodeAndValidate(r, &req); len(errs) > 0 {
+		RespondJSON(w, http.StatusBadRequest, map[string]interface{}{"errors": errs})
 		return
 	}
 
@@ -131,13 +119,8 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 // @Router       /refresh [post]
 func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 	var req RefreshRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		RespondError(w, http.StatusBadRequest, "invalid json payload")
-		return
-	}
-
-	if req.RefreshToken == "" {
-		RespondError(w, http.StatusBadRequest, "refresh_token is required")
+	if errs := DecodeAndValidate(r, &req); len(errs) > 0 {
+		RespondJSON(w, http.StatusBadRequest, map[string]interface{}{"errors": errs})
 		return
 	}
 

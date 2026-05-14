@@ -150,9 +150,9 @@ func (h *UserHandler) AssignRoles(w http.ResponseWriter, r *http.Request) {
 
 // CreateUserRequest es el DTO para crear usuario.
 type CreateUserRequest struct {
-	Username string `json:"username" example:"johndoe"`
-	Password string `json:"password" example:"secret1234"`
-	Email    string `json:"email,omitempty" example:"johndoe@example.com"`
+	Username string `json:"username" validate:"required,min=3,max=50" example:"johndoe"`
+	Password string `json:"password" validate:"required,min=8,max=72" example:"secret1234"`
+	Email    string `json:"email,omitempty" validate:"omitempty,email" example:"johndoe@example.com"`
 }
 
 // GetByID Obtiene un usuario por su ID.
@@ -208,13 +208,8 @@ func (h *UserHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 // @Router       /users [post]
 func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 	var req CreateUserRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		RespondError(w, http.StatusBadRequest, "invalid json payload")
-		return
-	}
-
-	if req.Username == "" || req.Password == "" {
-		RespondError(w, http.StatusBadRequest, "username and password are required")
+	if errs := DecodeAndValidate(r, &req); len(errs) > 0 {
+		RespondJSON(w, http.StatusBadRequest, map[string]interface{}{"errors": errs})
 		return
 	}
 
@@ -233,8 +228,8 @@ func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 
 // UpdateUserRequest es el DTO para actualizar usuario.
 type UpdateUserRequest struct {
-	Username string `json:"username,omitempty" example:"johndoe"`
-	Email    string `json:"email,omitempty" example:"johndoe@example.com"`
+	Username string `json:"username,omitempty" validate:"omitempty,min=3,max=50" example:"johndoe"`
+	Email    string `json:"email,omitempty" validate:"omitempty,email" example:"johndoe@example.com"`
 }
 
 // Update actualiza un usuario existente.
@@ -261,8 +256,8 @@ func (h *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 	}
 
 	var req UpdateUserRequest
-	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
-		RespondError(w, http.StatusBadRequest, "invalid json payload")
+	if errs := DecodeAndValidate(r, &req); len(errs) > 0 {
+		RespondJSON(w, http.StatusBadRequest, map[string]interface{}{"errors": errs})
 		return
 	}
 
