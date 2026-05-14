@@ -251,3 +251,58 @@ func (r *userRepository) Delete(ctx context.Context, id uint) error {
 	}
 	return nil
 }
+
+// SearchUsers busca usuarios por username/email y filtra por nombre de rol.
+// La búsqueda es case-insensitive en username. Si query está vacío, lista todos.
+// Si roleName está vacío, no filtra por rol.
+func (r *userRepository) SearchUsers(ctx context.Context, query, roleName string, page, size int) ([]domain.User, error) {
+	var users []User
+	db := r.db.WithContext(ctx).Preload("Roles.Permissions")
+
+	if query != "" {
+		db = db.Where("username ILIKE ? OR email_hash ILIKE ?", "%"+query+"%", "%"+query+"%")
+	}
+
+	if roleName != "" {
+		db = db.Joins("JOIN user_roles ON user_roles.user_id = users.id").
+			Joins("JOIN roles ON roles.id = user_roles.role_id").
+			Where("roles.name = ?", roleName)
+	}
+
+	offset := (page - 1) * size
+	if err := db.Offset(offset).Limit(size).Find(&users).Error; err != nil {
+		return nil, fmt.Errorf("database search user error: %w", err)
+	}
+
+	var dUsers []domain.User
+	for _, u := range users {
+		dUsers = append(dUsers, *toDomainUser(&u))
+	}
+	return dUsers, nil
+}
+
+// FindAllDeleted retorna todos los usuarios soft-deleted.
+func (r *userRepository) FindAllDeleted(ctx context.Context) ([]domain.User, error) {
+	var users []User
+	if err := r.db.WithContext(ctx).Unscoped().Where("deleted_at IS NOT NULL").Preload("Roles.Permissions").Find(&users).Error; err != nil {
+		return nil, fmt.Errorf("database list deleted users error: %w", err)
+	}
+
+	var dUsers []domain.User
+	for _, u := range users {
+		dUsers = append(dUsers, *toDomainUser(&u))
+	}
+	return dUsers, nil
+}
+
+// Restore recupera un usuario soft-deleted por su ID.
+func (r *userRepository) Restore(ctx context.Context, id uint) error {
+	result := r.db.WithContext(ctx).Unscoped().Model(&User{}).Where("id = ?", id).Update("deleted_at", nil)
+	if result.Error != nil {
+		return fmt.Errorf("repository unable to restore user: %w", result.Error)
+	}
+	if result.RowsAffected == 0 {
+		return domain.ErrUserNotFound
+	}
+	return nil
+}

@@ -4,13 +4,15 @@ package domain
 
 // Permission representa un permiso atómico del sistema (ej: "read:users", "manage:roles").
 type Permission struct {
-	ID   uint
-	Name string
+	ID          uint
+	Name        string
+	Description string
 }
 
 // Role agrupa permisos. Un usuario puede tener múltiples roles.
 type Role struct {
 	ID          uint
 	Name        string
+	Description string
 	Permissions []Permission
 }

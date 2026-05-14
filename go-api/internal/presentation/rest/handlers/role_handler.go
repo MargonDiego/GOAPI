@@ -11,7 +11,8 @@ import (
 
 // RoleCreateRequest es el DTO para crear un rol.
 type RoleCreateRequest struct {
-	Name string `json:"name" validate:"required,min=2,max=50" example:"Editor"`
+	Name        string `json:"name" validate:"required,min=2,max=50" example:"Editor"`
+	Description string `json:"description,omitempty" validate:"omitempty,max=500" example:"Can edit content"`
 }
 
 // AssignPermissionsRequest es el DTO para asignar permisos a un rol.
@@ -21,14 +22,16 @@ type AssignPermissionsRequest struct {
 
 // PermissionResponse es la respuesta de un Permiso.
 type PermissionResponse struct {
-	ID   uint   `json:"id"`
-	Name string `json:"name"`
+	ID          uint   `json:"id"`
+	Name        string `json:"name"`
+	Description string `json:"description,omitempty"`
 }
 
 // RoleResponse es la respuesta de un Rol.
 type RoleResponse struct {
 	ID          uint                 `json:"id"`
 	Name        string               `json:"name"`
+	Description string               `json:"description,omitempty"`
 	Permissions []PermissionResponse `json:"permissions"`
 }
 
@@ -63,7 +66,7 @@ func (h *RoleHandler) CreateRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	role, err := h.roleService.CreateRole(withActor(r), req.Name)
+	role, err := h.roleService.CreateRole(withActor(r), req.Name, req.Description)
 	if err != nil {
 		if errors.Is(err, domain.ErrRoleAlreadyExists) {
 			RespondError(w, http.StatusConflict, err.Error())
@@ -76,16 +79,20 @@ func (h *RoleHandler) CreateRole(w http.ResponseWriter, r *http.Request) {
 	RespondJSON(w, http.StatusCreated, RoleResponse{
 		ID:          role.ID,
 		Name:        role.Name,
+		Description: role.Description,
 		Permissions: []PermissionResponse{},
 	})
 }
 
-// GetRoles lista todos los roles.
+// GetRoles lista todos los roles, con soporte opcional de paginación y búsqueda.
 //
 // @Summary      Listar roles
-// @Description  Obtiene todos los roles con sus permisos asociados
+// @Description  Obtiene roles con sus permisos. Soporta paginación (?page=&size=) y búsqueda (?search=).
 // @Tags         roles
 // @Produce      json
+// @Param        page query int false "Número de página" default(1)
+// @Param        size query int false "Tamaño de página" default(10)
+// @Param        search query string false "Buscar por nombre"
 // @Security     BearerAuth
 // @Success      200 {array} RoleResponse
 // @Failure      401 {object} ErrorResponse
@@ -93,7 +100,21 @@ func (h *RoleHandler) CreateRole(w http.ResponseWriter, r *http.Request) {
 // @Failure      500 {object} ErrorResponse
 // @Router       /roles [get]
 func (h *RoleHandler) GetRoles(w http.ResponseWriter, r *http.Request) {
-	roles, err := h.roleService.GetRoles(r.Context())
+	search := r.URL.Query().Get("search")
+	page := parseQueryInt(r, "page", 0)
+	size := parseQueryInt(r, "size", 0)
+
+	var roles []domain.Role
+	var err error
+
+	if search != "" {
+		roles, err = h.roleService.SearchRoles(r.Context(), search)
+	} else if page > 0 && size > 0 {
+		roles, err = h.roleService.GetRolesPaginated(r.Context(), page, size)
+	} else {
+		roles, err = h.roleService.GetRoles(r.Context())
+	}
+
 	if err != nil {
 		log.Error().Err(err).Msg("failed to get roles")
 		RespondError(w, http.StatusInternalServerError, "failed to get roles")
@@ -105,11 +126,12 @@ func (h *RoleHandler) GetRoles(w http.ResponseWriter, r *http.Request) {
 		// Inicializar como slice vacío para serializar [] en vez de null cuando no hay permisos.
 		perms := make([]PermissionResponse, 0, len(role.Permissions))
 		for _, p := range role.Permissions {
-			perms = append(perms, PermissionResponse{ID: p.ID, Name: p.Name})
+			perms = append(perms, PermissionResponse{ID: p.ID, Name: p.Name, Description: p.Description})
 		}
 		res = append(res, RoleResponse{
 			ID:          role.ID,
 			Name:        role.Name,
+			Description: role.Description,
 			Permissions: perms,
 		})
 	}
@@ -234,13 +256,15 @@ func (h *RoleHandler) GetRoleByID(w http.ResponseWriter, r *http.Request) {
 	RespondJSON(w, http.StatusOK, RoleResponse{
 		ID:          role.ID,
 		Name:        role.Name,
+		Description: role.Description,
 		Permissions: perms,
 	})
 }
 
 // RoleUpdateRequest es el DTO para actualizar un rol.
 type RoleUpdateRequest struct {
-	Name string `json:"name" validate:"required,min=2,max=50" example:"Editor"`
+	Name        string `json:"name" validate:"required,min=2,max=50" example:"Editor"`
+	Description string `json:"description,omitempty" validate:"omitempty,max=500" example:"Can edit content"`
 }
 
 // UpdateRole actualiza un rol existente.
@@ -272,7 +296,7 @@ func (h *RoleHandler) UpdateRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.roleService.UpdateRole(withActor(r), uint(id), req.Name)
+	err = h.roleService.UpdateRole(withActor(r), uint(id), req.Name, req.Description)
 	if err != nil {
 		if errors.Is(err, domain.ErrRoleNotFound) {
 			RespondError(w, http.StatusNotFound, err.Error())
@@ -322,7 +346,8 @@ func (h *RoleHandler) DeleteRole(w http.ResponseWriter, r *http.Request) {
 
 // PermissionCreateRequest es el DTO para crear un permiso.
 type PermissionCreateRequest struct {
-	Name string `json:"name" validate:"required,min=3,max=100" example:"read:posts"`
+	Name        string `json:"name" validate:"required,min=3,max=100" example:"read:posts"`
+	Description string `json:"description,omitempty" validate:"omitempty,max=500" example:"Allows reading posts"`
 }
 
 // CreatePermission crea un nuevo permiso.
@@ -347,7 +372,7 @@ func (h *RoleHandler) CreatePermission(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.roleService.CreatePermission(withActor(r), req.Name)
+	err := h.roleService.CreatePermission(withActor(r), req.Name, req.Description)
 	if err != nil {
 		if errors.Is(err, domain.ErrPermissionAlreadyExists) {
 			RespondError(w, http.StatusConflict, err.Error())
@@ -358,4 +383,76 @@ func (h *RoleHandler) CreatePermission(w http.ResponseWriter, r *http.Request) {
 	}
 
 	RespondJSON(w, http.StatusCreated, MessageResponse{Message: "permission created successfully"})
+}
+
+// GetDeletedRoles lista todos los roles soft-deleted.
+//
+// @Summary      Listar roles eliminados
+// @Description  Obtiene todos los roles que fueron soft-deleted
+// @Tags         roles
+// @Produce      json
+// @Security     BearerAuth
+// @Success      200 {array} RoleResponse
+// @Failure      401 {object} ErrorResponse
+// @Failure      403 {object} ErrorResponse
+// @Failure      500 {object} ErrorResponse
+// @Router       /roles/deleted [get]
+func (h *RoleHandler) GetDeletedRoles(w http.ResponseWriter, r *http.Request) {
+	roles, err := h.roleService.GetDeletedRoles(r.Context())
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get deleted roles")
+		RespondError(w, http.StatusInternalServerError, "failed to get deleted roles")
+		return
+	}
+
+	res := make([]RoleResponse, 0, len(roles))
+	for _, role := range roles {
+		perms := make([]PermissionResponse, 0, len(role.Permissions))
+		for _, p := range role.Permissions {
+			perms = append(perms, PermissionResponse{ID: p.ID, Name: p.Name, Description: p.Description})
+		}
+		res = append(res, RoleResponse{
+			ID:          role.ID,
+			Name:        role.Name,
+			Description: role.Description,
+			Permissions: perms,
+		})
+	}
+
+	RespondJSON(w, http.StatusOK, res)
+}
+
+// RestoreRole recupera un rol soft-deleted.
+//
+// @Summary      Restaurar rol
+// @Description  Recupera un rol que fue soft-deleted
+// @Tags         roles
+// @Produce      json
+// @Param        id path int true "Role ID"
+// @Security     BearerAuth
+// @Success      200 {object} MessageResponse
+// @Failure      400 {object} ErrorResponse
+// @Failure      401 {object} ErrorResponse
+// @Failure      403 {object} ErrorResponse
+// @Failure      404 {object} ErrorResponse
+// @Failure      500 {object} ErrorResponse
+// @Router       /roles/{id}/restore [post]
+func (h *RoleHandler) RestoreRole(w http.ResponseWriter, r *http.Request) {
+	id, err := getIDFromURL(r, "id")
+	if err != nil {
+		RespondError(w, http.StatusBadRequest, "invalid role id")
+		return
+	}
+
+	if err := h.roleService.RestoreRole(withActor(r), uint(id)); err != nil {
+		if errors.Is(err, domain.ErrRoleNotFound) {
+			RespondError(w, http.StatusNotFound, err.Error())
+			return
+		}
+		log.Error().Err(err).Msg("failed to restore role")
+		RespondError(w, http.StatusInternalServerError, "failed to restore role")
+		return
+	}
+
+	RespondJSON(w, http.StatusOK, MessageResponse{Message: "role restored successfully"})
 }

@@ -12,12 +12,24 @@ import (
 // RoleService define el contrato de la capa de aplicación para operaciones sobre roles y permisos.
 // Centraliza la lógica de validación y orquestación, dejando los handlers libres de reglas de negocio.
 type RoleService interface {
-	// CreateRole crea un nuevo rol con el nombre indicado.
+	// CreateRole crea un nuevo rol con el nombre y descripción indicados.
 	// Retorna domain.ErrInvalidInput si el nombre está vacío.
-	CreateRole(ctx context.Context, name string) (*domain.Role, error)
+	CreateRole(ctx context.Context, name, description string) (*domain.Role, error)
 
 	// GetRoles retorna todos los roles del sistema con sus permisos asociados.
 	GetRoles(ctx context.Context) ([]domain.Role, error)
+
+	// GetRolesPaginated retorna una página de roles.
+	GetRolesPaginated(ctx context.Context, page, size int) ([]domain.Role, error)
+
+	// SearchRoles busca roles por nombre (case-insensitive).
+	SearchRoles(ctx context.Context, query string) ([]domain.Role, error)
+
+	// GetDeletedRoles retorna todos los roles soft-deleted.
+	GetDeletedRoles(ctx context.Context) ([]domain.Role, error)
+
+	// RestoreRole recupera un rol soft-deleted.
+	RestoreRole(ctx context.Context, roleID uint) error
 
 	// GetRoleByID retorna un rol por su ID primario.
 	// Retorna domain.ErrRoleNotFound si no existe.
@@ -26,9 +38,15 @@ type RoleService interface {
 	// GetPermissions retorna todos los permisos disponibles en el sistema.
 	GetPermissions(ctx context.Context) ([]domain.Permission, error)
 
-	// CreatePermission crea un nuevo permiso con el nombre indicado (ej: "read:posts").
+	// GetPermissionsPaginated retorna una página de permisos.
+	GetPermissionsPaginated(ctx context.Context, page, size int) ([]domain.Permission, error)
+
+	// CreatePermission crea un nuevo permiso con nombre y descripción.
 	// Retorna domain.ErrInvalidInput si el nombre está vacío.
-	CreatePermission(ctx context.Context, name string) error
+	CreatePermission(ctx context.Context, name, description string) error
+
+	// UpdatePermission actualiza nombre y descripción de un permiso.
+	UpdatePermission(ctx context.Context, permID uint, name, description string) error
 
 	// AssignPermissionsToRole reemplaza completamente los permisos de un rol.
 	// Pasar un slice vacío elimina todos sus permisos.
@@ -36,9 +54,9 @@ type RoleService interface {
 	// domain.ErrInvalidInput si algún permissionID no existe en la base de datos.
 	AssignPermissionsToRole(ctx context.Context, roleID uint, permissionIDs []uint) error
 
-	// UpdateRole actualiza el nombre de un rol existente.
+	// UpdateRole actualiza nombre y descripción de un rol existente.
 	// Retorna domain.ErrRoleNotFound si no existe, domain.ErrInvalidInput si el nombre está vacío.
-	UpdateRole(ctx context.Context, roleID uint, name string) error
+	UpdateRole(ctx context.Context, roleID uint, name, description string) error
 
 	// DeleteRole elimina un rol del sistema.
 	// Retorna domain.ErrRoleNotFound si no existe.
@@ -63,7 +81,7 @@ func NewRoleService(repo domain.RoleRepository, userRepo domain.UserRepository, 
 // CreateRole valida que el nombre no sea vacío y que no exista ya en el sistema
 // antes de persistir el nuevo rol.
 // Retorna domain.ErrRoleAlreadyExists si ya existe un rol con ese nombre.
-func (s *roleService) CreateRole(ctx context.Context, name string) (*domain.Role, error) {
+func (s *roleService) CreateRole(ctx context.Context, name, description string) (*domain.Role, error) {
 	if name == "" {
 		return nil, fmt.Errorf("%w: role name cannot be empty", domain.ErrInvalidInput)
 	}
@@ -74,12 +92,12 @@ func (s *roleService) CreateRole(ctx context.Context, name string) (*domain.Role
 		return nil, fmt.Errorf("%w: %s", domain.ErrRoleAlreadyExists, name)
 	}
 
-	role := &domain.Role{Name: name}
+	role := &domain.Role{Name: name, Description: description}
 	if err := s.repo.Create(ctx, role); err != nil {
 		return nil, fmt.Errorf("failed to create role: %w", err)
 	}
 
-	s.audit.log(ctx, "create_role", "role", role.ID, nil, map[string]any{"name": role.Name})
+	s.audit.log(ctx, "create_role", "role", role.ID, nil, map[string]any{"name": role.Name, "description": description})
 	return role, nil
 }
 
@@ -173,7 +191,7 @@ func (s *roleService) GetRoleByID(ctx context.Context, id uint) (*domain.Role, e
 
 // CreatePermission valida que el nombre no sea vacío y que no exista ya en el sistema.
 // Retorna domain.ErrPermissionAlreadyExists si ya existe un permiso con ese nombre.
-func (s *roleService) CreatePermission(ctx context.Context, name string) error {
+func (s *roleService) CreatePermission(ctx context.Context, name, description string) error {
 	if name == "" {
 		return fmt.Errorf("%w: permission name cannot be empty", domain.ErrInvalidInput)
 	}
@@ -187,7 +205,7 @@ func (s *roleService) CreatePermission(ctx context.Context, name string) error {
 		return fmt.Errorf("%w: %s", domain.ErrPermissionAlreadyExists, name)
 	}
 
-	if err := s.repo.CreatePermission(ctx, name); err != nil {
+	if err := s.repo.CreatePermissionWithDescription(ctx, name, description); err != nil {
 		return fmt.Errorf("failed to create permission: %w", err)
 	}
 
@@ -197,13 +215,13 @@ func (s *roleService) CreatePermission(ctx context.Context, name string) error {
 		return fmt.Errorf("failed to retrieve created permission: %w", err)
 	}
 
-	s.audit.log(ctx, "create_permission", "permission", perm.ID, nil, map[string]any{"name": name})
+	s.audit.log(ctx, "create_permission", "permission", perm.ID, nil, map[string]any{"name": name, "description": description})
 	return nil
 }
 
 // UpdateRole valida el nuevo nombre y reemplaza el campo en la base de datos.
 // No modifica los permisos del rol — usar AssignPermissionsToRole para eso.
-func (s *roleService) UpdateRole(ctx context.Context, roleID uint, name string) error {
+func (s *roleService) UpdateRole(ctx context.Context, roleID uint, name, description string) error {
 	if name == "" {
 		return fmt.Errorf("%w: role name cannot be empty", domain.ErrInvalidInput)
 	}
@@ -213,15 +231,14 @@ func (s *roleService) UpdateRole(ctx context.Context, roleID uint, name string) 
 		return fmt.Errorf("failed to find role: %w", err)
 	}
 
-	oldName := role.Name
+	oldRole := map[string]any{"name": role.Name, "description": role.Description}
 	role.Name = name
+	role.Description = description
 	if err := s.repo.Update(ctx, role); err != nil {
 		return fmt.Errorf("failed to update role: %w", err)
 	}
 
-	s.audit.log(ctx, "update_role", "role", role.ID,
-		map[string]any{"name": oldName},
-		map[string]any{"name": name})
+	s.audit.log(ctx, "update_role", "role", role.ID, oldRole, map[string]any{"name": name, "description": description})
 	return nil
 }
 
@@ -238,5 +255,89 @@ func (s *roleService) DeleteRole(ctx context.Context, roleID uint) error {
 
 	s.audit.log(ctx, "delete_role", "role", roleID,
 		map[string]any{"id": role.ID, "name": role.Name}, nil)
+	return nil
+}
+
+// GetRolesPaginated retorna una página de roles con sus permisos.
+func (s *roleService) GetRolesPaginated(ctx context.Context, page, size int) ([]domain.Role, error) {
+	if page < 1 {
+		page = 1
+	}
+	if size <= 0 || size > 100 {
+		size = 10
+	}
+	roles, err := s.repo.FindAllPaginated(ctx, page, size)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve roles: %w", err)
+	}
+	return roles, nil
+}
+
+// SearchRoles busca roles por nombre (case-insensitive).
+func (s *roleService) SearchRoles(ctx context.Context, query string) ([]domain.Role, error) {
+	if query == "" {
+		return s.GetRoles(ctx)
+	}
+	roles, err := s.repo.SearchByName(ctx, query)
+	if err != nil {
+		return nil, fmt.Errorf("failed to search roles: %w", err)
+	}
+	return roles, nil
+}
+
+// GetDeletedRoles retorna todos los roles soft-deleted.
+func (s *roleService) GetDeletedRoles(ctx context.Context) ([]domain.Role, error) {
+	roles, err := s.repo.FindAllDeleted(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve deleted roles: %w", err)
+	}
+	return roles, nil
+}
+
+// RestoreRole recupera un rol soft-deleted.
+func (s *roleService) RestoreRole(ctx context.Context, roleID uint) error {
+	if err := s.repo.Restore(ctx, roleID); err != nil {
+		return fmt.Errorf("failed to restore role: %w", err)
+	}
+	s.audit.log(ctx, "restore_role", "role", roleID, nil, nil)
+	return nil
+}
+
+// GetPermissionsPaginated retorna una página de permisos.
+func (s *roleService) GetPermissionsPaginated(ctx context.Context, page, size int) ([]domain.Permission, error) {
+	if page < 1 {
+		page = 1
+	}
+	if size <= 0 || size > 100 {
+		size = 10
+	}
+	perms, err := s.repo.FindAllPermissionsPaginated(ctx, page, size)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve permissions: %w", err)
+	}
+	return perms, nil
+}
+
+// UpdatePermission actualiza nombre y descripción de un permiso.
+func (s *roleService) UpdatePermission(ctx context.Context, permID uint, name, description string) error {
+	if name == "" {
+		return fmt.Errorf("%w: permission name cannot be empty", domain.ErrInvalidInput)
+	}
+
+	perm, err := s.repo.FindPermissionByName(ctx, name)
+	if err != nil && !errors.Is(err, domain.ErrPermissionNotFound) {
+		return fmt.Errorf("failed to check permission: %w", err)
+	}
+	if perm != nil && perm.ID != permID {
+		return fmt.Errorf("%w: %s", domain.ErrPermissionAlreadyExists, name)
+	}
+
+	if err := s.repo.UpdatePermission(ctx, &domain.Permission{ID: permID, Name: name, Description: description}); err != nil {
+		return fmt.Errorf("failed to update permission: %w", err)
+	}
+
+	s.audit.log(ctx, "update_permission", "permission", permID,
+		map[string]any{"name": perm.Name, "description": perm.Description},
+		map[string]any{"name": name, "description": description})
 	return nil
 }

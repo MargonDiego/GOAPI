@@ -47,7 +47,7 @@ func TestRoleHandler_CreateRole(t *testing.T) {
 			name:    "Éxito al crear rol",
 			payload: handlers.RoleCreateRequest{Name: "Admin"},
 			setupMock: func(m *mocks.MockRoleService) {
-				m.On("CreateRole", mock.Anything, "Admin").Return(&domain.Role{ID: 1, Name: "Admin"}, nil)
+				m.On("CreateRole", mock.Anything, "Admin", "").Return(&domain.Role{ID: 1, Name: "Admin"}, nil)
 			},
 			expectedStatus: http.StatusCreated,
 			expectedBody:   "Admin",

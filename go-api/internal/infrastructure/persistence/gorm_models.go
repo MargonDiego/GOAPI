@@ -24,12 +24,14 @@ type User struct {
 type Role struct {
 	gorm.Model
 	Name        string       `gorm:"uniqueIndex;not null"`
+	Description string       `gorm:"type:text"`
 	Permissions []Permission `gorm:"many2many:role_permissions;"`
 }
 
 type Permission struct {
 	gorm.Model
-	Name string `gorm:"uniqueIndex;not null"`
+	Name        string `gorm:"uniqueIndex;not null"`
+	Description string `gorm:"type:text"`
 }
 
 type RefreshToken struct {
@@ -74,10 +76,11 @@ func toDomainUser(u *User) *domain.User {
 		dr := domain.Role{
 			ID:          r.ID,
 			Name:        r.Name,
+			Description: r.Description,
 			Permissions: make([]domain.Permission, 0, len(r.Permissions)),
 		}
 		for _, p := range r.Permissions {
-			dr.Permissions = append(dr.Permissions, domain.Permission{ID: p.ID, Name: p.Name})
+			dr.Permissions = append(dr.Permissions, domain.Permission{ID: p.ID, Name: p.Name, Description: p.Description})
 		}
 		du.Roles = append(du.Roles, dr)
 	}
@@ -104,8 +107,9 @@ func toDBUser(du *domain.User) *User {
 
 	for _, r := range du.Roles {
 		u.Roles = append(u.Roles, Role{
-			Model: gorm.Model{ID: r.ID},
-			Name:  r.Name,
+			Model:       gorm.Model{ID: r.ID},
+			Name:        r.Name,
+			Description: r.Description,
 		})
 	}
 	return u

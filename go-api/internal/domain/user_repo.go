@@ -17,6 +17,8 @@ type UserReader interface {
 	FindByID(ctx context.Context, id uint) (*User, error)
 	FindByEmailHash(ctx context.Context, emailHash string) (*User, error)
 	FindAll(ctx context.Context, page, size int) ([]User, error)
+	SearchUsers(ctx context.Context, query string, roleName string, page, size int) ([]User, error)
+	FindAllDeleted(ctx context.Context) ([]User, error)
 
 	// Token version queries
 	GetTokenVersion(ctx context.Context, userID uint) (int, error)
@@ -31,6 +33,7 @@ type UserWriter interface {
 	UpdateRoles(ctx context.Context, userID uint, roles []Role) error
 	IncrementTokenVersion(ctx context.Context, userID uint) (int, error)
 	Delete(ctx context.Context, id uint) error
+	Restore(ctx context.Context, id uint) error
 }
 
 // TokenStore agrupa las operaciones de persistencia de Refresh Tokens.

@@ -116,6 +116,54 @@ func (_c *MockRoleRepository_CreatePermission_Call) RunAndReturn(run func(contex
 	return _c
 }
 
+// CreatePermissionWithDescription provides a mock function with given fields: ctx, name, description
+func (_m *MockRoleRepository) CreatePermissionWithDescription(ctx context.Context, name string, description string) error {
+	ret := _m.Called(ctx, name, description)
+
+	if len(ret) == 0 {
+		panic("no return value specified for CreatePermissionWithDescription")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string) error); ok {
+		r0 = rf(ctx, name, description)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MockRoleRepository_CreatePermissionWithDescription_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'CreatePermissionWithDescription'
+type MockRoleRepository_CreatePermissionWithDescription_Call struct {
+	*mock.Call
+}
+
+// CreatePermissionWithDescription is a helper method to define mock.On call
+//   - ctx context.Context
+//   - name string
+//   - description string
+func (_e *MockRoleRepository_Expecter) CreatePermissionWithDescription(ctx interface{}, name interface{}, description interface{}) *MockRoleRepository_CreatePermissionWithDescription_Call {
+	return &MockRoleRepository_CreatePermissionWithDescription_Call{Call: _e.mock.On("CreatePermissionWithDescription", ctx, name, description)}
+}
+
+func (_c *MockRoleRepository_CreatePermissionWithDescription_Call) Run(run func(ctx context.Context, name string, description string)) *MockRoleRepository_CreatePermissionWithDescription_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(string))
+	})
+	return _c
+}
+
+func (_c *MockRoleRepository_CreatePermissionWithDescription_Call) Return(_a0 error) *MockRoleRepository_CreatePermissionWithDescription_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockRoleRepository_CreatePermissionWithDescription_Call) RunAndReturn(run func(context.Context, string, string) error) *MockRoleRepository_CreatePermissionWithDescription_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Delete provides a mock function with given fields: ctx, id
 func (_m *MockRoleRepository) Delete(ctx context.Context, id uint) error {
 	ret := _m.Called(ctx, id)
@@ -221,6 +269,124 @@ func (_c *MockRoleRepository_FindAll_Call) RunAndReturn(run func(context.Context
 	return _c
 }
 
+// FindAllDeleted provides a mock function with given fields: ctx
+func (_m *MockRoleRepository) FindAllDeleted(ctx context.Context) ([]domain.Role, error) {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FindAllDeleted")
+	}
+
+	var r0 []domain.Role
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) ([]domain.Role, error)); ok {
+		return rf(ctx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) []domain.Role); ok {
+		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]domain.Role)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockRoleRepository_FindAllDeleted_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindAllDeleted'
+type MockRoleRepository_FindAllDeleted_Call struct {
+	*mock.Call
+}
+
+// FindAllDeleted is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *MockRoleRepository_Expecter) FindAllDeleted(ctx interface{}) *MockRoleRepository_FindAllDeleted_Call {
+	return &MockRoleRepository_FindAllDeleted_Call{Call: _e.mock.On("FindAllDeleted", ctx)}
+}
+
+func (_c *MockRoleRepository_FindAllDeleted_Call) Run(run func(ctx context.Context)) *MockRoleRepository_FindAllDeleted_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *MockRoleRepository_FindAllDeleted_Call) Return(_a0 []domain.Role, _a1 error) *MockRoleRepository_FindAllDeleted_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockRoleRepository_FindAllDeleted_Call) RunAndReturn(run func(context.Context) ([]domain.Role, error)) *MockRoleRepository_FindAllDeleted_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// FindAllPaginated provides a mock function with given fields: ctx, page, size
+func (_m *MockRoleRepository) FindAllPaginated(ctx context.Context, page int, size int) ([]domain.Role, error) {
+	ret := _m.Called(ctx, page, size)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FindAllPaginated")
+	}
+
+	var r0 []domain.Role
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, int) ([]domain.Role, error)); ok {
+		return rf(ctx, page, size)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int, int) []domain.Role); ok {
+		r0 = rf(ctx, page, size)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]domain.Role)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, int, int) error); ok {
+		r1 = rf(ctx, page, size)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockRoleRepository_FindAllPaginated_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindAllPaginated'
+type MockRoleRepository_FindAllPaginated_Call struct {
+	*mock.Call
+}
+
+// FindAllPaginated is a helper method to define mock.On call
+//   - ctx context.Context
+//   - page int
+//   - size int
+func (_e *MockRoleRepository_Expecter) FindAllPaginated(ctx interface{}, page interface{}, size interface{}) *MockRoleRepository_FindAllPaginated_Call {
+	return &MockRoleRepository_FindAllPaginated_Call{Call: _e.mock.On("FindAllPaginated", ctx, page, size)}
+}
+
+func (_c *MockRoleRepository_FindAllPaginated_Call) Run(run func(ctx context.Context, page int, size int)) *MockRoleRepository_FindAllPaginated_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(int), args[2].(int))
+	})
+	return _c
+}
+
+func (_c *MockRoleRepository_FindAllPaginated_Call) Return(_a0 []domain.Role, _a1 error) *MockRoleRepository_FindAllPaginated_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockRoleRepository_FindAllPaginated_Call) RunAndReturn(run func(context.Context, int, int) ([]domain.Role, error)) *MockRoleRepository_FindAllPaginated_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // FindAllPermissions provides a mock function with given fields: ctx
 func (_m *MockRoleRepository) FindAllPermissions(ctx context.Context) ([]domain.Permission, error) {
 	ret := _m.Called(ctx)
@@ -275,6 +441,66 @@ func (_c *MockRoleRepository_FindAllPermissions_Call) Return(_a0 []domain.Permis
 }
 
 func (_c *MockRoleRepository_FindAllPermissions_Call) RunAndReturn(run func(context.Context) ([]domain.Permission, error)) *MockRoleRepository_FindAllPermissions_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// FindAllPermissionsPaginated provides a mock function with given fields: ctx, page, size
+func (_m *MockRoleRepository) FindAllPermissionsPaginated(ctx context.Context, page int, size int) ([]domain.Permission, error) {
+	ret := _m.Called(ctx, page, size)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FindAllPermissionsPaginated")
+	}
+
+	var r0 []domain.Permission
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, int, int) ([]domain.Permission, error)); ok {
+		return rf(ctx, page, size)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, int, int) []domain.Permission); ok {
+		r0 = rf(ctx, page, size)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]domain.Permission)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, int, int) error); ok {
+		r1 = rf(ctx, page, size)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockRoleRepository_FindAllPermissionsPaginated_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindAllPermissionsPaginated'
+type MockRoleRepository_FindAllPermissionsPaginated_Call struct {
+	*mock.Call
+}
+
+// FindAllPermissionsPaginated is a helper method to define mock.On call
+//   - ctx context.Context
+//   - page int
+//   - size int
+func (_e *MockRoleRepository_Expecter) FindAllPermissionsPaginated(ctx interface{}, page interface{}, size interface{}) *MockRoleRepository_FindAllPermissionsPaginated_Call {
+	return &MockRoleRepository_FindAllPermissionsPaginated_Call{Call: _e.mock.On("FindAllPermissionsPaginated", ctx, page, size)}
+}
+
+func (_c *MockRoleRepository_FindAllPermissionsPaginated_Call) Run(run func(ctx context.Context, page int, size int)) *MockRoleRepository_FindAllPermissionsPaginated_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(int), args[2].(int))
+	})
+	return _c
+}
+
+func (_c *MockRoleRepository_FindAllPermissionsPaginated_Call) Return(_a0 []domain.Permission, _a1 error) *MockRoleRepository_FindAllPermissionsPaginated_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockRoleRepository_FindAllPermissionsPaginated_Call) RunAndReturn(run func(context.Context, int, int) ([]domain.Permission, error)) *MockRoleRepository_FindAllPermissionsPaginated_Call {
 	_c.Call.Return(run)
 	return _c
 }
@@ -574,6 +800,112 @@ func (_c *MockRoleRepository_FindRolesByIDs_Call) RunAndReturn(run func(context.
 	return _c
 }
 
+// Restore provides a mock function with given fields: ctx, id
+func (_m *MockRoleRepository) Restore(ctx context.Context, id uint) error {
+	ret := _m.Called(ctx, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Restore")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, uint) error); ok {
+		r0 = rf(ctx, id)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MockRoleRepository_Restore_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Restore'
+type MockRoleRepository_Restore_Call struct {
+	*mock.Call
+}
+
+// Restore is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id uint
+func (_e *MockRoleRepository_Expecter) Restore(ctx interface{}, id interface{}) *MockRoleRepository_Restore_Call {
+	return &MockRoleRepository_Restore_Call{Call: _e.mock.On("Restore", ctx, id)}
+}
+
+func (_c *MockRoleRepository_Restore_Call) Run(run func(ctx context.Context, id uint)) *MockRoleRepository_Restore_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(uint))
+	})
+	return _c
+}
+
+func (_c *MockRoleRepository_Restore_Call) Return(_a0 error) *MockRoleRepository_Restore_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockRoleRepository_Restore_Call) RunAndReturn(run func(context.Context, uint) error) *MockRoleRepository_Restore_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// SearchByName provides a mock function with given fields: ctx, query
+func (_m *MockRoleRepository) SearchByName(ctx context.Context, query string) ([]domain.Role, error) {
+	ret := _m.Called(ctx, query)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SearchByName")
+	}
+
+	var r0 []domain.Role
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string) ([]domain.Role, error)); ok {
+		return rf(ctx, query)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string) []domain.Role); ok {
+		r0 = rf(ctx, query)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]domain.Role)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string) error); ok {
+		r1 = rf(ctx, query)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockRoleRepository_SearchByName_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SearchByName'
+type MockRoleRepository_SearchByName_Call struct {
+	*mock.Call
+}
+
+// SearchByName is a helper method to define mock.On call
+//   - ctx context.Context
+//   - query string
+func (_e *MockRoleRepository_Expecter) SearchByName(ctx interface{}, query interface{}) *MockRoleRepository_SearchByName_Call {
+	return &MockRoleRepository_SearchByName_Call{Call: _e.mock.On("SearchByName", ctx, query)}
+}
+
+func (_c *MockRoleRepository_SearchByName_Call) Run(run func(ctx context.Context, query string)) *MockRoleRepository_SearchByName_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string))
+	})
+	return _c
+}
+
+func (_c *MockRoleRepository_SearchByName_Call) Return(_a0 []domain.Role, _a1 error) *MockRoleRepository_SearchByName_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockRoleRepository_SearchByName_Call) RunAndReturn(run func(context.Context, string) ([]domain.Role, error)) *MockRoleRepository_SearchByName_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // Update provides a mock function with given fields: ctx, role
 func (_m *MockRoleRepository) Update(ctx context.Context, role *domain.Role) error {
 	ret := _m.Called(ctx, role)
@@ -617,6 +949,53 @@ func (_c *MockRoleRepository_Update_Call) Return(_a0 error) *MockRoleRepository_
 }
 
 func (_c *MockRoleRepository_Update_Call) RunAndReturn(run func(context.Context, *domain.Role) error) *MockRoleRepository_Update_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// UpdatePermission provides a mock function with given fields: ctx, perm
+func (_m *MockRoleRepository) UpdatePermission(ctx context.Context, perm *domain.Permission) error {
+	ret := _m.Called(ctx, perm)
+
+	if len(ret) == 0 {
+		panic("no return value specified for UpdatePermission")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, *domain.Permission) error); ok {
+		r0 = rf(ctx, perm)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MockRoleRepository_UpdatePermission_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'UpdatePermission'
+type MockRoleRepository_UpdatePermission_Call struct {
+	*mock.Call
+}
+
+// UpdatePermission is a helper method to define mock.On call
+//   - ctx context.Context
+//   - perm *domain.Permission
+func (_e *MockRoleRepository_Expecter) UpdatePermission(ctx interface{}, perm interface{}) *MockRoleRepository_UpdatePermission_Call {
+	return &MockRoleRepository_UpdatePermission_Call{Call: _e.mock.On("UpdatePermission", ctx, perm)}
+}
+
+func (_c *MockRoleRepository_UpdatePermission_Call) Run(run func(ctx context.Context, perm *domain.Permission)) *MockRoleRepository_UpdatePermission_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(*domain.Permission))
+	})
+	return _c
+}
+
+func (_c *MockRoleRepository_UpdatePermission_Call) Return(_a0 error) *MockRoleRepository_UpdatePermission_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockRoleRepository_UpdatePermission_Call) RunAndReturn(run func(context.Context, *domain.Permission) error) *MockRoleRepository_UpdatePermission_Call {
 	_c.Call.Return(run)
 	return _c
 }

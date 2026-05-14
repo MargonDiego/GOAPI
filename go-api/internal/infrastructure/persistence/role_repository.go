@@ -20,7 +20,8 @@ func NewRoleRepository(db *gorm.DB) domain.RoleRepository {
 // Create inserta un nuevo rol en la base de datos y propaga el ID generado al objeto de dominio.
 func (r *roleRepository) Create(ctx context.Context, role *domain.Role) error {
 	dbRole := &Role{
-		Name: role.Name,
+		Name:        role.Name,
+		Description: role.Description,
 	}
 	if err := r.db.WithContext(ctx).Create(dbRole).Error; err != nil {
 		return err
@@ -41,11 +42,12 @@ func (r *roleRepository) FindAll(ctx context.Context) ([]domain.Role, error) {
 	for _, dbRole := range dbRoles {
 		perms := make([]domain.Permission, 0, len(dbRole.Permissions))
 		for _, dbPerm := range dbRole.Permissions {
-			perms = append(perms, domain.Permission{ID: dbPerm.ID, Name: dbPerm.Name})
+			perms = append(perms, domain.Permission{ID: dbPerm.ID, Name: dbPerm.Name, Description: dbPerm.Description})
 		}
 		roles = append(roles, domain.Role{
 			ID:          dbRole.ID,
 			Name:        dbRole.Name,
+			Description: dbRole.Description,
 			Permissions: perms,
 		})
 	}
@@ -71,6 +73,7 @@ func (r *roleRepository) FindByID(ctx context.Context, id uint) (*domain.Role, e
 	return &domain.Role{
 		ID:          dbRole.ID,
 		Name:        dbRole.Name,
+		Description: dbRole.Description,
 		Permissions: perms,
 	}, nil
 }
@@ -83,8 +86,9 @@ func (r *roleRepository) Update(ctx context.Context, role *domain.Role) error {
 		return err
 	}
 
-	// Actualizar el campo de nombre.
+	// Actualizar campos editables.
 	dbRole.Name = role.Name
+	dbRole.Description = role.Description
 
 	// Construir la lista de permisos a asociar (solo ID necesario para la join table).
 	var dbPerms []Permission
@@ -109,7 +113,7 @@ func (r *roleRepository) FindAllPermissions(ctx context.Context) ([]domain.Permi
 
 	perms := make([]domain.Permission, 0, len(dbPerms))
 	for _, dbPerm := range dbPerms {
-		perms = append(perms, domain.Permission{ID: dbPerm.ID, Name: dbPerm.Name})
+		perms = append(perms, domain.Permission{ID: dbPerm.ID, Name: dbPerm.Name, Description: dbPerm.Description})
 	}
 	return perms, nil
 }
@@ -124,7 +128,7 @@ func (r *roleRepository) FindPermissionByName(ctx context.Context, name string) 
 		}
 		return nil, err
 	}
-	return &domain.Permission{ID: dbPerm.ID, Name: dbPerm.Name}, nil
+	return &domain.Permission{ID: dbPerm.ID, Name: dbPerm.Name, Description: dbPerm.Description}, nil
 }
 
 // FindPermissionsByIDs retorna los permisos cuyos IDs están en el slice dado.
@@ -138,7 +142,7 @@ func (r *roleRepository) FindPermissionsByIDs(ctx context.Context, ids []uint) (
 
 	perms := make([]domain.Permission, 0, len(dbPerms))
 	for _, dbPerm := range dbPerms {
-		perms = append(perms, domain.Permission{ID: dbPerm.ID, Name: dbPerm.Name})
+		perms = append(perms, domain.Permission{ID: dbPerm.ID, Name: dbPerm.Name, Description: dbPerm.Description})
 	}
 	return perms, nil
 }
@@ -156,11 +160,12 @@ func (r *roleRepository) FindRolesByIDs(ctx context.Context, ids []uint) ([]doma
 	for _, dbRole := range dbRoles {
 		perms := make([]domain.Permission, 0, len(dbRole.Permissions))
 		for _, dbPerm := range dbRole.Permissions {
-			perms = append(perms, domain.Permission{ID: dbPerm.ID, Name: dbPerm.Name})
+			perms = append(perms, domain.Permission{ID: dbPerm.ID, Name: dbPerm.Name, Description: dbPerm.Description})
 		}
 		roles = append(roles, domain.Role{
 			ID:          dbRole.ID,
 			Name:        dbRole.Name,
+			Description: dbRole.Description,
 			Permissions: perms,
 		})
 	}
@@ -186,6 +191,7 @@ func (r *roleRepository) FindByName(ctx context.Context, name string) (*domain.R
 	return &domain.Role{
 		ID:          dbRole.ID,
 		Name:        dbRole.Name,
+		Description: dbRole.Description,
 		Permissions: perms,
 	}, nil
 }
@@ -207,4 +213,95 @@ func (r *roleRepository) Delete(ctx context.Context, id uint) error {
 // CreatePermission inserta un nuevo permiso con el nombre dado.
 func (r *roleRepository) CreatePermission(ctx context.Context, name string) error {
 	return r.db.WithContext(ctx).Create(&Permission{Name: name}).Error
+}
+
+// CreatePermissionWithDescription inserta un permiso con nombre y descripción.
+func (r *roleRepository) CreatePermissionWithDescription(ctx context.Context, name, description string) error {
+	return r.db.WithContext(ctx).Create(&Permission{Name: name, Description: description}).Error
+}
+
+// UpdatePermission actualiza el nombre y descripción de un permiso existente.
+func (r *roleRepository) UpdatePermission(ctx context.Context, perm *domain.Permission) error {
+	return r.db.WithContext(ctx).Model(&Permission{}).Where("id = ?", perm.ID).Updates(map[string]any{
+		"name":        perm.Name,
+		"description": perm.Description,
+	}).Error
+}
+
+// FindAllPaginated retorna una página de roles con permisos pre-cargados.
+func (r *roleRepository) FindAllPaginated(ctx context.Context, page, size int) ([]domain.Role, error) {
+	var dbRoles []Role
+	offset := (page - 1) * size
+	if err := r.db.WithContext(ctx).Preload("Permissions").Offset(offset).Limit(size).Find(&dbRoles).Error; err != nil {
+		return nil, err
+	}
+	return toDomainRoles(dbRoles), nil
+}
+
+// SearchByName busca roles cuyo nombre contenga la query (case-insensitive).
+func (r *roleRepository) SearchByName(ctx context.Context, query string) ([]domain.Role, error) {
+	var dbRoles []Role
+	if err := r.db.WithContext(ctx).Preload("Permissions").
+		Where("name ILIKE ?", "%"+query+"%").Find(&dbRoles).Error; err != nil {
+		return nil, err
+	}
+	return toDomainRoles(dbRoles), nil
+}
+
+// FindAllDeleted retorna todos los roles soft-deleted (incluyendo deleted_at).
+func (r *roleRepository) FindAllDeleted(ctx context.Context) ([]domain.Role, error) {
+	var dbRoles []Role
+	if err := r.db.WithContext(ctx).Unscoped().Where("deleted_at IS NOT NULL").Find(&dbRoles).Error; err != nil {
+		return nil, err
+	}
+	return toDomainRoles(dbRoles), nil
+}
+
+// Restore recupera un rol soft-deleted por su ID.
+func (r *roleRepository) Restore(ctx context.Context, id uint) error {
+	result := r.db.WithContext(ctx).Unscoped().Model(&Role{}).Where("id = ?", id).Update("deleted_at", nil)
+	if result.Error != nil {
+		return result.Error
+	}
+	if result.RowsAffected == 0 {
+		return domain.ErrRoleNotFound
+	}
+	return nil
+}
+
+// FindAllPermissionsPaginated retorna una página de permisos.
+func (r *roleRepository) FindAllPermissionsPaginated(ctx context.Context, page, size int) ([]domain.Permission, error) {
+	var dbPerms []Permission
+	offset := (page - 1) * size
+	if err := r.db.WithContext(ctx).Offset(offset).Limit(size).Find(&dbPerms).Error; err != nil {
+		return nil, err
+	}
+	return toDomainPermissions(dbPerms), nil
+}
+
+// toDomainRoles convierte un slice de modelos DB a dominio.
+func toDomainRoles(dbRoles []Role) []domain.Role {
+	roles := make([]domain.Role, 0, len(dbRoles))
+	for _, dbRole := range dbRoles {
+		perms := make([]domain.Permission, 0, len(dbRole.Permissions))
+		for _, dbPerm := range dbRole.Permissions {
+			perms = append(perms, domain.Permission{ID: dbPerm.ID, Name: dbPerm.Name, Description: dbPerm.Description})
+		}
+		roles = append(roles, domain.Role{
+			ID:          dbRole.ID,
+			Name:        dbRole.Name,
+			Description: dbRole.Description,
+			Permissions: perms,
+		})
+	}
+	return roles
+}
+
+// toDomainPermissions convierte un slice de permisos DB a dominio.
+func toDomainPermissions(dbPerms []Permission) []domain.Permission {
+	perms := make([]domain.Permission, 0, len(dbPerms))
+	for _, dbPerm := range dbPerms {
+		perms = append(perms, domain.Permission{ID: dbPerm.ID, Name: dbPerm.Name, Description: dbPerm.Description})
+	}
+	return perms
 }

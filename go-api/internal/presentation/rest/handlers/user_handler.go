@@ -58,14 +58,16 @@ func (h *UserHandler) GetMe(w http.ResponseWriter, r *http.Request) {
 	RespondJSON(w, http.StatusOK, toUserResponse(*user))
 }
 
-// GetAll lista todos los usuarios paginados.
+// GetAll lista usuarios paginados, con soporte de búsqueda y filtro por rol.
 //
 // @Summary      Listar usuarios
-// @Description  Retorna la lista paginada de usuarios. Requiere permiso read:users
+// @Description  Retorna la lista paginada de usuarios. Soporta búsqueda (?search=) y filtro por rol (?role=).
 // @Tags         users
 // @Produce      json
 // @Param        page query int false "Número de página" default(1)
 // @Param        size query int false "Tamaño de página" default(10)
+// @Param        search query string false "Buscar por username/email"
+// @Param        role query string false "Filtrar por nombre de rol"
 // @Success      200 {array}  UserResponse
 // @Failure      401 {object} ErrorResponse
 // @Failure      403 {object} ErrorResponse
@@ -75,8 +77,18 @@ func (h *UserHandler) GetMe(w http.ResponseWriter, r *http.Request) {
 func (h *UserHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 	page := parseQueryInt(r, "page", 1)
 	size := parseQueryInt(r, "size", 10)
+	search := r.URL.Query().Get("search")
+	roleName := r.URL.Query().Get("role")
 
-	users, err := h.userService.GetAllUsers(r.Context(), page, size)
+	var users []domain.User
+	var err error
+
+	if search != "" || roleName != "" {
+		users, err = h.userService.SearchUsers(r.Context(), search, roleName, page, size)
+	} else {
+		users, err = h.userService.GetAllUsers(r.Context(), page, size)
+	}
+
 	if err != nil {
 		log.Error().Err(err).Msg("failed to list users")
 		RespondError(w, http.StatusInternalServerError, "failed to list users")
@@ -319,11 +331,74 @@ func toUserResponse(u domain.User) UserResponse {
 	for _, r := range u.Roles {
 		perms := make([]PermissionResponse, 0, len(r.Permissions))
 		for _, p := range r.Permissions {
-			perms = append(perms, PermissionResponse{ID: p.ID, Name: p.Name})
+			perms = append(perms, PermissionResponse{ID: p.ID, Name: p.Name, Description: p.Description})
 		}
-		roles = append(roles, RoleResponse{ID: r.ID, Name: r.Name, Permissions: perms})
+		roles = append(roles, RoleResponse{ID: r.ID, Name: r.Name, Description: r.Description, Permissions: perms})
 	}
 	return UserResponse{ID: u.ID, Username: u.Username, Roles: roles}
+}
+
+// GetDeletedUsers lista todos los usuarios soft-deleted.
+//
+// @Summary      Listar usuarios eliminados
+// @Description  Obtiene todos los usuarios que fueron soft-deleted
+// @Tags         users
+// @Produce      json
+// @Security     BearerAuth
+// @Success      200 {array} UserResponse
+// @Failure      401 {object} ErrorResponse
+// @Failure      403 {object} ErrorResponse
+// @Failure      500 {object} ErrorResponse
+// @Router       /users/deleted [get]
+func (h *UserHandler) GetDeletedUsers(w http.ResponseWriter, r *http.Request) {
+	users, err := h.userService.GetDeletedUsers(r.Context())
+	if err != nil {
+		log.Error().Err(err).Msg("failed to get deleted users")
+		RespondError(w, http.StatusInternalServerError, "failed to get deleted users")
+		return
+	}
+
+	response := make([]UserResponse, 0, len(users))
+	for _, u := range users {
+		response = append(response, toUserResponse(u))
+	}
+
+	RespondJSON(w, http.StatusOK, response)
+}
+
+// RestoreUser recupera un usuario soft-deleted.
+//
+// @Summary      Restaurar usuario
+// @Description  Recupera un usuario que fue soft-deleted
+// @Tags         users
+// @Produce      json
+// @Param        id path int true "User ID"
+// @Security     BearerAuth
+// @Success      200 {object} MessageResponse
+// @Failure      400 {object} ErrorResponse
+// @Failure      401 {object} ErrorResponse
+// @Failure      403 {object} ErrorResponse
+// @Failure      404 {object} ErrorResponse
+// @Failure      500 {object} ErrorResponse
+// @Router       /users/{id}/restore [post]
+func (h *UserHandler) RestoreUser(w http.ResponseWriter, r *http.Request) {
+	id, err := getIDFromURL(r, "id")
+	if err != nil {
+		RespondError(w, http.StatusBadRequest, "invalid user id")
+		return
+	}
+
+	if err := h.userService.RestoreUser(withActor(r), uint(id)); err != nil {
+		if errors.Is(err, domain.ErrUserNotFound) {
+			RespondError(w, http.StatusNotFound, err.Error())
+			return
+		}
+		log.Error().Err(err).Msg("failed to restore user")
+		RespondError(w, http.StatusInternalServerError, "failed to restore user")
+		return
+	}
+
+	RespondJSON(w, http.StatusOK, MessageResponse{Message: "user restored successfully"})
 }
 
 // parseQueryInt abstrae el casteo y previene silent failures con fallbacks seguros.

@@ -49,11 +49,13 @@ func NewRouter(
 	// Lectura
 	usersRoute.Handle("", authMw.RequirePermission("read:users")(http.HandlerFunc(userHandler.GetAll))).Methods("GET")
 	usersRoute.Handle("/{id}", authMw.RequirePermission("read:users")(http.HandlerFunc(userHandler.GetByID))).Methods("GET")
+	usersRoute.Handle("/deleted", authMw.RequirePermission("manage:users")(http.HandlerFunc(userHandler.GetDeletedUsers))).Methods("GET")
 	// Creación
 	usersRoute.Handle("", authMw.RequirePermission("manage:users")(http.HandlerFunc(userHandler.Create))).Methods("POST")
 	// Modificación
 	usersRoute.Handle("/{id}", authMw.RequirePermission("manage:users")(http.HandlerFunc(userHandler.Update))).Methods("PUT")
 	usersRoute.Handle("/{id}", authMw.RequirePermission("manage:users")(http.HandlerFunc(userHandler.Delete))).Methods("DELETE")
+	usersRoute.Handle("/{id}/restore", authMw.RequirePermission("manage:users")(http.HandlerFunc(userHandler.RestoreUser))).Methods("POST")
 	usersRoute.Handle("/{id}/roles", authMw.RequirePermission("manage:roles")(http.HandlerFunc(userHandler.AssignRoles))).Methods("PUT")
 
 	// Rutas de Roles
@@ -61,9 +63,11 @@ func NewRouter(
 	rolesRoute.Use(authMw.RequirePermission("manage:roles"))
 	rolesRoute.HandleFunc("", roleHandler.CreateRole).Methods("POST")
 	rolesRoute.HandleFunc("", roleHandler.GetRoles).Methods("GET")
+	rolesRoute.HandleFunc("/deleted", roleHandler.GetDeletedRoles).Methods("GET")
 	rolesRoute.HandleFunc("/{id}", roleHandler.GetRoleByID).Methods("GET")
 	rolesRoute.HandleFunc("/{id}", roleHandler.UpdateRole).Methods("PUT")
 	rolesRoute.HandleFunc("/{id}", roleHandler.DeleteRole).Methods("DELETE")
+	rolesRoute.HandleFunc("/{id}/restore", roleHandler.RestoreRole).Methods("POST")
 	rolesRoute.HandleFunc("/{id}/permissions", roleHandler.AssignPermissions).Methods("PUT")
 
 	// Rutas de Permisos

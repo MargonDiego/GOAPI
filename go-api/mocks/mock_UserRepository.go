@@ -270,6 +270,64 @@ func (_c *MockUserRepository_FindAll_Call) RunAndReturn(run func(context.Context
 	return _c
 }
 
+// FindAllDeleted provides a mock function with given fields: ctx
+func (_m *MockUserRepository) FindAllDeleted(ctx context.Context) ([]domain.User, error) {
+	ret := _m.Called(ctx)
+
+	if len(ret) == 0 {
+		panic("no return value specified for FindAllDeleted")
+	}
+
+	var r0 []domain.User
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context) ([]domain.User, error)); ok {
+		return rf(ctx)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context) []domain.User); ok {
+		r0 = rf(ctx)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]domain.User)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context) error); ok {
+		r1 = rf(ctx)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockUserRepository_FindAllDeleted_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'FindAllDeleted'
+type MockUserRepository_FindAllDeleted_Call struct {
+	*mock.Call
+}
+
+// FindAllDeleted is a helper method to define mock.On call
+//   - ctx context.Context
+func (_e *MockUserRepository_Expecter) FindAllDeleted(ctx interface{}) *MockUserRepository_FindAllDeleted_Call {
+	return &MockUserRepository_FindAllDeleted_Call{Call: _e.mock.On("FindAllDeleted", ctx)}
+}
+
+func (_c *MockUserRepository_FindAllDeleted_Call) Run(run func(ctx context.Context)) *MockUserRepository_FindAllDeleted_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context))
+	})
+	return _c
+}
+
+func (_c *MockUserRepository_FindAllDeleted_Call) Return(_a0 []domain.User, _a1 error) *MockUserRepository_FindAllDeleted_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockUserRepository_FindAllDeleted_Call) RunAndReturn(run func(context.Context) ([]domain.User, error)) *MockUserRepository_FindAllDeleted_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // FindByEmailHash provides a mock function with given fields: ctx, emailHash
 func (_m *MockUserRepository) FindByEmailHash(ctx context.Context, emailHash string) (*domain.User, error) {
 	ret := _m.Called(ctx, emailHash)
@@ -679,6 +737,53 @@ func (_c *MockUserRepository_IncrementTokenVersion_Call) RunAndReturn(run func(c
 	return _c
 }
 
+// Restore provides a mock function with given fields: ctx, id
+func (_m *MockUserRepository) Restore(ctx context.Context, id uint) error {
+	ret := _m.Called(ctx, id)
+
+	if len(ret) == 0 {
+		panic("no return value specified for Restore")
+	}
+
+	var r0 error
+	if rf, ok := ret.Get(0).(func(context.Context, uint) error); ok {
+		r0 = rf(ctx, id)
+	} else {
+		r0 = ret.Error(0)
+	}
+
+	return r0
+}
+
+// MockUserRepository_Restore_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'Restore'
+type MockUserRepository_Restore_Call struct {
+	*mock.Call
+}
+
+// Restore is a helper method to define mock.On call
+//   - ctx context.Context
+//   - id uint
+func (_e *MockUserRepository_Expecter) Restore(ctx interface{}, id interface{}) *MockUserRepository_Restore_Call {
+	return &MockUserRepository_Restore_Call{Call: _e.mock.On("Restore", ctx, id)}
+}
+
+func (_c *MockUserRepository_Restore_Call) Run(run func(ctx context.Context, id uint)) *MockUserRepository_Restore_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(uint))
+	})
+	return _c
+}
+
+func (_c *MockUserRepository_Restore_Call) Return(_a0 error) *MockUserRepository_Restore_Call {
+	_c.Call.Return(_a0)
+	return _c
+}
+
+func (_c *MockUserRepository_Restore_Call) RunAndReturn(run func(context.Context, uint) error) *MockUserRepository_Restore_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
 // SaveRefreshToken provides a mock function with given fields: ctx, rt
 func (_m *MockUserRepository) SaveRefreshToken(ctx context.Context, rt *domain.RefreshToken) error {
 	ret := _m.Called(ctx, rt)
@@ -722,6 +827,68 @@ func (_c *MockUserRepository_SaveRefreshToken_Call) Return(_a0 error) *MockUserR
 }
 
 func (_c *MockUserRepository_SaveRefreshToken_Call) RunAndReturn(run func(context.Context, *domain.RefreshToken) error) *MockUserRepository_SaveRefreshToken_Call {
+	_c.Call.Return(run)
+	return _c
+}
+
+// SearchUsers provides a mock function with given fields: ctx, query, roleName, page, size
+func (_m *MockUserRepository) SearchUsers(ctx context.Context, query string, roleName string, page int, size int) ([]domain.User, error) {
+	ret := _m.Called(ctx, query, roleName, page, size)
+
+	if len(ret) == 0 {
+		panic("no return value specified for SearchUsers")
+	}
+
+	var r0 []domain.User
+	var r1 error
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, int, int) ([]domain.User, error)); ok {
+		return rf(ctx, query, roleName, page, size)
+	}
+	if rf, ok := ret.Get(0).(func(context.Context, string, string, int, int) []domain.User); ok {
+		r0 = rf(ctx, query, roleName, page, size)
+	} else {
+		if ret.Get(0) != nil {
+			r0 = ret.Get(0).([]domain.User)
+		}
+	}
+
+	if rf, ok := ret.Get(1).(func(context.Context, string, string, int, int) error); ok {
+		r1 = rf(ctx, query, roleName, page, size)
+	} else {
+		r1 = ret.Error(1)
+	}
+
+	return r0, r1
+}
+
+// MockUserRepository_SearchUsers_Call is a *mock.Call that shadows Run/Return methods with type explicit version for method 'SearchUsers'
+type MockUserRepository_SearchUsers_Call struct {
+	*mock.Call
+}
+
+// SearchUsers is a helper method to define mock.On call
+//   - ctx context.Context
+//   - query string
+//   - roleName string
+//   - page int
+//   - size int
+func (_e *MockUserRepository_Expecter) SearchUsers(ctx interface{}, query interface{}, roleName interface{}, page interface{}, size interface{}) *MockUserRepository_SearchUsers_Call {
+	return &MockUserRepository_SearchUsers_Call{Call: _e.mock.On("SearchUsers", ctx, query, roleName, page, size)}
+}
+
+func (_c *MockUserRepository_SearchUsers_Call) Run(run func(ctx context.Context, query string, roleName string, page int, size int)) *MockUserRepository_SearchUsers_Call {
+	_c.Call.Run(func(args mock.Arguments) {
+		run(args[0].(context.Context), args[1].(string), args[2].(string), args[3].(int), args[4].(int))
+	})
+	return _c
+}
+
+func (_c *MockUserRepository_SearchUsers_Call) Return(_a0 []domain.User, _a1 error) *MockUserRepository_SearchUsers_Call {
+	_c.Call.Return(_a0, _a1)
+	return _c
+}
+
+func (_c *MockUserRepository_SearchUsers_Call) RunAndReturn(run func(context.Context, string, string, int, int) ([]domain.User, error)) *MockUserRepository_SearchUsers_Call {
 	_c.Call.Return(run)
 	return _c
 }

@@ -42,6 +42,17 @@ type UserService interface {
 	// Retorna domain.ErrUserNotFound si el usuario no existe.
 	DeleteUser(ctx context.Context, userID uint) error
 
+	// SearchUsers busca usuarios por username/email y filtra por rol.
+	// query: búsqueda por username o email (case-insensitive). Vacío = todos.
+	// roleName: filtra por nombre de rol. Vacío = sin filtro.
+	SearchUsers(ctx context.Context, query, roleName string, page, size int) ([]domain.User, error)
+
+	// GetDeletedUsers retorna todos los usuarios soft-deleted.
+	GetDeletedUsers(ctx context.Context) ([]domain.User, error)
+
+	// RestoreUser recupera un usuario soft-deleted.
+	RestoreUser(ctx context.Context, userID uint) error
+
 	// AssignRolesToUser reemplaza completamente los roles de un usuario.
 	// Pasar un slice vacío elimina todos sus roles.
 	// Retorna domain.ErrInvalidInput si algún roleID no existe en la base de datos.
@@ -274,5 +285,38 @@ func (s *userService) DeleteUser(ctx context.Context, userID uint) error {
 
 	s.audit.log(ctx, "delete_user", "user", userID,
 		map[string]any{"id": user.ID, "username": user.Username}, nil)
+	return nil
+}
+
+// SearchUsers busca usuarios por username/email y filtra por rol.
+func (s *userService) SearchUsers(ctx context.Context, query, roleName string, page, size int) ([]domain.User, error) {
+	if page < 1 {
+		page = 1
+	}
+	if size <= 0 || size > 100 {
+		size = 10
+	}
+	users, err := s.repo.SearchUsers(ctx, query, roleName, page, size)
+	if err != nil {
+		return nil, fmt.Errorf("failed to search users: %w", err)
+	}
+	return users, nil
+}
+
+// GetDeletedUsers retorna todos los usuarios soft-deleted.
+func (s *userService) GetDeletedUsers(ctx context.Context) ([]domain.User, error) {
+	users, err := s.repo.FindAllDeleted(ctx)
+	if err != nil {
+		return nil, fmt.Errorf("failed to retrieve deleted users: %w", err)
+	}
+	return users, nil
+}
+
+// RestoreUser recupera un usuario soft-deleted.
+func (s *userService) RestoreUser(ctx context.Context, userID uint) error {
+	if err := s.repo.Restore(ctx, userID); err != nil {
+		return fmt.Errorf("failed to restore user: %w", err)
+	}
+	s.audit.log(ctx, "restore_user", "user", userID, nil, nil)
 	return nil
 }

@@ -94,6 +94,53 @@ func (m *mockRoleRepository) CreatePermission(ctx context.Context, name string) 
 	return args.Error(0)
 }
 
+func (m *mockRoleRepository) CreatePermissionWithDescription(ctx context.Context, name, description string) error {
+	args := m.Called(ctx, name, description)
+	return args.Error(0)
+}
+
+func (m *mockRoleRepository) UpdatePermission(ctx context.Context, perm *domain.Permission) error {
+	args := m.Called(ctx, perm)
+	return args.Error(0)
+}
+
+func (m *mockRoleRepository) FindAllPaginated(ctx context.Context, page, size int) ([]domain.Role, error) {
+	args := m.Called(ctx, page, size)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]domain.Role), args.Error(1)
+}
+
+func (m *mockRoleRepository) SearchByName(ctx context.Context, query string) ([]domain.Role, error) {
+	args := m.Called(ctx, query)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]domain.Role), args.Error(1)
+}
+
+func (m *mockRoleRepository) FindAllDeleted(ctx context.Context) ([]domain.Role, error) {
+	args := m.Called(ctx)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]domain.Role), args.Error(1)
+}
+
+func (m *mockRoleRepository) Restore(ctx context.Context, id uint) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *mockRoleRepository) FindAllPermissionsPaginated(ctx context.Context, page, size int) ([]domain.Permission, error) {
+	args := m.Called(ctx, page, size)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]domain.Permission), args.Error(1)
+}
+
 func TestRoleService_CreateRole(t *testing.T) {
 	t.Parallel()
 
@@ -169,7 +216,7 @@ func TestRoleService_CreateRole(t *testing.T) {
 			ctx := context.Background()
 
 			// Act
-			got, err := service.CreateRole(ctx, tt.roleName)
+			got, err := service.CreateRole(ctx, tt.roleName, "")
 
 			// Assert
 			if tt.expectedError != nil {
@@ -204,7 +251,7 @@ func TestRoleService_CreatePermission(t *testing.T) {
 			setupMock: func(m *mockRoleRepository) {
 				// FindPermissionByName retorna ErrPermissionNotFound cuando el permiso no existe.
 				m.On("FindPermissionByName", mock.Anything, "read:users").Return(nil, domain.ErrPermissionNotFound).Once()
-				m.On("CreatePermission", mock.Anything, "read:users").Return(nil)
+				m.On("CreatePermissionWithDescription", mock.Anything, "read:users", "").Return(nil)
 				m.On("FindPermissionByName", mock.Anything, "read:users").Return(&domain.Permission{ID: 1, Name: "read:users"}, nil).Once()
 			},
 			expectedError: nil,
@@ -241,7 +288,7 @@ func TestRoleService_CreatePermission(t *testing.T) {
 			service := application.NewRoleService(mockRepo, nil, nil, nil)
 			ctx := context.Background()
 
-			err := service.CreatePermission(ctx, tt.permName)
+			err := service.CreatePermission(ctx, tt.permName, "")
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)
@@ -362,7 +409,7 @@ func TestRoleService_UpdateRole(t *testing.T) {
 			service := application.NewRoleService(mockRepo, nil, nil, nil)
 			ctx := context.Background()
 
-			err := service.UpdateRole(ctx, tt.roleID, tt.newName)
+			err := service.UpdateRole(ctx, tt.roleID, tt.newName, "")
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)
