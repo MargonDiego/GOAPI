@@ -35,10 +35,12 @@ func NewRouter(
 	r.Handle("/api/v1/register", authLimiter.Middleware(http.HandlerFunc(authHandler.Register))).Methods("POST")
 	r.Handle("/api/v1/login", authLimiter.Middleware(http.HandlerFunc(authHandler.Login))).Methods("POST")
 	r.Handle("/api/v1/refresh", authLimiter.Middleware(http.HandlerFunc(authHandler.Refresh))).Methods("POST")
-	r.Handle("/api/v1/logout", authLimiter.Middleware(http.HandlerFunc(authHandler.Logout))).Methods("POST")
 
 	api := r.PathPrefix("/api/v1").Subrouter()
 	api.Use(authMw.RequireAuth())
+
+	// Logout requiere autenticación (necesita userID del contexto) + rate limiting
+	api.Handle("/logout", authLimiter.Middleware(http.HandlerFunc(authHandler.Logout))).Methods("POST")
 
 	api.HandleFunc("/me", userHandler.GetMe).Methods("GET")
 

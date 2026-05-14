@@ -164,6 +164,7 @@ func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 // @Success      200 {object} MessageResponse
 // @Failure      401 {object} ErrorResponse
 // @Failure      500 {object} ErrorResponse
+// @Security     BearerAuth
 // @Router       /logout [post]
 func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	userID, ok := middleware.GetUserIDFromContext(r.Context())

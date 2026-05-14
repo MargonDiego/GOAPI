@@ -75,6 +75,11 @@ const docTemplate = `{
         },
         "/logout": {
             "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
                 "description": "Invalida todos los refresh tokens del usuario",
                 "consumes": [
                     "application/json"
