@@ -200,8 +200,9 @@ func (s *userService) CreateUser(ctx context.Context, username, password, email 
 }
 
 // UpdateUser aplica un patch sobre username y/o email de un usuario existente.
-// Si se provee email, se verifica unicidad contra otros usuarios y se re-cifra con AES-256-GCM.
-// Internamente llama a repo.Save que detecta el ID > 0 y ejecuta un UPDATE (no INSERT).
+// Los campos vacíos se ignoran. Si se provee email, se verifica unicidad y se re-cifra.
+// Retorna domain.ErrUserNotFound si el usuario no existe,
+// domain.ErrEmailAlreadyExists si el email ya pertenece a otro usuario.
 func (s *userService) UpdateUser(ctx context.Context, userID uint, username, email string) error {
 	user, err := s.repo.FindByID(ctx, userID)
 	if err != nil {

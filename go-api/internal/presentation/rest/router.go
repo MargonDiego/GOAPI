@@ -42,7 +42,7 @@ func NewRouter(
 
 	api.HandleFunc("/me", userHandler.GetMe).Methods("GET")
 
-	// Users routes
+	// Rutas de Usuarios
 	usersRoute := api.PathPrefix("/users").Subrouter()
 	// Lectura
 	usersRoute.Handle("", authMw.RequirePermission("read:users")(http.HandlerFunc(userHandler.GetAll))).Methods("GET")
@@ -54,7 +54,7 @@ func NewRouter(
 	usersRoute.Handle("/{id}", authMw.RequirePermission("manage:users")(http.HandlerFunc(userHandler.Delete))).Methods("DELETE")
 	usersRoute.Handle("/{id}/roles", authMw.RequirePermission("manage:roles")(http.HandlerFunc(userHandler.AssignRoles))).Methods("PUT")
 
-	// Roles routes
+	// Rutas de Roles
 	rolesRoute := api.PathPrefix("/roles").Subrouter()
 	rolesRoute.Use(authMw.RequirePermission("manage:roles"))
 	rolesRoute.HandleFunc("", roleHandler.CreateRole).Methods("POST")
@@ -64,7 +64,7 @@ func NewRouter(
 	rolesRoute.HandleFunc("/{id}", roleHandler.DeleteRole).Methods("DELETE")
 	rolesRoute.HandleFunc("/{id}/permissions", roleHandler.AssignPermissions).Methods("PUT")
 
-	// Permissions routes
+	// Rutas de Permisos
 	permsRoute := api.PathPrefix("/permissions").Subrouter()
 	permsRoute.Use(authMw.RequirePermission("manage:roles"))
 	permsRoute.HandleFunc("", roleHandler.GetPermissions).Methods("GET")
