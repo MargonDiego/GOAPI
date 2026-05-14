@@ -63,7 +63,7 @@ func (h *RoleHandler) CreateRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	role, err := h.roleService.CreateRole(r.Context(), req.Name)
+	role, err := h.roleService.CreateRole(withActor(r), req.Name)
 	if err != nil {
 		if errors.Is(err, domain.ErrRoleAlreadyExists) {
 			RespondError(w, http.StatusConflict, err.Error())
@@ -175,7 +175,7 @@ func (h *RoleHandler) AssignPermissions(w http.ResponseWriter, r *http.Request) 
 		return
 	}
 
-	if err := h.roleService.AssignPermissionsToRole(r.Context(), uint(roleID), req.PermissionIDs); err != nil {
+	if err := h.roleService.AssignPermissionsToRole(withActor(r), uint(roleID), req.PermissionIDs); err != nil {
 		if errors.Is(err, domain.ErrRoleNotFound) {
 			RespondError(w, http.StatusNotFound, err.Error())
 			return
@@ -272,7 +272,7 @@ func (h *RoleHandler) UpdateRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.roleService.UpdateRole(r.Context(), uint(id), req.Name)
+	err = h.roleService.UpdateRole(withActor(r), uint(id), req.Name)
 	if err != nil {
 		if errors.Is(err, domain.ErrRoleNotFound) {
 			RespondError(w, http.StatusNotFound, err.Error())
@@ -306,7 +306,7 @@ func (h *RoleHandler) DeleteRole(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.roleService.DeleteRole(r.Context(), uint(id))
+	err = h.roleService.DeleteRole(withActor(r), uint(id))
 	if err != nil {
 		if errors.Is(err, domain.ErrRoleNotFound) {
 			RespondError(w, http.StatusNotFound, err.Error())
@@ -347,7 +347,7 @@ func (h *RoleHandler) CreatePermission(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.roleService.CreatePermission(r.Context(), req.Name)
+	err := h.roleService.CreatePermission(withActor(r), req.Name)
 	if err != nil {
 		if errors.Is(err, domain.ErrPermissionAlreadyExists) {
 			RespondError(w, http.StatusConflict, err.Error())

@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"context"
 	"encoding/json"
 	"errors"
 	"fmt"
@@ -8,6 +9,8 @@ import (
 	"strconv"
 	"strings"
 
+	"github.com/diego/go-api/internal/application"
+	"github.com/diego/go-api/internal/presentation/rest/middleware"
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
 )
@@ -81,4 +84,13 @@ func getIDFromURL(r *http.Request, param string) (int, error) {
 		return 0, fmt.Errorf("%s must be a positive integer, got %d", param, id)
 	}
 	return id, nil
+}
+
+// withActor extrae el userID de la sesión JWT y lo inyecta en el contexto
+// para que los servicios puedan registrar auditoría. Si no hay sesión, retorna el contexto original.
+func withActor(r *http.Request) context.Context {
+	if session, ok := middleware.GetSessionFromContext(r.Context()); ok {
+		return application.WithActor(r.Context(), session.UserID)
+	}
+	return r.Context()
 }

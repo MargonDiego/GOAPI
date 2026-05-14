@@ -63,7 +63,7 @@ func TestUserService_GetUserByUsername(t *testing.T) {
 
 			tt.setupMock(mockUserRepo)
 
-			service := application.NewUserService(mockUserRepo, mockRoleRepo, enc, nil)
+			service := application.NewUserService(mockUserRepo, mockRoleRepo, enc, nil, nil)
 			ctx := context.Background()
 
 			user, err := service.GetUserByUsername(ctx, tt.username)
@@ -137,7 +137,7 @@ func TestUserService_GetAllUsers(t *testing.T) {
 			mockRoleRepo := mocks.NewMockRoleRepository(t)
 			enc := setupTestEncryptorForUserService(t)
 
-			service := application.NewUserService(mockUserRepo, mockRoleRepo, enc, nil)
+			service := application.NewUserService(mockUserRepo, mockRoleRepo, enc, nil, nil)
 			ctx := context.Background()
 
 			users, err := service.GetAllUsers(ctx, tt.page, tt.size)
@@ -236,7 +236,7 @@ func TestUserService_AssignRolesToUser(t *testing.T) {
 			tt.setupUserMock(mockUserRepo)
 			tt.setupRoleMock(mockRoleRepo)
 
-			service := application.NewUserService(mockUserRepo, mockRoleRepo, enc, nil)
+			service := application.NewUserService(mockUserRepo, mockRoleRepo, enc, nil, nil)
 			ctx := context.Background()
 
 			err := service.AssignRolesToUser(ctx, tt.userID, tt.roleIDs)
@@ -297,7 +297,7 @@ func TestUserService_GetUserByID(t *testing.T) {
 
 			tt.setupMock(mockUserRepo)
 
-			service := application.NewUserService(mockUserRepo, mockRoleRepo, enc, nil)
+			service := application.NewUserService(mockUserRepo, mockRoleRepo, enc, nil, nil)
 			ctx := context.Background()
 
 			user, err := service.GetUserByID(ctx, tt.userID)
@@ -362,7 +362,7 @@ func TestUserService_CreateUser(t *testing.T) {
 
 			tt.setupMock(mockUserRepo, mockRoleRepo)
 
-			service := application.NewUserService(mockUserRepo, mockRoleRepo, enc, nil)
+			service := application.NewUserService(mockUserRepo, mockRoleRepo, enc, nil, nil)
 			ctx := context.Background()
 
 			err := service.CreateUser(ctx, tt.username, tt.password, tt.email)
@@ -419,7 +419,7 @@ func TestUserService_UpdateUser(t *testing.T) {
 
 			tt.setupMock(mockUserRepo)
 
-			service := application.NewUserService(mockUserRepo, mockRoleRepo, enc, nil)
+			service := application.NewUserService(mockUserRepo, mockRoleRepo, enc, nil, nil)
 			ctx := context.Background()
 
 			err := service.UpdateUser(ctx, tt.userID, tt.newUsername, "")
@@ -447,6 +447,7 @@ func TestUserService_DeleteUser(t *testing.T) {
 			name:    "Usuario eliminado",
 			userID:  1,
 			setupMock: func(m *mocks.MockUserRepository) {
+				m.On("FindByID", mock.Anything, uint(1)).Return(&domain.User{ID: 1, Username: "john"}, nil)
 				m.On("Delete", mock.Anything, uint(1)).Return(nil)
 			},
 			expectedError: nil,
@@ -455,6 +456,7 @@ func TestUserService_DeleteUser(t *testing.T) {
 			name:    "Error al eliminar",
 			userID:  1,
 			setupMock: func(m *mocks.MockUserRepository) {
+				m.On("FindByID", mock.Anything, uint(1)).Return(&domain.User{ID: 1, Username: "john"}, nil)
 				m.On("Delete", mock.Anything, uint(1)).Return(errors.New("db error"))
 			},
 			expectedError: errors.New("db error"),
@@ -472,7 +474,7 @@ func TestUserService_DeleteUser(t *testing.T) {
 
 			tt.setupMock(mockUserRepo)
 
-			service := application.NewUserService(mockUserRepo, mockRoleRepo, enc, nil)
+			service := application.NewUserService(mockUserRepo, mockRoleRepo, enc, nil, nil)
 			ctx := context.Background()
 
 			err := service.DeleteUser(ctx, tt.userID)

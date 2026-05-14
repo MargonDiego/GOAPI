@@ -40,6 +40,20 @@ type RefreshToken struct {
 	CreatedAt time.Time
 }
 
+// AuditLog registra cambios críticos en el sistema para trazabilidad forense.
+type AuditLog struct {
+	ID         uint      `gorm:"primarykey"`
+	Action     string    `gorm:"not null;index"`
+	ActorID    uint      `gorm:"not null;index"`
+	TargetType string    `gorm:"not null"`
+	TargetID   uint      `gorm:"not null"`
+	OldValue   string    `gorm:"type:text"`
+	NewValue   string    `gorm:"type:text"`
+	IPAddress  string
+	UserAgent  string
+	CreatedAt  time.Time
+}
+
 func toDomainUser(u *User) *domain.User {
 	if u == nil {
 		return nil

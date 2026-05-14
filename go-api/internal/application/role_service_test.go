@@ -165,7 +165,7 @@ func TestRoleService_CreateRole(t *testing.T) {
 			mockRepo := new(mockRoleRepository)
 			tt.setupMock(mockRepo)
 
-			service := application.NewRoleService(mockRepo, nil, nil)
+			service := application.NewRoleService(mockRepo, nil, nil, nil)
 			ctx := context.Background()
 
 			// Act
@@ -203,8 +203,9 @@ func TestRoleService_CreatePermission(t *testing.T) {
 			permName: "read:users",
 			setupMock: func(m *mockRoleRepository) {
 				// FindPermissionByName retorna ErrPermissionNotFound cuando el permiso no existe.
-				m.On("FindPermissionByName", mock.Anything, "read:users").Return(nil, domain.ErrPermissionNotFound)
+				m.On("FindPermissionByName", mock.Anything, "read:users").Return(nil, domain.ErrPermissionNotFound).Once()
 				m.On("CreatePermission", mock.Anything, "read:users").Return(nil)
+				m.On("FindPermissionByName", mock.Anything, "read:users").Return(&domain.Permission{ID: 1, Name: "read:users"}, nil).Once()
 			},
 			expectedError: nil,
 		},
@@ -237,7 +238,7 @@ func TestRoleService_CreatePermission(t *testing.T) {
 			mockRepo := new(mockRoleRepository)
 			tt.setupMock(mockRepo)
 
-			service := application.NewRoleService(mockRepo, nil, nil)
+			service := application.NewRoleService(mockRepo, nil, nil, nil)
 			ctx := context.Background()
 
 			err := service.CreatePermission(ctx, tt.permName)
@@ -291,7 +292,7 @@ func TestRoleService_GetRoleByID(t *testing.T) {
 			mockRepo := new(mockRoleRepository)
 			tt.setupMock(mockRepo)
 
-			service := application.NewRoleService(mockRepo, nil, nil)
+			service := application.NewRoleService(mockRepo, nil, nil, nil)
 			ctx := context.Background()
 
 			role, err := service.GetRoleByID(ctx, tt.roleID)
@@ -358,7 +359,7 @@ func TestRoleService_UpdateRole(t *testing.T) {
 			mockRepo := new(mockRoleRepository)
 			tt.setupMock(mockRepo)
 
-			service := application.NewRoleService(mockRepo, nil, nil)
+			service := application.NewRoleService(mockRepo, nil, nil, nil)
 			ctx := context.Background()
 
 			err := service.UpdateRole(ctx, tt.roleID, tt.newName)
@@ -385,16 +386,18 @@ func TestRoleService_DeleteRole(t *testing.T) {
 	}{
 		{
 			name:    "Rol eliminado",
-			roleID: 1,
+			roleID:  1,
 			setupMock: func(m *mockRoleRepository) {
+				m.On("FindByID", mock.Anything, uint(1)).Return(&domain.Role{ID: 1, Name: "Admin"}, nil)
 				m.On("Delete", mock.Anything, uint(1)).Return(nil)
 			},
 			expectedError: nil,
 		},
 		{
 			name:    "Error al eliminar",
-			roleID: 1,
+			roleID:  1,
 			setupMock: func(m *mockRoleRepository) {
+				m.On("FindByID", mock.Anything, uint(1)).Return(&domain.Role{ID: 1, Name: "Admin"}, nil)
 				m.On("Delete", mock.Anything, uint(1)).Return(errors.New("db error"))
 			},
 			expectedError: errors.New("db error"),
@@ -409,7 +412,7 @@ func TestRoleService_DeleteRole(t *testing.T) {
 			mockRepo := new(mockRoleRepository)
 			tt.setupMock(mockRepo)
 
-			service := application.NewRoleService(mockRepo, nil, nil)
+			service := application.NewRoleService(mockRepo, nil, nil, nil)
 			ctx := context.Background()
 
 			err := service.DeleteRole(ctx, tt.roleID)

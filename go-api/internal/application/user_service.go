@@ -53,12 +53,14 @@ type userService struct {
 	roleRepo     domain.RoleRepository
 	enc          *appcrypto.Encryptor
 	versionCache *cache.TokenVersionCache // nil-safe: si no se inyecta, la invalidación espera al TTL
+	audit        auditService
 }
 
 // NewUserService construye un UserService con todas sus dependencias inyectadas.
 // versionCache puede ser nil (el sistema funciona correctamente, con TTL de 30s como ventana).
-func NewUserService(repo domain.UserRepository, roleRepo domain.RoleRepository, enc *appcrypto.Encryptor, versionCache *cache.TokenVersionCache) UserService {
-	return &userService{repo: repo, roleRepo: roleRepo, enc: enc, versionCache: versionCache}
+// auditRepo puede ser nil (auditoría se ignora silenciosamente).
+func NewUserService(repo domain.UserRepository, roleRepo domain.RoleRepository, enc *appcrypto.Encryptor, versionCache *cache.TokenVersionCache, auditRepo domain.AuditRepository) UserService {
+	return &userService{repo: repo, roleRepo: roleRepo, enc: enc, versionCache: versionCache, audit: newAuditService(auditRepo)}
 }
 
 // GetUserByUsername busca al usuario por username. Propaga ErrUserNotFound del repositorio.
@@ -92,7 +94,7 @@ func (s *userService) GetAllUsers(ctx context.Context, page, size int) ([]domain
 // Tras actualizar los roles incrementa token_version para invalidar los JWT activos del usuario.
 func (s *userService) AssignRolesToUser(ctx context.Context, userID uint, roleIDs []uint) error {
 	// Verificar existencia del usuario antes de operar.
-	_, err := s.repo.FindByID(ctx, userID)
+	user, err := s.repo.FindByID(ctx, userID)
 	if err != nil {
 		return fmt.Errorf("failed to find user: %w", err)
 	}
@@ -109,9 +111,23 @@ func (s *userService) AssignRolesToUser(ctx context.Context, userID uint, roleID
 		}
 	}
 
+	oldRoles := make([]string, 0, len(user.Roles))
+	for _, r := range user.Roles {
+		oldRoles = append(oldRoles, r.Name)
+	}
+
 	if err := s.repo.UpdateRoles(ctx, userID, roles); err != nil {
 		return fmt.Errorf("failed to update user roles: %w", err)
 	}
+
+	newRoles := make([]string, 0, len(roles))
+	for _, r := range roles {
+		newRoles = append(newRoles, r.Name)
+	}
+
+	s.audit.log(ctx, "assign_roles", "user", userID,
+		map[string]any{"roles": oldRoles},
+		map[string]any{"roles": newRoles})
 
 	// Invalidar los JWT activos del usuario incrementando su token_version.
 	// A partir de este momento, cualquier request con el token anterior recibirá 401.
@@ -196,6 +212,7 @@ func (s *userService) CreateUser(ctx context.Context, username, password, email 
 		return fmt.Errorf("failed to create user: %w", err)
 	}
 
+	s.audit.log(ctx, "create_user", "user", user.ID, nil, map[string]any{"username": username, "email": email != ""})
 	return nil
 }
 
@@ -233,18 +250,29 @@ func (s *userService) UpdateUser(ctx context.Context, userID uint, username, ema
 		}
 	}
 
+	oldUser := map[string]any{"username": user.Username, "email_hash": user.EmailHash}
+
 	// repo.UpdateProfile persiste solo username, email_encrypted y email_hash.
 	if err := s.repo.UpdateProfile(ctx, user); err != nil {
 		return fmt.Errorf("failed to update user: %w", err)
 	}
 
+	s.audit.log(ctx, "update_user", "user", user.ID, oldUser, map[string]any{"username": user.Username, "email_hash": user.EmailHash})
 	return nil
 }
 
 // DeleteUser elimina el usuario. Propaga ErrUserNotFound si el ID no existe.
 func (s *userService) DeleteUser(ctx context.Context, userID uint) error {
+	user, err := s.repo.FindByID(ctx, userID)
+	if err != nil {
+		return fmt.Errorf("failed to find user: %w", err)
+	}
+
 	if err := s.repo.Delete(ctx, userID); err != nil {
 		return fmt.Errorf("failed to delete user: %w", err)
 	}
+
+	s.audit.log(ctx, "delete_user", "user", userID,
+		map[string]any{"id": user.ID, "username": user.Username}, nil)
 	return nil
 }

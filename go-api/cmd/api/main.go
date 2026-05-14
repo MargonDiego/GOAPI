@@ -41,6 +41,7 @@ type infraDeps struct {
 	sqlDB        *sql.DB
 	userRepo     domain.UserRepository
 	roleRepo     domain.RoleRepository
+	auditRepo    domain.AuditRepository
 	enc          *crypto.Encryptor
 	versionCache *cache.TokenVersionCache
 }
@@ -117,6 +118,7 @@ func mustInitInfra(cfg *config.Config) *infraDeps {
 		sqlDB:        sqlDB,
 		userRepo:     persistence.NewUserRepository(db),
 		roleRepo:     persistence.NewRoleRepository(db),
+		auditRepo:    persistence.NewAuditRepository(db),
 		enc:          enc,
 		versionCache: versionCache,
 	}
@@ -127,8 +129,8 @@ func mustInitInfra(cfg *config.Config) *infraDeps {
 func initServices(cfg *config.Config, infra *infraDeps) *appServices {
 	return &appServices{
 		auth: application.NewAuthService(infra.userRepo, infra.roleRepo, cfg.JWTSecret, infra.enc),
-		user: application.NewUserService(infra.userRepo, infra.roleRepo, infra.enc, infra.versionCache),
-		role: application.NewRoleService(infra.roleRepo, infra.userRepo, infra.versionCache),
+		user: application.NewUserService(infra.userRepo, infra.roleRepo, infra.enc, infra.versionCache, infra.auditRepo),
+		role: application.NewRoleService(infra.roleRepo, infra.userRepo, infra.versionCache, infra.auditRepo),
 	}
 }
 

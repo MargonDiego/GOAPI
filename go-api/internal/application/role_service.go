@@ -47,15 +47,17 @@ type RoleService interface {
 
 type roleService struct {
 	repo         domain.RoleRepository
-	userRepo     domain.UserRepository        // para invalidar tokens al cambiar permisos de un rol
-	versionCache *cache.TokenVersionCache     // nil-safe: invalidación explícita post-cambio
+	userRepo     domain.UserRepository    // para invalidar tokens al cambiar permisos de un rol
+	versionCache *cache.TokenVersionCache // nil-safe: invalidación explícita post-cambio
+	audit        auditService
 }
 
 // NewRoleService construye un RoleService con sus dependencias inyectadas.
 // userRepo se usa para incrementar token_version de los usuarios afectados cuando cambian los permisos de un rol.
 // versionCache puede ser nil (el sistema funciona con el TTL del cache como ventana máxima).
-func NewRoleService(repo domain.RoleRepository, userRepo domain.UserRepository, versionCache *cache.TokenVersionCache) RoleService {
-	return &roleService{repo: repo, userRepo: userRepo, versionCache: versionCache}
+// auditRepo puede ser nil (auditoría se ignora silenciosamente).
+func NewRoleService(repo domain.RoleRepository, userRepo domain.UserRepository, versionCache *cache.TokenVersionCache, auditRepo domain.AuditRepository) RoleService {
+	return &roleService{repo: repo, userRepo: userRepo, versionCache: versionCache, audit: newAuditService(auditRepo)}
 }
 
 // CreateRole valida que el nombre no sea vacío y que no exista ya en el sistema
@@ -76,6 +78,8 @@ func (s *roleService) CreateRole(ctx context.Context, name string) (*domain.Role
 	if err := s.repo.Create(ctx, role); err != nil {
 		return nil, fmt.Errorf("failed to create role: %w", err)
 	}
+
+	s.audit.log(ctx, "create_role", "role", role.ID, nil, map[string]any{"name": role.Name})
 	return role, nil
 }
 
@@ -120,9 +124,23 @@ func (s *roleService) AssignPermissionsToRole(ctx context.Context, roleID uint, 
 		role.Permissions = []domain.Permission{}
 	}
 
+	oldPerms := make([]string, 0, len(role.Permissions))
+	for _, p := range role.Permissions {
+		oldPerms = append(oldPerms, p.Name)
+	}
+
 	if err := s.repo.Update(ctx, role); err != nil {
 		return fmt.Errorf("failed to update role permissions: %w", err)
 	}
+
+	newPerms := make([]string, 0, len(role.Permissions))
+	for _, p := range role.Permissions {
+		newPerms = append(newPerms, p.Name)
+	}
+
+	s.audit.log(ctx, "assign_permissions", "role", role.ID,
+		map[string]any{"permissions": oldPerms},
+		map[string]any{"permissions": newPerms})
 
 	// Invalidar los JWT de todos los usuarios que tengan este rol.
 	// Primero incrementamos token_version en DB, luego limpiamos el cache en memoria
@@ -172,6 +190,14 @@ func (s *roleService) CreatePermission(ctx context.Context, name string) error {
 	if err := s.repo.CreatePermission(ctx, name); err != nil {
 		return fmt.Errorf("failed to create permission: %w", err)
 	}
+
+	// Para obtener el ID del permiso creado necesitamos buscarlo.
+	perm, err := s.repo.FindPermissionByName(ctx, name)
+	if err != nil {
+		return fmt.Errorf("failed to retrieve created permission: %w", err)
+	}
+
+	s.audit.log(ctx, "create_permission", "permission", perm.ID, nil, map[string]any{"name": name})
 	return nil
 }
 
@@ -187,18 +213,30 @@ func (s *roleService) UpdateRole(ctx context.Context, roleID uint, name string) 
 		return fmt.Errorf("failed to find role: %w", err)
 	}
 
+	oldName := role.Name
 	role.Name = name
 	if err := s.repo.Update(ctx, role); err != nil {
 		return fmt.Errorf("failed to update role: %w", err)
 	}
 
+	s.audit.log(ctx, "update_role", "role", role.ID,
+		map[string]any{"name": oldName},
+		map[string]any{"name": name})
 	return nil
 }
 
 // DeleteRole elimina el rol del sistema. Propaga ErrRoleNotFound si no existe.
 func (s *roleService) DeleteRole(ctx context.Context, roleID uint) error {
+	role, err := s.repo.FindByID(ctx, roleID)
+	if err != nil {
+		return fmt.Errorf("failed to find role: %w", err)
+	}
+
 	if err := s.repo.Delete(ctx, roleID); err != nil {
 		return fmt.Errorf("failed to delete role: %w", err)
 	}
+
+	s.audit.log(ctx, "delete_role", "role", roleID,
+		map[string]any{"id": role.ID, "name": role.Name}, nil)
 	return nil
 }

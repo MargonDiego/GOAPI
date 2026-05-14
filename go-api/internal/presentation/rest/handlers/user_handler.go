@@ -130,7 +130,7 @@ func (h *UserHandler) AssignRoles(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if err := h.userService.AssignRolesToUser(r.Context(), uint(userID), req.RoleIDs); err != nil {
+	if err := h.userService.AssignRolesToUser(withActor(r), uint(userID), req.RoleIDs); err != nil {
 		if errors.Is(err, domain.ErrUserNotFound) {
 			RespondError(w, http.StatusNotFound, err.Error())
 			return
@@ -212,7 +212,7 @@ func (h *UserHandler) Create(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err := h.userService.CreateUser(r.Context(), req.Username, req.Password, req.Email)
+	err := h.userService.CreateUser(withActor(r), req.Username, req.Password, req.Email)
 	if err != nil {
 		if errors.Is(err, domain.ErrUserAlreadyExists) || errors.Is(err, domain.ErrEmailAlreadyExists) {
 			RespondError(w, http.StatusConflict, err.Error())
@@ -265,7 +265,7 @@ func (h *UserHandler) Update(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.userService.UpdateUser(r.Context(), uint(id), req.Username, req.Email)
+	err = h.userService.UpdateUser(withActor(r), uint(id), req.Username, req.Email)
 	if err != nil {
 		if errors.Is(err, domain.ErrUserNotFound) {
 			RespondError(w, http.StatusNotFound, err.Error())
@@ -299,7 +299,7 @@ func (h *UserHandler) Delete(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	err = h.userService.DeleteUser(r.Context(), uint(id))
+	err = h.userService.DeleteUser(withActor(r), uint(id))
 	if err != nil {
 		if errors.Is(err, domain.ErrUserNotFound) {
 			RespondError(w, http.StatusNotFound, err.Error())
