@@ -7,57 +7,76 @@ import (
 	"github.com/golang-migrate/migrate/v4"
 	_ "github.com/golang-migrate/migrate/v4/database/postgres"
 	_ "github.com/golang-migrate/migrate/v4/source/file"
+	"github.com/rs/zerolog"
+	"github.com/rs/zerolog/log"
 	"gorm.io/driver/postgres"
 	"gorm.io/gorm"
+	gormlogger "gorm.io/gorm/logger"
 )
 
+// newGormLogger crea un logger de GORM que usa zerolog como backend.
+// Solo loguea errores y queries lentas (>200ms), no todas las consultas SQL.
+func newGormLogger() gormlogger.Interface {
+	return gormlogger.New(
+		&zerologWriter{logger: log.Logger},
+		gormlogger.Config{
+			SlowThreshold:             200 * time.Millisecond, // Log queries > 200ms
+			LogLevel:                  gormlogger.Warn,        // Solo warnings y errores
+			IgnoreRecordNotFoundError: true,                   // ErrRecordNotFound no es error
+			Colorful:                  false,                  // Sin colores ANSI en Docker
+		},
+	)
+}
+
+// zerologWriter adapta zerolog a la interfaz logger.Writer de GORM.
+type zerologWriter struct {
+	logger zerolog.Logger
+}
+
+func (w *zerologWriter) Printf(format string, args ...interface{}) {
+	// GORM llama a Printf para todos los logs (SQL, errores, warnings).
+	// Solo logueamos a nivel Warn porque el Config ya filtra por LogLevel.
+	w.logger.Warn().Msgf(format, args...)
+}
+
+// connectDB es la función interna que abre la conexión con configuración común.
+func connectDB(dsn string, maxOpen, maxIdle int) (*gorm.DB, error) {
+	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
+		Logger: newGormLogger(),
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	sqlDB, err := db.DB()
+	if err != nil {
+		return nil, err
+	}
+	sqlDB.SetMaxOpenConns(maxOpen)
+	sqlDB.SetMaxIdleConns(maxIdle)
+	sqlDB.SetConnMaxLifetime(5 * time.Minute)
+
+	return db, nil
+}
+
 func NewPostgresDB(dsn, migrationDSN string) (*gorm.DB, error) {
-	// 1. Ejecutar migraciones con el usuario privilegiado (DDL).
 	if err := runMigrations(migrationDSN); err != nil {
 		return nil, err
 	}
 
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
+	db, err := connectDB(dsn, 25, 10)
 	if err != nil {
 		return nil, err
 	}
-
-	// 2. Configura el pool de conexiones para evitar saturar Postgres bajo carga.
-	sqlDB, err := db.DB()
-	if err != nil {
-		return nil, err
-	}
-	sqlDB.SetMaxOpenConns(25)
-	sqlDB.SetMaxIdleConns(10)
-	sqlDB.SetConnMaxLifetime(5 * time.Minute)
 
 	seedDefaults(db)
-
 	return db, nil
 }
 
-// ConnectPostgres abre una conexión a PostgreSQL sin ejecutar migraciones.
-// Útil para tests de integración donde el schema se crea por separado
-// (ej: testcontainers) o para tools de diagnóstico.
 func ConnectPostgres(dsn string) (*gorm.DB, error) {
-	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{})
-	if err != nil {
-		return nil, err
-	}
-
-	sqlDB, err := db.DB()
-	if err != nil {
-		return nil, err
-	}
-	sqlDB.SetMaxOpenConns(5)
-	sqlDB.SetMaxIdleConns(2)
-	sqlDB.SetConnMaxLifetime(5 * time.Minute)
-
-	return db, nil
+	return connectDB(dsn, 5, 2)
 }
 
-// runMigrations aplica todas las migraciones pendientes desde el directorio /migrations.
-// ErrNoChange no es un error — significa que el schema ya está al día.
 func runMigrations(dsn string) error {
 	m, err := migrate.New("file://migrations", dsn)
 	if err != nil {
