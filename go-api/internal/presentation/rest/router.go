@@ -52,10 +52,10 @@ func NewRouter(
 
 	// Rutas de Usuarios
 	usersRoute := api.PathPrefix("/users").Subrouter()
-	// Lectura
+	// Lectura (rutas fijas primero para evitar captura por /{id})
 	usersRoute.Handle("", authMw.RequirePermission("read:users")(http.HandlerFunc(userHandler.GetAll))).Methods("GET")
-	usersRoute.Handle("/{id}", authMw.RequirePermission("read:users")(http.HandlerFunc(userHandler.GetByID))).Methods("GET")
 	usersRoute.Handle("/deleted", authMw.RequirePermission("manage:users")(http.HandlerFunc(userHandler.GetDeletedUsers))).Methods("GET")
+	usersRoute.Handle("/{id}", authMw.RequirePermission("read:users")(http.HandlerFunc(userHandler.GetByID))).Methods("GET")
 	// Creación
 	usersRoute.Handle("", authMw.RequirePermission("manage:users")(http.HandlerFunc(userHandler.Create))).Methods("POST")
 	// Modificación

@@ -109,6 +109,12 @@ func seedDefaults(db *gorm.DB) {
 	writePerm := Permission{Name: "write:users"}
 	db.FirstOrCreate(&writePerm, Permission{Name: "write:users"})
 
-	db.Model(&adminRole).Association("Permissions").Append(&readPerm, &writePerm)
+	manageRolesPerm := Permission{Name: "manage:roles"}
+	db.FirstOrCreate(&manageRolesPerm, Permission{Name: "manage:roles"})
+
+	manageUsersPerm := Permission{Name: "manage:users"}
+	db.FirstOrCreate(&manageUsersPerm, Permission{Name: "manage:users"})
+
+	db.Model(&adminRole).Association("Permissions").Append(&readPerm, &writePerm, &manageRolesPerm, &manageUsersPerm)
 	db.Model(&userRole).Association("Permissions").Append(&readPerm)
 }
