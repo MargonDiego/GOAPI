@@ -7,6 +7,7 @@ import (
 
 	"github.com/diego/go-api/internal/application"
 	"github.com/diego/go-api/internal/domain"
+	"github.com/rs/zerolog/log"
 )
 
 // RoleCreateRequest es el DTO para crear un rol.
@@ -95,6 +96,7 @@ func (h *RoleHandler) CreateRole(w http.ResponseWriter, r *http.Request) {
 func (h *RoleHandler) GetRoles(w http.ResponseWriter, r *http.Request) {
 	roles, err := h.roleService.GetRoles(r.Context())
 	if err != nil {
+		log.Error().Err(err).Msg("failed to get roles")
 		RespondError(w, http.StatusInternalServerError, "failed to get roles")
 		return
 	}
@@ -131,6 +133,7 @@ func (h *RoleHandler) GetRoles(w http.ResponseWriter, r *http.Request) {
 func (h *RoleHandler) GetPermissions(w http.ResponseWriter, r *http.Request) {
 	perms, err := h.roleService.GetPermissions(r.Context())
 	if err != nil {
+		log.Error().Err(err).Msg("failed to get permissions")
 		RespondError(w, http.StatusInternalServerError, "failed to get permissions")
 		return
 	}
@@ -182,6 +185,7 @@ func (h *RoleHandler) AssignPermissions(w http.ResponseWriter, r *http.Request) 
 			RespondError(w, http.StatusBadRequest, err.Error())
 			return
 		}
+		log.Error().Err(err).Msg("failed to assign permissions")
 		RespondError(w, http.StatusInternalServerError, "failed to assign permissions")
 		return
 	}
@@ -217,6 +221,7 @@ func (h *RoleHandler) GetRoleByID(w http.ResponseWriter, r *http.Request) {
 			RespondError(w, http.StatusNotFound, err.Error())
 			return
 		}
+		log.Error().Err(err).Msg("failed to get role")
 		RespondError(w, http.StatusInternalServerError, "failed to get role")
 		return
 	}
@@ -313,6 +318,7 @@ func (h *RoleHandler) DeleteRole(w http.ResponseWriter, r *http.Request) {
 			RespondError(w, http.StatusNotFound, err.Error())
 			return
 		}
+		log.Error().Err(err).Msg("failed to delete role")
 		RespondError(w, http.StatusInternalServerError, "failed to delete role")
 		return
 	}

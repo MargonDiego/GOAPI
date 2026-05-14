@@ -9,6 +9,7 @@ import (
 	"github.com/diego/go-api/internal/application"
 	"github.com/diego/go-api/internal/domain"
 	"github.com/diego/go-api/internal/presentation/rest/middleware"
+	"github.com/rs/zerolog/log"
 )
 
 type UserResponse struct {
@@ -50,6 +51,7 @@ func (h *UserHandler) GetMe(w http.ResponseWriter, r *http.Request) {
 			RespondError(w, http.StatusNotFound, err.Error())
 			return
 		}
+		log.Error().Err(err).Msg("failed to get current user by username")
 		RespondError(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
@@ -77,6 +79,7 @@ func (h *UserHandler) GetAll(w http.ResponseWriter, r *http.Request) {
 
 	users, err := h.userService.GetAllUsers(r.Context(), page, size)
 	if err != nil {
+		log.Error().Err(err).Msg("failed to list users")
 		RespondError(w, http.StatusInternalServerError, "failed to list users")
 		return
 	}
@@ -137,6 +140,7 @@ func (h *UserHandler) AssignRoles(w http.ResponseWriter, r *http.Request) {
 			RespondError(w, http.StatusBadRequest, err.Error())
 			return
 		}
+		log.Error().Err(err).Msg("failed to assign roles")
 		RespondError(w, http.StatusInternalServerError, "failed to assign roles")
 		return
 	}
@@ -179,6 +183,7 @@ func (h *UserHandler) GetByID(w http.ResponseWriter, r *http.Request) {
 			RespondError(w, http.StatusNotFound, err.Error())
 			return
 		}
+		log.Error().Err(err).Msg("failed to get user by ID")
 		RespondError(w, http.StatusInternalServerError, "internal server error")
 		return
 	}
@@ -306,6 +311,7 @@ func (h *UserHandler) Delete(w http.ResponseWriter, r *http.Request) {
 			RespondError(w, http.StatusNotFound, err.Error())
 			return
 		}
+		log.Error().Err(err).Msg("failed to delete user")
 		RespondError(w, http.StatusInternalServerError, "failed to delete user")
 		return
 	}

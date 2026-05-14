@@ -2,38 +2,50 @@ package domain
 
 import "context"
 
-// UserRepository define el contrato de persistencia para la entidad User.
-// La implementación concreta vive en infrastructure/persistence y usa GORM.
-type UserRepository interface {
-	// Create inserta un nuevo usuario y propaga el ID generado al objeto de dominio.
-	Create(ctx context.Context, u *User) error
+// --- Interfaces segregadas (Principio de Segregación de Interfaces) ---
+//
+// UserRepository se descompone en tres contratos especializados.
+// Los consumidores que solo necesitan lectura (ej: AuthMiddleware) pueden
+// depender de UserReader en lugar del repositorio completo.
+//
+// La interfaz compuesta UserRepository se mantiene por retrocompatibilidad
+// y para el wiring en main.go donde se necesita el contrato completo.
 
-	// UpdateProfile actualiza los campos de perfil (username, email) de un usuario existente.
-	UpdateProfile(ctx context.Context, u *User) error
-
-	// Update persiste campos de seguridad: intentos fallidos, bloqueo y email.
-	Update(ctx context.Context, u *User) error
-
-	// UpdateRoles reemplaza completamente los roles del usuario.
-	UpdateRoles(ctx context.Context, userID uint, roles []Role) error
-
-	// --- Queries ---
+// UserReader agrupa las operaciones de consulta sobre usuarios.
+type UserReader interface {
 	FindByUsername(ctx context.Context, username string) (*User, error)
 	FindByID(ctx context.Context, id uint) (*User, error)
 	FindByEmailHash(ctx context.Context, emailHash string) (*User, error)
 	FindAll(ctx context.Context, page, size int) ([]User, error)
 
-	// --- Token Version (invalidación de JWT) ---
-	IncrementTokenVersion(ctx context.Context, userID uint) (int, error)
+	// Token version queries
 	GetTokenVersion(ctx context.Context, userID uint) (int, error)
 	FindUserIDsByRoleID(ctx context.Context, roleID uint) ([]uint, error)
+}
 
-	// --- Refresh Tokens ---
+// UserWriter agrupa las operaciones de mutación sobre usuarios.
+type UserWriter interface {
+	Create(ctx context.Context, u *User) error
+	UpdateProfile(ctx context.Context, u *User) error
+	Update(ctx context.Context, u *User) error
+	UpdateRoles(ctx context.Context, userID uint, roles []Role) error
+	IncrementTokenVersion(ctx context.Context, userID uint) (int, error)
+	Delete(ctx context.Context, id uint) error
+}
+
+// TokenStore agrupa las operaciones de persistencia de Refresh Tokens.
+type TokenStore interface {
 	SaveRefreshToken(ctx context.Context, rt *RefreshToken) error
 	GetRefreshToken(ctx context.Context, token string) (*RefreshToken, error)
 	DeleteRefreshToken(ctx context.Context, token string) error
 	DeleteAllRefreshTokens(ctx context.Context, userID uint) error
+}
 
-	// --- Delete ---
-	Delete(ctx context.Context, id uint) error
+// UserRepository es la interfaz compuesta que agrupa los tres contratos.
+// Es la dependencia principal para servicios que necesitan acceso completo
+// a usuarios y tokens (AuthService, UserService).
+type UserRepository interface {
+	UserReader
+	UserWriter
+	TokenStore
 }

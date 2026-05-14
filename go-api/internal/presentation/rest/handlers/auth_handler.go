@@ -10,6 +10,7 @@ import (
 	"github.com/diego/go-api/internal/application"
 	"github.com/diego/go-api/internal/domain"
 	"github.com/diego/go-api/internal/presentation/rest/middleware"
+	"github.com/rs/zerolog/log"
 )
 
 // AuthRequest es el DTO de entrada para registro y login.
@@ -197,6 +198,7 @@ func (h *AuthHandler) handleAuthError(w http.ResponseWriter, err error) {
 		// 429 Too Many Requests comunica al cliente que debe esperar.
 		RespondError(w, http.StatusTooManyRequests, err.Error())
 	default:
+		log.Error().Err(err).Msg("unexpected error in auth handler")
 		RespondError(w, http.StatusInternalServerError, "internal server error")
 	}
 }
