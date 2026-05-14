@@ -206,3 +206,166 @@ func TestRoleRepository_Integration_SoftDeleteUniqueIndex(t *testing.T) {
 		assert.NotEqual(t, role.ID, role2.ID, "debe ser un rol nuevo con ID diferente")
 	})
 }
+
+func TestRoleRepository_Integration_ScopingAndRestore(t *testing.T) {
+	if testing.Short() {
+		t.Skip("saltando test de integración en modo short")
+	}
+
+	ctx := context.Background()
+
+	dockerClient, err := testcontainers.NewDockerClientWithOpts(ctx)
+	if err != nil {
+		t.Skipf("Docker no disponible, saltando test de integración: %v", err)
+	}
+	defer dockerClient.Close()
+
+	pgContainer, err := postgres.Run(ctx,
+		"postgres:16-alpine",
+		postgres.WithDatabase("testdb"),
+		postgres.WithUsername("testuser"),
+		postgres.WithPassword("testpass"),
+		testcontainers.WithWaitStrategy(
+			wait.ForLog("database system is ready to accept connections").WithOccurrence(2).WithStartupTimeout(30*time.Second),
+		),
+	)
+	if err != nil {
+		t.Skipf("No se pudo levantar PostgreSQL en Docker: %v", err)
+	}
+	defer func() { _ = pgContainer.Terminate(ctx) }()
+
+	host, err := pgContainer.Host(ctx)
+	require.NoError(t, err)
+	port, err := pgContainer.MappedPort(ctx, "5432")
+	require.NoError(t, err)
+
+	dsn := "postgresql://testuser:testpass@" + host + ":" + port.Port() + "/testdb?sslmode=disable"
+
+	db, err := persistence.ConnectPostgres(dsn)
+	require.NoError(t, err)
+
+	err = db.AutoMigrate(&persistence.User{}, &persistence.Role{}, &persistence.Permission{}, &persistence.RefreshToken{}, &persistence.AuditLog{})
+	require.NoError(t, err)
+
+	roleRepo := persistence.NewRoleRepository(db)
+	userRepo := persistence.NewUserRepository(db)
+
+	t.Run("Role scoping isolates roles by scope", func(t *testing.T) {
+		// Crear roles con diferentes scopes
+		globalRole := &domain.Role{Name: "global-admin", Scope: ""}
+		err := roleRepo.Create(ctx, globalRole)
+		require.NoError(t, err)
+
+		scopedRole := &domain.Role{Name: "tenant-admin", Scope: "tenant-a"}
+		err = roleRepo.Create(ctx, scopedRole)
+		require.NoError(t, err)
+
+		// Listar roles sin scope debe retornar ambos (global + scope vacío)
+		all, err := roleRepo.FindAll(ctx)
+		require.NoError(t, err)
+		assert.Len(t, all, 2, "FindAll debe retornar todos los roles")
+
+		// Listar roles con scope "tenant-a" debe retornar global + tenant-a
+		scoped, err := roleRepo.FindAllByScope(ctx, "tenant-a")
+		require.NoError(t, err)
+		assert.Len(t, scoped, 2, "FindAllByScope debe retornar roles del scope + globales")
+
+		// Listar roles con scope diferente solo debe retornar global
+		otherScoped, err := roleRepo.FindAllByScope(ctx, "tenant-b")
+		require.NoError(t, err)
+		assert.Len(t, otherScoped, 1, "FindAllByScope para otro scope solo debe retornar globales")
+		assert.Equal(t, "global-admin", otherScoped[0].Name)
+	})
+
+	t.Run("Role restore recovers soft-deleted role", func(t *testing.T) {
+		role := &domain.Role{Name: "restorable-role"}
+		err := roleRepo.Create(ctx, role)
+		require.NoError(t, err)
+		require.NotZero(t, role.ID)
+
+		// Soft delete
+		err = roleRepo.Delete(ctx, role.ID)
+		require.NoError(t, err)
+
+		// Verificar que no aparece en listados normales
+		_, err = roleRepo.FindByID(ctx, role.ID)
+		assert.ErrorIs(t, err, domain.ErrRoleNotFound, "rol soft-deleted no debe encontrarse por ID")
+
+		// Verificar que aparece en listado de eliminados
+		deleted, err := roleRepo.FindAllDeleted(ctx)
+		require.NoError(t, err)
+		assert.Len(t, deleted, 1, "debe haber exactamente un rol eliminado")
+		assert.Equal(t, "restorable-role", deleted[0].Name)
+
+		// Restaurar
+		err = roleRepo.Restore(ctx, role.ID)
+		require.NoError(t, err, "restore debe funcionar")
+
+		// Verificar que vuelve a aparecer
+		restored, err := roleRepo.FindByID(ctx, role.ID)
+		require.NoError(t, err)
+		assert.Equal(t, "restorable-role", restored.Name)
+
+		// Verificar que ya no está en eliminados
+		deletedAfter, err := roleRepo.FindAllDeleted(ctx)
+		require.NoError(t, err)
+		assert.Len(t, deletedAfter, 0, "no debe quedar ningún rol eliminado")
+	})
+
+	t.Run("User scoping isolates users by scope", func(t *testing.T) {
+		// Crear usuarios con diferentes scopes y emails únicos
+		globalUser := &domain.User{Username: "global-user", PasswordHash: "hash", EmailHash: "global@example.com", Scope: ""}
+		err := userRepo.Create(ctx, globalUser)
+		require.NoError(t, err)
+
+		scopedUser := &domain.User{Username: "tenant-user", PasswordHash: "hash", EmailHash: "tenant@example.com", Scope: "tenant-a"}
+		err = userRepo.Create(ctx, scopedUser)
+		require.NoError(t, err)
+
+		// Listar usuarios con scope "tenant-a" debe retornar global + tenant-a
+		scoped, err := userRepo.FindAllByScope(ctx, "tenant-a", 1, 10)
+		require.NoError(t, err)
+		assert.Len(t, scoped, 2, "FindAllByScope debe retornar usuarios del scope + globales")
+
+		// Listar usuarios con scope diferente solo debe retornar global
+		otherScoped, err := userRepo.FindAllByScope(ctx, "tenant-b", 1, 10)
+		require.NoError(t, err)
+		assert.Len(t, otherScoped, 1, "FindAllByScope para otro scope solo debe retornar globales")
+		assert.Equal(t, "global-user", otherScoped[0].Username)
+	})
+
+	t.Run("User restore recovers soft-deleted user", func(t *testing.T) {
+		user := &domain.User{Username: "restorable-user", PasswordHash: "hash", EmailHash: "restore@example.com"}
+		err := userRepo.Create(ctx, user)
+		require.NoError(t, err)
+		require.NotZero(t, user.ID)
+
+		// Soft delete
+		err = userRepo.Delete(ctx, user.ID)
+		require.NoError(t, err)
+
+		// Verificar que no aparece en listados normales
+		_, err = userRepo.FindByID(ctx, user.ID)
+		assert.ErrorIs(t, err, domain.ErrUserNotFound, "usuario soft-deleted no debe encontrarse por ID")
+
+		// Verificar que aparece en listado de eliminados
+		deleted, err := userRepo.FindAllDeleted(ctx)
+		require.NoError(t, err)
+		assert.Len(t, deleted, 1, "debe haber exactamente un usuario eliminado")
+		assert.Equal(t, "restorable-user", deleted[0].Username)
+
+		// Restaurar
+		err = userRepo.Restore(ctx, user.ID)
+		require.NoError(t, err, "restore debe funcionar")
+
+		// Verificar que vuelve a aparecer
+		restored, err := userRepo.FindByID(ctx, user.ID)
+		require.NoError(t, err)
+		assert.Equal(t, "restorable-user", restored.Username)
+
+		// Verificar que ya no está en eliminados
+		deletedAfter, err := userRepo.FindAllDeleted(ctx)
+		require.NoError(t, err)
+		assert.Len(t, deletedAfter, 0, "no debe quedar ningún usuario eliminado")
+	})
+}

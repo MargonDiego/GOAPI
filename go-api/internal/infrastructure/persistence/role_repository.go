@@ -22,6 +22,7 @@ func (r *roleRepository) Create(ctx context.Context, role *domain.Role) error {
 	dbRole := &Role{
 		Name:        role.Name,
 		Description: role.Description,
+		Scope:       role.Scope,
 	}
 	if err := r.db.WithContext(ctx).Create(dbRole).Error; err != nil {
 		return err
