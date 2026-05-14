@@ -9,7 +9,7 @@ import (
 
 	"github.com/stretchr/testify/assert"
 
-	"github.com/diego/go-api/internal/presentation/http/handlers"
+	"github.com/diego/go-api/internal/presentation/rest/handlers"
 )
 
 type mockPinger struct {

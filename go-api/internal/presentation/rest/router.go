@@ -1,4 +1,4 @@
-package http
+package rest
 
 import (
 	"net/http"
@@ -6,8 +6,8 @@ import (
 	"github.com/gorilla/mux"
 	httpSwagger "github.com/swaggo/http-swagger"
 
-	"github.com/diego/go-api/internal/presentation/http/handlers"
-	"github.com/diego/go-api/internal/presentation/http/middleware"
+	"github.com/diego/go-api/internal/presentation/rest/handlers"
+	"github.com/diego/go-api/internal/presentation/rest/middleware"
 )
 
 func NewRouter(

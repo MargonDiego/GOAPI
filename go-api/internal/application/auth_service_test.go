@@ -250,6 +250,7 @@ func TestAuthService_RefreshTokens(t *testing.T) {
 					UserID:    1,
 					ExpiresAt: time.Now().Add(-1 * time.Hour), // Expired 1 hour ago
 				}, nil)
+				m.On("DeleteRefreshToken", mock.Anything, "expired-token").Return(nil)
 			},
 			expectedError: domain.ErrInvalidToken,
 		},

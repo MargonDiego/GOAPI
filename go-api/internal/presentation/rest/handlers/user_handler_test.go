@@ -13,8 +13,8 @@ import (
 	"github.com/stretchr/testify/mock"
 
 	"github.com/diego/go-api/internal/domain"
-	"github.com/diego/go-api/internal/presentation/http/handlers"
-	"github.com/diego/go-api/internal/presentation/http/middleware"
+	"github.com/diego/go-api/internal/presentation/rest/handlers"
+	"github.com/diego/go-api/internal/presentation/rest/middleware"
 	"github.com/diego/go-api/mocks"
 )
 

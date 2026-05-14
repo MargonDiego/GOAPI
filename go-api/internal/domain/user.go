@@ -1,44 +1,9 @@
 package domain
 
 import (
-	"context"
-	"errors"
 	"strings"
 	"time"
 )
-
-// Configuración de Account Lockout.
-// Constantes exportadas para que puedan ser consultadas por los tests.
-const (
-	MaxFailedAttempts = 5               // Intentos antes del bloqueo
-	LockDuration      = 15 * time.Minute // Duración del bloqueo
-)
-
-var (
-	ErrUserNotFound            = errors.New("user not found")
-	ErrInvalidCreds            = errors.New("invalid credentials")
-	ErrUserAlreadyExists       = errors.New("username already exists")
-	ErrEmailAlreadyExists      = errors.New("email already registered")
-	ErrInsufficientPerms       = errors.New("insufficient permissions")
-	ErrInvalidInput            = errors.New("invalid user input data")
-	ErrRoleNotFound            = errors.New("role not found")
-	ErrRoleAlreadyExists       = errors.New("role already exists")
-	ErrPermissionNotFound      = errors.New("permission not found")
-	ErrPermissionAlreadyExists = errors.New("permission already exists")
-	ErrInvalidToken            = errors.New("invalid or expired refresh token")
-	ErrAccountLocked           = errors.New("account temporarily locked due to multiple failed attempts")
-)
-
-type Permission struct {
-	ID   uint
-	Name string
-}
-
-type Role struct {
-	ID          uint
-	Name        string
-	Permissions []Permission
-}
 
 // User es la entidad central del dominio.
 // El Email NUNCA llega aquí en texto plano desde la BD — se descifra en el servicio
@@ -56,11 +21,7 @@ type User struct {
 	Roles          []Role
 }
 
-type RefreshToken struct {
-	Token     string
-	UserID    uint
-	ExpiresAt time.Time
-}
+// --- Factory ---
 
 // NewUser es la Fábrica (Factory) del Dominio Puro.
 // Encapsula las invariantes de creación de usuario.
@@ -79,6 +40,8 @@ func NewUser(username, passwordHash string, defaultRole Role) (*User, error) {
 		Roles:        []Role{defaultRole},
 	}, nil
 }
+
+// --- Account Lockout ---
 
 // IsLocked informa si la cuenta está bloqueada EN ESTE MOMENTO.
 // Separar esta lógica del servicio permite testearla sin infraestructura.
@@ -107,6 +70,11 @@ func (u *User) ResetFailedAttempts() {
 	u.LockedUntil = nil
 }
 
+// --- Permissions ---
+
+// HasPermission verifica si el usuario posee un permiso específico a través
+// de cualquiera de sus roles asignados. Búsqueda O(n*m) — los roles/permisos
+// son conjuntos pequeños en memoria (embebidos en el Fat JWT).
 func (u *User) HasPermission(p string) bool {
 	for _, r := range u.Roles {
 		for _, perm := range r.Permissions {
@@ -116,35 +84,4 @@ func (u *User) HasPermission(p string) bool {
 		}
 	}
 	return false
-}
-
-type UserRepository interface {
-	Save(ctx context.Context, u *User) error
-	Update(ctx context.Context, u *User) error
-	UpdateRoles(ctx context.Context, userID uint, roles []Role) error
-	FindByUsername(ctx context.Context, username string) (*User, error)
-	FindByID(ctx context.Context, id uint) (*User, error)
-	FindByEmailHash(ctx context.Context, emailHash string) (*User, error)
-	FindAll(ctx context.Context, page, size int) ([]User, error)
-	FindRoleByName(ctx context.Context, roleName string) (Role, error)
-
-	// IncrementTokenVersion invalida todos los JWT activos del usuario incrementando
-	// su token_version. Llamar siempre que cambien los roles o permisos de un usuario.
-	// Retorna la nueva versión para que el caller pueda propagarla si es necesario.
-	IncrementTokenVersion(ctx context.Context, userID uint) (int, error)
-
-	// GetTokenVersion retorna la token_version actual del usuario.
-	// Usado por el middleware para validar el claim "ver" del JWT.
-	GetTokenVersion(ctx context.Context, userID uint) (int, error)
-
-	// FindUserIDsByRoleID retorna los IDs de todos los usuarios que tienen asignado el rol.
-	// Usado para invalidar los tokens de todos los afectados cuando cambian los permisos de un rol.
-	FindUserIDsByRoleID(ctx context.Context, roleID uint) ([]uint, error)
-
-	// Operaciones para Refresh Tokens
-	SaveRefreshToken(ctx context.Context, rt *RefreshToken) error
-	GetRefreshToken(ctx context.Context, token string) (*RefreshToken, error)
-	DeleteRefreshToken(ctx context.Context, token string) error
-	DeleteAllRefreshTokens(ctx context.Context, userID uint) error
-	Delete(ctx context.Context, id uint) error
 }

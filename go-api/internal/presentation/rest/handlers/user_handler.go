@@ -8,7 +8,7 @@ import (
 
 	"github.com/diego/go-api/internal/application"
 	"github.com/diego/go-api/internal/domain"
-	"github.com/diego/go-api/internal/presentation/http/middleware"
+	"github.com/diego/go-api/internal/presentation/rest/middleware"
 )
 
 type UserResponse struct {

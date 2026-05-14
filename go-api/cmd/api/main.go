@@ -11,6 +11,7 @@ package main
 
 import (
 	"context"
+	"database/sql"
 	"errors"
 	"net/http"
 	"os"
@@ -21,24 +22,65 @@ import (
 	_ "github.com/diego/go-api/docs"
 	"github.com/diego/go-api/internal/application"
 	"github.com/diego/go-api/internal/config"
+	"github.com/diego/go-api/internal/domain"
 	"github.com/diego/go-api/internal/infrastructure/cache"
 	"github.com/diego/go-api/internal/infrastructure/crypto"
-	"github.com/diego/go-api/internal/infrastructure/database"
-	apirouter "github.com/diego/go-api/internal/presentation/http"
-	"github.com/diego/go-api/internal/presentation/http/handlers"
-	"github.com/diego/go-api/internal/presentation/http/middleware"
+	"github.com/diego/go-api/internal/infrastructure/persistence"
+	"github.com/diego/go-api/internal/presentation/rest"
+	"github.com/diego/go-api/internal/presentation/rest/handlers"
+	"github.com/diego/go-api/internal/presentation/rest/middleware"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+	"gorm.io/gorm"
 )
 
+// --- Tipos auxiliares para el wiring ---
+
+type infraDeps struct {
+	db           *gorm.DB
+	sqlDB        *sql.DB
+	userRepo     domain.UserRepository
+	roleRepo     domain.RoleRepository
+	enc          *crypto.Encryptor
+	versionCache *cache.TokenVersionCache
+}
+
+type appServices struct {
+	auth application.AuthService
+	user application.UserService
+	role application.RoleService
+}
+
+// --- Entrypoint ---
+
 func main() {
-	// 1. Cargar Configuración (Fail-Fast: explota si falta algo)
+	// 1. Configuración y logger
+	cfg := mustLoadConfig()
+	initLogger(cfg)
+
+	// 2. Infraestructura (DB, encryptor, cache)
+	infra := mustInitInfra(cfg)
+	defer infra.sqlDB.Close()
+
+	// 3. Servicios de aplicación
+	services := initServices(cfg, infra)
+
+	// 4. Servidor HTTP + graceful shutdown
+	srv := initServer(cfg, services, infra)
+	runGraceful(srv, infra.sqlDB)
+}
+
+// --- Paso 1: Configuración y Logger ---
+
+func mustLoadConfig() *config.Config {
 	cfg, err := config.Load()
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to load configuration")
 	}
+	return cfg
+}
 
-	// 2. Configuración del logger global.
+func initLogger(cfg *config.Config) {
 	if cfg.AppEnv == "production" {
 		zerolog.SetGlobalLevel(zerolog.InfoLevel)
 	} else {
@@ -46,22 +88,21 @@ func main() {
 		log.Logger = log.Output(zerolog.NewConsoleWriter())
 	}
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnixMs
+}
 
-	// 3. Capa de Infraestructura (Base de datos PostgreSQL)
-	db, err := database.NewPostgresDB(cfg.DBDsn, cfg.MigrationDsn)
+// --- Paso 2: Infraestructura ---
+
+func mustInitInfra(cfg *config.Config) *infraDeps {
+	db, err := persistence.NewPostgresDB(cfg.DBDsn, cfg.MigrationDsn)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to connect to PostgreSQL database")
 	}
-	userRepo := database.NewUserRepository(db)
-	roleRepo := database.NewRoleRepository(db)
-	
-	// Obtenemos la instancia nativa sql.DB para el healthcheck y para el cierre limpio
+
 	sqlDB, err := db.DB()
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to get underlying sql.DB")
 	}
 
-	// Encryptor para PII (AES-256-GCM + HMAC-SHA256)
 	enc, err := crypto.NewEncryptor(cfg.EmailEncryptionKey)
 	if err != nil {
 		log.Fatal().Err(err).Msg("Failed to initialize email encryptor")
@@ -69,50 +110,69 @@ func main() {
 
 	// Cache en memoria para token_version: TTL de 30s reduce la ventana de stale-permissions
 	// de 15 minutos (vida del JWT) a 30 segundos sin hits extra a Postgres por request.
-	// Al cambiar roles/permisos, el cache se invalida explícitamente → efecto inmediato.
 	versionCache := cache.NewTokenVersionCache(30 * time.Second)
 
-	// 4. Capa de Aplicación (Servicios de dominio)
-	authService := application.NewAuthService(userRepo, cfg.JWTSecret, enc)
-	userService := application.NewUserService(userRepo, roleRepo, enc, versionCache)
-	roleService := application.NewRoleService(roleRepo, userRepo, versionCache)
+	return &infraDeps{
+		db:           db,
+		sqlDB:        sqlDB,
+		userRepo:     persistence.NewUserRepository(db),
+		roleRepo:     persistence.NewRoleRepository(db),
+		enc:          enc,
+		versionCache: versionCache,
+	}
+}
 
-	// 5. Capa de Presentación HTTP (Middlewares y Controladores)
-	authHandler := handlers.NewAuthHandler(authService)
-	userHandler := handlers.NewUserHandler(userService)
-	roleHandler := handlers.NewRoleHandler(roleService)
-	healthHandler := handlers.NewHealthHandler(sqlDB)
-	authMw := middleware.NewAuthMiddleware(cfg.JWTSecret, userRepo, versionCache)
+// --- Paso 3: Servicios de Aplicación ---
 
-	// Inicialización de Router con logging de requests
-	router := apirouter.NewRouter(authHandler, userHandler, roleHandler, healthHandler, authMw)
+func initServices(cfg *config.Config, infra *infraDeps) *appServices {
+	return &appServices{
+		auth: application.NewAuthService(infra.userRepo, cfg.JWTSecret, infra.enc),
+		user: application.NewUserService(infra.userRepo, infra.roleRepo, infra.enc, infra.versionCache),
+		role: application.NewRoleService(infra.roleRepo, infra.userRepo, infra.versionCache),
+	}
+}
+
+// --- Paso 4: Servidor HTTP ---
+
+func initServer(cfg *config.Config, services *appServices, infra *infraDeps) *http.Server {
+	authHandler := handlers.NewAuthHandler(services.auth)
+	userHandler := handlers.NewUserHandler(services.user)
+	roleHandler := handlers.NewRoleHandler(services.role)
+	healthHandler := handlers.NewHealthHandler(infra.sqlDB)
+	authMw := middleware.NewAuthMiddleware(cfg.JWTSecret, infra.userRepo, infra.versionCache)
+
+	router := rest.NewRouter(authHandler, userHandler, roleHandler, healthHandler, authMw)
 	router.Use(middleware.RequestLogger())
 
 	log.Info().Str("port", cfg.Port).Msg("Starting API server")
-	srv := &http.Server{
+
+	return &http.Server{
 		Addr:         ":" + cfg.Port,
 		Handler:      router,
 		ReadTimeout:  5 * time.Second,
 		WriteTimeout: 10 * time.Second,
 		IdleTimeout:  60 * time.Second,
 	}
+}
 
-	// 6. Iniciar el servidor en una goroutine
+// --- Paso 5: Graceful Shutdown ---
+
+func runGraceful(srv *http.Server, sqlDB *sql.DB) {
+	// Iniciar servidor en goroutine
 	go func() {
 		if err := srv.ListenAndServe(); err != nil && !errors.Is(err, http.ErrServerClosed) {
 			log.Fatal().Err(err).Msg("Server stopped abruptly")
 		}
 	}()
 
-	// 7. Graceful Shutdown (Apagado elegante)
+	// Escuchar señales del sistema operativo
 	quit := make(chan os.Signal, 1)
-	// Escuchar SIGINT (Ctrl+C) y SIGTERM (Terminación de Kubernetes/Docker)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
-	
-	<-quit // Bloquea hasta recibir la señal
+	<-quit
+
 	log.Info().Msg("Shutting down server gracefully...")
 
-	// Damos 10 segundos para que las peticiones en curso terminen
+	// Timeout de 10 segundos para que las peticiones en curso terminen
 	ctx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
 	defer cancel()
 
@@ -120,7 +180,7 @@ func main() {
 		log.Error().Err(err).Msg("Server forced to shutdown")
 	}
 
-	// Cerramos la conexión a la base de datos limpiamente
+	// Cerrar conexión a base de datos
 	log.Info().Msg("Closing database connection...")
 	if err := sqlDB.Close(); err != nil {
 		log.Error().Err(err).Msg("Error closing database")

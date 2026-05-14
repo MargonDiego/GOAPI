@@ -9,7 +9,7 @@ import (
 
 	"github.com/diego/go-api/internal/application"
 	"github.com/diego/go-api/internal/domain"
-	"github.com/diego/go-api/internal/presentation/http/middleware"
+	"github.com/diego/go-api/internal/presentation/rest/middleware"
 )
 
 // AuthRequest es el DTO de entrada para registro y login.
@@ -28,16 +28,6 @@ type RefreshRequest struct {
 type AuthResponse struct {
 	AccessToken  string `json:"access_token" example:"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."`
 	RefreshToken string `json:"refresh_token" example:"rand_base64_string"`
-}
-
-// MessageResponse es una respuesta genérica con mensaje.
-type MessageResponse struct {
-	Message string `json:"message" example:"user registered successfully"`
-}
-
-// ErrorResponse es una respuesta de error estándar.
-type ErrorResponse struct {
-	Error string `json:"error" example:"invalid credentials"`
 }
 
 type AuthHandler struct {

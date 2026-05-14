@@ -14,10 +14,13 @@ import (
 
 var testSecret = []byte("my_super_secret_key")
 
-// generateTestToken crea un JWT válido para las pruebas
+// generateTestToken crea un JWT válido para las pruebas.
+// Incluye los claims requeridos por el middleware: sub, uid, ver, permissions.
 func generateTestToken(username string, permissions []string, expired bool) string {
 	claims := jwt.MapClaims{
 		"sub":         username,
+		"uid":         float64(1), // userID fijo para tests
+		"ver":         float64(1), // token_version = 1 (match con el cache default)
 		"permissions": permissions,
 	}
 
@@ -36,6 +39,8 @@ func TestRequireAuth(t *testing.T) {
 	t.Parallel()
 
 	mw := NewAuthMiddleware(testSecret, nil, cache.NewTokenVersionCache(30*time.Second))
+	// Precargar el cache con la versión esperada para evitar el fallback a DB (repo es nil en tests).
+	mw.versionCache.Set(1, 1)
 
 	// Handler ficticio que simplemente retorna 200 OK si el middleware lo deja pasar
 	nextHandler := http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

@@ -199,6 +199,7 @@ func TestUserService_AssignRolesToUser(t *testing.T) {
 				m.On("FindByID", mock.Anything, uint(1)).Return(&domain.User{ID: 1}, nil)
 				roles := []domain.Role{{ID: 1}, {ID: 2}}
 				m.On("UpdateRoles", mock.Anything, uint(1), roles).Return(nil)
+				m.On("IncrementTokenVersion", mock.Anything, uint(1)).Return(1, nil)
 			},
 			setupRoleMock: func(m *mocks.MockRoleRepository) {
 				roles := []domain.Role{{ID: 1}, {ID: 2}}
@@ -214,6 +215,7 @@ func TestUserService_AssignRolesToUser(t *testing.T) {
 				m.On("FindByID", mock.Anything, uint(1)).Return(&domain.User{ID: 1}, nil)
 				var roles []domain.Role // nil o slice vacío
 				m.On("UpdateRoles", mock.Anything, uint(1), roles).Return(nil)
+				m.On("IncrementTokenVersion", mock.Anything, uint(1)).Return(1, nil)
 			},
 			setupRoleMock: func(m *mocks.MockRoleRepository) {
 				// No debe llamar a buscar roles
