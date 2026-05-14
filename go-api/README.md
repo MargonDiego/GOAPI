@@ -1,210 +1,227 @@
-# Go API Server - Clean Architecture (Production-Ready)
+# Go API Server — Clean Architecture RBAC Enterprise
 
-Este proyecto es una API REST escalable y de alto rendimiento construida en Go (Golang). Implementa principios de **Domain-Driven Design (DDD)** y **Clean Architecture**, y ha sido rigurosamente auditada y optimizada bajo los más altos estándares de **Performance** y **Seguridad (AppSec)**.
+API REST de alta disponibilidad construida en Go con **Clean Architecture**, **RBAC dinámico enterprise**, **auditoría forense**, y **scoping administrativo**.
 
-## 🚀 Características Principales
+## Características Principales
 
-### 🏗️ Arquitectura Limpia & DDD
-*   **Diseño por Capas:** Separación estricta entre **Domain** (lógica de negocio pura), **Application** (casos de uso) e **Infrastructure** (frameworks, base de datos).
-*   **Invariantes de Dominio Protegidas:** Uso de factorías (`domain.NewUser`) para asegurar que el modelo de negocio jamás alcance estados inválidos (ej: validaciones Regex anti-Path Traversal / XSS pasivo).
-*   **Inyección de Dependencias:** Total desacoplamiento usando interfaces, garantizando 100% de testabilidad.
+### Arquitectura
+- **Clean Architecture / Hexagonal**: Separación estricta Domain → Application → Infrastructure → Presentation
+- **Domain-Driven Design**: Entidades puras con invariantes protegidas (factory `NewUser`, account lockout)
+- **Inyección de Dependencias**: 100% testable, mocks generados con mockery
+- **Fat JWT (O(1) Auth)**: Permisos embebidos en token, cero consultas N+1 a DB por request
 
-### 🛡️ Seguridad Avanzada (AppSec Defensivo)
-*   **Mitigación OOM (Out Of Memory):** Parsing protegido con `http.MaxBytesReader` (limitado a 10KB), truncando payloads anómalos en seco.
-*   **Protección Slowloris & Keep-alive Floods:** Servidor HTTP configurado con `ReadTimeout (5s)`, `WriteTimeout (10s)` e `IdleTimeout (120s)`.
-*   **Prevención CPU Starvation:** Verificaciones de longitud pre-bcrypt (máx. 72 chars) impidiendo ataques DoS por hashing de strings gigantes.
-*   **Account Lockout:** Bloqueo progresivo de cuentas tras `domain.MaxFailedAttempts` intentos fallidos, con período de bloqueo configurable (`domain.LockDuration`).
-*   **Protección PII — Email Cifrado:** Los emails se almacenan cifrados con **AES-256-GCM** (IV aleatorio). Para búsquedas se usa un **HMAC-SHA256** determinista, separando confidencialidad de buscabilidad sin exponer datos en claro.
-*   **Rate Limiting por IP:** Las rutas de autenticación tienen un limitador estricto de 1 req/s con ráfagas de hasta 5, protegiendo bcrypt de ataques de fuerza bruta distribuidos.
-*   **Secrets Zero-Trust:** Prohibición estricta de credenciales en código. Configurado íntegramente vía variables de entorno con validación en startup (fail-fast).
+### Seguridad Enterprise
+- **RBAC Dinámico**: Roles y permisos gestionables vía API sin redeploy
+- **Protección de Roles Críticos**: `Admin` y `User` marcados como `IsSystem` — no se pueden eliminar ni renombrar
+- **Scoping Administrativo**: Multi-tenant por dominio. Un admin de "equipo-a" solo ve/modifica recursos de su scope
+- **Auditoría Forense**: Tabla `audit_logs` registra quién, qué, cuándo, old/new values en JSON
+- **Account Lockout**: Bloqueo progresivo tras `MaxFailedAttempts` intentos fallidos
+- **PII Protection**: Emails cifrados con AES-256-GCM, buscables por HMAC-SHA256 determinista
+- **Rate Limiting**: 1 req/s con ráfagas de 5 en rutas de autenticación (protección bcrypt)
+- **Token Version Cache**: Cache en memoria con TTL 30s para validar `token_version` sin hits a DB
+- **Refresh Token Rotation**: Tokens de uso único, previenen replay attacks
 
-### ⚡ Performance & Alta Concurrencia
-*   **Fat JWT (O(1) Authorization):** El middleware desempaqueta roles y permisos desde los `claims` del token en RAM, eliminando consultas N+1 a base de datos por cada request autenticado.
-*   **Token Version Cache:** Un cache en memoria con TTL de 30 segundos valida `token_version` sin tocar Postgres en el caso feliz. Reduce la ventana de stale permissions de 15 minutos (TTL del JWT) a 30 segundos.
-*   **Refresh Token Rotation:** Los Refresh Tokens son de uso único. Cada renovación borra el token anterior y emite uno nuevo, previniendo replay attacks.
-*   **Time-Bound Contexts:** Todas las operaciones de DB usan `context.WithTimeout(ctx, 3s)` para prevenir bloqueos ante latencia de red.
-*   **Control de Alocaciones:** Lógica GORM mapeada a DDD pre-alocando slices a su capacidad exacta.
-*   **Paginación Nativa:** Implementada de extremo a extremo controlando consumo de Heap.
-
-### 🗄️ Base de Datos
-*   Motor: **PostgreSQL** (compatible con **Supabase**), usando `gorm.io/driver/postgres`.
-*   Migraciones versionadas con `golang-migrate` (4 migraciones activas).
+### Operaciones Administrativas
+- **Paginación**: Todos los listados soportan `?page=` y `?size=` (máx 100)
+- **Búsqueda**: `GET /users?search=john&role=Admin` — case-insensitive
+- **Soft Delete + Restore**: Items borrados se pueden recuperar (`POST /.../{id}/restore`)
+- **Bulk Operations**: `POST /users/bulk/roles` asigna roles a múltiples usuarios atómicamente
+- **Metadata**: Roles y permisos tienen campo `description` para documentación
 
 ---
 
-## 🛠️ Estructura del Proyecto
+## Estructura del Proyecto
 
 ```text
-├── cmd/
-│   └── api/
-│       └── main.go                          # Entrypoint: wiring de dependencias y bootstrap del servidor
-│
-├── internal/
-│   ├── config/
-│   │   └── config.go                        # Carga y valida todas las variables de entorno (fail-fast)
-│   │
-│   ├── domain/                              # 🔵 CORE — sin dependencias externas
-│   │   ├── user.go                          # Entidad User, factory NewUser, lógica de lockout
-│   │   └── role_repository.go              # Interfaces: UserRepository, RoleRepository (puertos)
-│   │
-│   ├── application/                         # 🟢 LÓGICA — orquesta domain + infrastructure
-│   │   ├── auth_service.go                  # Register, Login, RefreshTokens, Logout
-│   │   ├── auth_service_test.go
-│   │   ├── user_service.go                  # GetMe, GetAll, CRUD de usuarios, AssignRoles
-│   │   ├── user_service_test.go
-│   │   ├── role_service.go                  # CRUD de roles, AssignPermissions
-│   │   └── role_service_test.go
-│   │
-│   ├── infrastructure/
-│   │   ├── cache/
-│   │   │   └── token_version_cache.go       # Cache en memoria (sync.Map, TTL 30s) para token_version
-│   │   ├── crypto/
-│   │   │   └── encryptor.go                 # AES-256-GCM (cifrado) + HMAC-SHA256 (hash buscable) para PII
-│   │   └── database/
-│   │       ├── postgres.go                  # Conexión GORM + ejecución automática de migraciones
-│   │       ├── gorm_models.go               # Modelos GORM (UserModel, RoleModel, etc.) — capa de mapeo
-│   │       ├── user_repository.go           # Implementación de UserRepository
-│   │       └── role_repository.go           # Implementación de RoleRepository
-│   │
-│   └── presentation/http/
-│       ├── router.go                        # Registro de rutas, middlewares globales y Swagger UI
-│       ├── handlers/
-│       │   ├── auth_handler.go              # POST /register, /login, /refresh, /logout
-│       │   ├── user_handler.go              # GET|POST|PUT|DELETE /users, GET /me
-│       │   ├── role_handler.go              # CRUD /roles, /permissions, PUT /{id}/permissions
-│       │   ├── health_handler.go            # GET /health/liveness, /health/readiness
-│       │   └── helpers.go                   # Funciones utilitarias compartidas entre handlers
-│       └── middleware/
-│           ├── auth.go                      # RequireAuth (valida JWT + token_version), RequirePermission
-│           ├── cors.go                      # Cabeceras CORS
-│           ├── rate_limiter.go              # Rate limiter por IP (token bucket)
-│           └── request_logger.go            # Logging estructurado de requests entrantes
-│
-├── migrations/                              # Migraciones SQL versionadas (golang-migrate)
-│   ├── 000001_create_schema                 # Tablas base: users, roles, permissions, pivotes
-│   ├── 000002_create_refresh_tokens         # Tabla refresh_tokens con índice único por token
-│   ├── 000003_add_security_fields           # email_encrypted, email_hash, failed_attempts, locked_until
-│   └── 000004_add_token_version             # token_version para invalidación inmediata de JWT
-│
-├── mocks/                                   # Mocks generados por mockery (no editar manualmente)
-│   ├── mock_AuthService.go
-│   ├── mock_UserService.go
-│   ├── mock_RoleService.go
-│   ├── mock_UserRepository.go
-│   └── mock_RoleRepository.go
-│
-├── docs/                                    # Documentación del proyecto
-│   ├── swagger.yaml / swagger.json          # Spec OpenAPI generada por swaggo
-│   ├── docs.go                              # Inicializador de Swagger para Go
-│   └── TESTING_ROADMAP.md                   # Avance de la suite de pruebas
-│
-├── scripts/
-│   ├── test.ps1                             # Ejecuta la suite de tests (PowerShell)
-│   └── coverage.ps1                         # Genera reporte de cobertura HTML (PowerShell)
-│
-├── generate.go                              # Directiva go:generate para invocar mockery
-├── .mockery.yaml                            # Configuración de mockery (interfaces a mockear)
-├── Makefile                                 # Targets: test, test-cov, generate, swag
-├── go.mod / go.sum                          # Módulos y dependencias
-└── .env                                     # Variables de entorno locales (no commitear)
+cmd/api/main.go                          # Entrypoint: DI wiring + graceful shutdown
+
+internal/
+  config/                                # Variables de entorno (fail-fast en startup)
+  domain/                                # Entidades puras, interfaces (puertos), errores
+    user.go                              # User, NewUser, Account Lockout, HasPermission
+    role.go                              # Role, Permission, IsSystem, Scope
+    user_repo.go                         # UserRepository (UserReader + UserWriter + TokenStore)
+    role_repo.go                         # RoleRepository
+    audit_repo.go                        # AuditRepository
+    errors.go                            # Errores de dominio (ErrRoleImmutable, ErrScopeMismatch, ...)
+  application/                           # Casos de uso, lógica de negocio orquestada
+    auth_service.go                      # Register, Login, Refresh, Logout
+    user_service.go                      # CRUD usuarios, SearchUsers, BulkAssignRolesToUsers
+    role_service.go                      # CRUD roles/permisos, SearchRoles, RestoreRole
+    audit_context.go                     # WithActor, ActorFromContext, WithScope, ScopeFromContext
+    audit_helper.go                      # auditService.log + canAccessScope/assertScopeAccess
+    audit_test.go                        # Tests de auditoría
+    *_test.go                            # Tests unitarios de servicios
+  infrastructure/
+    persistence/
+      postgres.go                        # Conexión GORM + golang-migrate + seedDefaults
+      gorm_models.go                     # User, Role, Permission, RefreshToken, AuditLog
+      user_repository.go                 # Implementación UserRepository
+      role_repository.go                 # Implementación RoleRepository
+      audit_repository.go                # Implementación AuditRepository
+    cache/token_version_cache.go         # sync.Map con TTL 30s
+    crypto/encryptor.go                  # AES-256-GCM + HMAC-SHA256
+  presentation/rest/
+    router.go                            # Registro de rutas + middlewares
+    handlers/                            # DTOs + handlers HTTP
+      auth_handler.go
+      user_handler.go
+      role_handler.go
+      health_handler.go
+      response.go                        # RespondJSON, RespondError, DecodeAndValidate, withActor
+    middleware/
+      auth.go                            # RequireAuth (JWT + token_version), RequirePermission
+      rate_limiter.go
+      cors.go
+      request_logger.go
+
+migrations/                              # 7 migraciones versionadas (golang-migrate)
+  000001_create_schema                   # Tablas base: users, roles, permissions, pivotes
+  000002_create_refresh_tokens           # refresh_tokens con índice único
+  000003_add_security_fields             # email_encrypted, email_hash, failed_attempts, locked_until
+  000004_add_token_version               # token_version para invalidación de JWT
+  000005_create_audit_logs               # Auditoría forense: action, actor, target, old/new values
+  000006_add_description_fields          # description en roles y permisos
+  000007_add_security_scoping            # is_system, scope en roles y usuarios
+
+mocks/                                   # Generados por mockery (go generate ./...)
+docs/                                    # Swagger/OpenAPI generado por swaggo
 ```
 
 ---
 
-## 💻 Configuración de Entorno Local
-
-Copia el archivo `.env` y completa las siguientes variables:
+## Configuración
 
 | Variable | Requerida | Descripción |
 |---|---|---|
-| `JWT_SECRET` | ✅ | Clave HMAC para firmar JWTs. Mínimo 64 caracteres. |
-| `DB_DSN` | ✅ | DSN de PostgreSQL para GORM. Ej: `postgresql://user:pass@host:5432/db` |
-| `MIGRATION_DSN` | ✅ | DSN para golang-migrate (puede ser el mismo que `DB_DSN`). |
-| `EMAIL_ENCRYPTION_KEY` | ✅ | Clave AES-256 para cifrar emails. Debe ser **exactamente 32 bytes**. |
-| `PORT` | ➖ | Puerto del servidor. Default: `8080`. |
-| `APP_ENV` | ➖ | Entorno de ejecución. Default: `development`. |
+| `JWT_SECRET` | ✅ | Clave HMAC para firmar JWTs (mínimo 64 caracteres) |
+| `DB_DSN` | ✅ | DSN PostgreSQL para GORM |
+| `MIGRATION_DSN` | ✅ | DSN para golang-migrate (puede ser igual a DB_DSN) |
+| `EMAIL_ENCRYPTION_KEY` | ✅ | Clave AES-256 (exactamente 32 bytes) |
+| `PORT` | ➖ | Default: `8080` |
+| `APP_ENV` | ➖ | Default: `development` |
 
-> La aplicación hace **fail-fast** en startup si alguna variable requerida falta o tiene formato inválido (ej: `EMAIL_ENCRYPTION_KEY` con longitud incorrecta).
+La app hace **fail-fast** en startup si falta alguna variable requerida.
 
 ---
 
-## ▶️ Ejecución
+## Ejecución
 
 ```bash
-# Instalar dependencias
+# Local
 go mod tidy
-
-# Correr la API (las variables se leen del archivo .env automáticamente)
 go run cmd/api/main.go
+
+# Docker
+docker compose up -d --build
 ```
+
+> Nota: Tras agregar nuevas migraciones, el contenedor necesita `docker compose up -d --build` para aplicarlas.
 
 ---
 
-## 🌐 Endpoints
+## Endpoints
 
-### Autenticación (sin token requerido)
+### Autenticación (sin token)
 
 | Método | Ruta | Descripción |
 |---|---|---|
-| `POST` | `/api/register` | Registro de usuario. Body: `{"username","password","email"}` |
-| `POST` | `/api/login` | Login. Retorna `access_token` (Fat JWT, 15 min) + `refresh_token` (7 días) |
-| `POST` | `/api/refresh` | Rota el refresh token y emite nuevos tokens |
-| `POST` | `/api/logout` | Invalida todos los refresh tokens del usuario |
+| POST | `/api/v1/register` | Registro. Body: `{"username","password","email"}` |
+| POST | `/api/v1/login` | Login. Retorna `access_token` + `refresh_token` |
+| POST | `/api/v1/refresh` | Rota refresh token, emite nuevos tokens |
+| POST | `/api/v1/logout` | Invalida todos los refresh tokens del usuario |
 
 ### Usuarios (requiere JWT)
 
 | Método | Ruta | Permiso | Descripción |
 |---|---|---|---|
-| `GET` | `/api/me` | — | Perfil del usuario autenticado (sin I/O a DB) |
-| `GET` | `/api/users` | `read:users` | Lista paginada de usuarios |
-| `GET` | `/api/users/{id}` | `read:users` | Detalle de un usuario |
-| `POST` | `/api/users` | `manage:users` | Crear usuario |
-| `PUT` | `/api/users/{id}` | `manage:users` | Actualizar usuario |
-| `DELETE` | `/api/users/{id}` | `manage:users` | Eliminar usuario |
-| `PUT` | `/api/users/{id}/roles` | `manage:roles` | Asignar roles a un usuario |
+| GET | `/api/v1/me` | — | Perfil del usuario autenticado |
+| GET | `/api/v1/users` | `read:users` | Listar paginado. Query: `?page=&size=&search=&role=` |
+| GET | `/api/v1/users/deleted` | `manage:users` | Listar usuarios soft-deleted |
+| GET | `/api/v1/users/{id}` | `read:users` | Detalle de usuario |
+| POST | `/api/v1/users` | `manage:users` | Crear usuario |
+| PUT | `/api/v1/users/{id}` | `manage:users` | Actualizar usuario |
+| DELETE | `/api/v1/users/{id}` | `manage:users` | Soft-delete usuario |
+| POST | `/api/v1/users/{id}/restore` | `manage:users` | Restaurar usuario soft-deleted |
+| PUT | `/api/v1/users/{id}/roles` | `manage:roles` | Asignar roles a usuario |
+| POST | `/api/v1/users/bulk/roles` | `manage:roles` | Asignar roles a múltiples usuarios |
 
-### Roles y Permisos (requiere permiso `manage:roles`)
+### Roles y Permisos (requiere `manage:roles`)
 
 | Método | Ruta | Descripción |
 |---|---|---|
-| `GET` | `/api/roles` | Listar roles |
-| `POST` | `/api/roles` | Crear rol |
-| `GET` | `/api/roles/{id}` | Detalle de rol |
-| `PUT` | `/api/roles/{id}` | Actualizar rol |
-| `DELETE` | `/api/roles/{id}` | Eliminar rol |
-| `PUT` | `/api/roles/{id}/permissions` | Asignar permisos a un rol |
-| `GET` | `/api/permissions` | Listar permisos |
-| `POST` | `/api/permissions` | Crear permiso |
+| GET | `/api/v1/roles` | Listar roles. Query: `?page=&size=&search=` |
+| GET | `/api/v1/roles/deleted` | Listar roles soft-deleted |
+| POST | `/api/v1/roles` | Crear rol. Body: `{"name","description"}` |
+| GET | `/api/v1/roles/{id}` | Detalle de rol |
+| PUT | `/api/v1/roles/{id}` | Actualizar rol. System roles: solo descripción editable |
+| DELETE | `/api/v1/roles/{id}` | Soft-delete rol. **Rechazado si IsSystem=true** |
+| POST | `/api/v1/roles/{id}/restore` | Restaurar rol soft-deleted |
+| PUT | `/api/v1/roles/{id}/permissions` | Asignar permisos a rol |
+| GET | `/api/v1/permissions` | Listar permisos. Query: `?page=&size=` |
+| POST | `/api/v1/permissions` | Crear permiso. Body: `{"name","description"}` |
 
 ### Healthchecks
 
 | Método | Ruta | Descripción |
 |---|---|---|
-| `GET` | `/health/liveness` | Probe de liveness (Kubernetes/Docker) |
-| `GET` | `/health/readiness` | Probe de readiness (verifica conexión a DB) |
+| GET | `/health/liveness` | Kubernetes liveness probe |
+| GET | `/health/readiness` | Verifica conexión a PostgreSQL |
 
-### Documentación interactiva
+### Documentación
 
-La UI de Swagger está disponible en `/swagger/index.html` cuando la API está corriendo.
+Swagger UI: `/swagger/index.html` (cuando la API está corriendo)
 
 ---
 
-## 🧪 Testing & Tooling
+## Testing
 
 ```bash
-# Correr todos los tests con race detector
+# Todos los tests
+go test ./...
+
+# Con race detector
 make test
 
-# Generar reporte de cobertura HTML
+# Cobertura HTML
 make test-cov
 
-# Regenerar mocks (tras modificar interfaces en domain/ o application/)
+# Regenerar mocks (tras modificar interfaces)
 make generate
 
-# Regenerar documentación Swagger (tras modificar annotations en handlers/)
+# Regenerar Swagger
 make swag
 ```
 
-Los mocks en `mocks/` son generados automáticamente por [mockery](https://github.com/vektra/mockery) y **no deben editarse manualmente**. Ver `.mockery.yaml` para la configuración de interfaces mockeadas.
+Los mocks en `mocks/` son generados automáticamente por [mockery](https://github.com/vektra/mockery). No editar manualmente.
 
-Para el estado actual de la suite de pruebas, ver [`docs/TESTING_ROADMAP.md`](docs/TESTING_ROADMAP.md).
+---
+
+## Seguridad: Scoping Administrativo
+
+El campo `scope` en usuarios y roles permite aislamiento multi-tenant:
+
+- **Super-admin**: Usuario con `scope = ""` (vacío). Accede a TODO.
+- **Admin de equipo**: Usuario con `scope = "equipo-a"`. Solo ve/modifica:
+  - Usuarios con `scope = "equipo-a"` o `scope = ""`
+  - Roles con `scope = "equipo-a"` o `scope = ""`
+- **Roles system**: `Admin` y `User` tienen `IsSystem = true`. No se pueden eliminar ni renombrar (cualquier scope).
+
+El scope del usuario autenticado se embebe en el JWT como claim `"scope"` y se valida en cada operación de escritura.
+
+---
+
+## Auditoría
+
+Todas las operaciones mutantes (crear, actualizar, eliminar, asignar, restaurar) registran un log en `audit_logs`:
+
+| Campo | Descripción |
+|---|---|
+| `action` | Tipo de operación: `create_role`, `update_user`, `delete_role`, `assign_permissions`, `restore_user`, etc. |
+| `actor_id` | ID del usuario que ejecutó la acción |
+| `target_type` | Tipo de recurso: `role`, `user`, `permission` |
+| `target_id` | ID del recurso afectado |
+| `old_value` / `new_value` | JSON con estado anterior y posterior |
+| `created_at` | Timestamp de la operación |
+
+Los logs son persistidos automáticamente y no interrumpen la operación principal (fail-safe).
