@@ -80,9 +80,10 @@ migrations/                              # 7 migraciones versionadas (golang-mig
   000002_create_refresh_tokens           # refresh_tokens con índice único
   000003_add_security_fields             # email_encrypted, email_hash, failed_attempts, locked_until
   000004_add_token_version               # token_version para invalidación de JWT
-  000005_create_audit_logs               # Auditoría forense: action, actor, target, old/new values
-  000006_add_description_fields          # description en roles y permisos
-  000007_add_security_scoping            # is_system, scope en roles y usuarios
+   000005_create_audit_logs               # Auditoría forense: action, actor, target, old/new values
+   000006_add_description_fields          # description en roles y permisos
+   000007_add_security_scoping            # is_system, scope en roles y usuarios
+   000008_fix_soft_delete_unique_index     # Índices parciales WHERE deleted_at IS NULL
 
 mocks/                                   # Generados por mockery (go generate ./...)
 docs/                                    # Swagger/OpenAPI generado por swaggo
@@ -136,7 +137,7 @@ docker compose up -d --build
 | Método | Ruta | Permiso | Descripción |
 |---|---|---|---|
 | GET | `/api/v1/me` | — | Perfil del usuario autenticado |
-| GET | `/api/v1/users` | `read:users` | Listar paginado. Query: `?page=&size=&search=&role=` |
+| GET | `/api/v1/users` | `read:users` | Listar paginado. Query: `?page=&size=&search=&role=`. Respuesta: `{data, page, size, total, total_pages}` |
 | GET | `/api/v1/users/deleted` | `manage:users` | Listar usuarios soft-deleted |
 | GET | `/api/v1/users/{id}` | `read:users` | Detalle de usuario |
 | POST | `/api/v1/users` | `manage:users` | Crear usuario |
@@ -150,7 +151,7 @@ docker compose up -d --build
 
 | Método | Ruta | Descripción |
 |---|---|---|
-| GET | `/api/v1/roles` | Listar roles. Query: `?page=&size=&search=` |
+| GET | `/api/v1/roles` | Listar roles. Query: `?page=&size=&search=`. Respuesta: `{data, page, size, total, total_pages}` |
 | GET | `/api/v1/roles/deleted` | Listar roles soft-deleted |
 | POST | `/api/v1/roles` | Crear rol. Body: `{"name","description"}` |
 | GET | `/api/v1/roles/{id}` | Detalle de rol |
@@ -158,7 +159,7 @@ docker compose up -d --build
 | DELETE | `/api/v1/roles/{id}` | Soft-delete rol. **Rechazado si IsSystem=true** |
 | POST | `/api/v1/roles/{id}/restore` | Restaurar rol soft-deleted |
 | PUT | `/api/v1/roles/{id}/permissions` | Asignar permisos a rol |
-| GET | `/api/v1/permissions` | Listar permisos. Query: `?page=&size=` |
+| GET | `/api/v1/permissions` | Listar permisos. Query: `?page=&size=`. Respuesta: `{data, page, size, total, total_pages}` |
 | POST | `/api/v1/permissions` | Crear permiso. Body: `{"name","description"}` |
 
 ### Healthchecks
@@ -185,6 +186,9 @@ make test
 
 # Cobertura HTML
 make test-cov
+
+# Tests de integración (requiere Docker)
+go test -tags=integration ./internal/infrastructure/persistence/ -v -count=1
 
 # Regenerar mocks (tras modificar interfaces)
 make generate
@@ -222,6 +226,8 @@ Todas las operaciones mutantes (crear, actualizar, eliminar, asignar, restaurar)
 | `target_type` | Tipo de recurso: `role`, `user`, `permission` |
 | `target_id` | ID del recurso afectado |
 | `old_value` / `new_value` | JSON con estado anterior y posterior |
+| `ip_address` | IP del cliente (X-Forwarded-For → X-Real-Ip → RemoteAddr) |
+| `user_agent` | User-Agent del cliente |
 | `created_at` | Timestamp de la operación |
 
 Los logs son persistidos automáticamente y no interrumpen la operación principal (fail-safe).
