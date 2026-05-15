@@ -210,9 +210,9 @@ docker compose up -d --build
 | Método | Ruta | Descripción |
 |---|---|---|
 | POST | `/api/v1/register` | Registro. Body: `{"username","password","email"}` |
-| POST | `/api/v1/login` | Login. Retorna `access_token` + `refresh_token` |
-| POST | `/api/v1/refresh` | Rota refresh token, emite nuevos tokens |
-| POST | `/api/v1/logout` | Invalida todos los refresh tokens del usuario |
+| POST | `/api/v1/login` | Login. Setea cookie `access_token` + retorna `refresh_token` en JSON |
+| POST | `/api/v1/refresh` | Rota refresh token, renueva cookie. Body: `{"refresh_token":"..."}` |
+| POST | `/api/v1/logout` | Invalida refresh tokens y limpia cookie |
 
 ### Usuarios (requiere JWT)
 
@@ -300,6 +300,49 @@ Los middlewares se ejecutan en orden — del más externo al más interno:
 | 6 | `IPRateLimiter` | Token bucket por IP (10 req/s global, 1 req/s en auth) |
 | 7 | `AuthMiddleware` | JWT via cookie HttpOnly (primario) o Bearer header (fallback) + validacion token_version + permisos en memoria |
 | 8 | `CSRF` | Validacion de Origin/Referer en mutations (POST/PUT/DELETE) |
+
+## Autenticacion
+
+La API usa **doble estrategia** de auth:
+
+### 1. Cookie HttpOnly (primario — frontend web)
+
+```bash
+# Login: la respuesta setea cookie automaticamente
+curl -X POST http://localhost:8080/api/v1/login \
+  -H "Content-Type: application/json" \
+  -H "Origin: http://localhost:3000" \
+  -d '{"username":"admin","password":"admin1234"}' \
+  -c cookies.txt
+
+# Requests autenticados: el browser envia la cookie solo
+curl http://localhost:8080/api/v1/me \
+  -H "Origin: http://localhost:3000" \
+  -b cookies.txt
+```
+
+| Propiedad | Valor | Proposito |
+|-----------|-------|-----------|
+| `HttpOnly` | `true` | Invisible a JS — inmune a robo por XSS |
+| `Secure` | `true` en prod | Solo via HTTPS |
+| `SameSite` | `Strict` | No se envia cross-site — anti-CSRF |
+| `Path` | `/api` | Solo en endpoints de la API |
+| `MaxAge` | `900s` (15 min) | Mismo TTL que el JWT |
+
+> **Frontend**: usar `credentials: 'include'` en fetch/axios. El browser envia la cookie automaticamente. NO guardar el token en localStorage.
+
+### 2. Authorization: Bearer (fallback — Swagger, mobile apps)
+
+```bash
+curl http://localhost:8080/api/v1/me \
+  -H "Authorization: Bearer <token>"
+```
+
+Sigue funcionando para Swagger UI (`/swagger/index.html`) y aplicaciones mobile que no pueden usar cookies.
+
+### CSRF Protection
+
+Toda mutacion (POST/PUT/DELETE) requiere header `Origin` que coincida con `CORS_ORIGINS`. Sin Origin, se rechaza con 403.
 
 ## Seguridad: Scoping Administrativo
 
