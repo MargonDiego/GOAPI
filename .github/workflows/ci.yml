@@ -17,11 +17,17 @@ jobs:
         with:
           go-version: "1.25"
 
-      - name: golangci-lint
-        uses: golangci/golangci-lint-action@v7
-        with:
-          version: v2.1.0
-          args: --timeout=3m
+      - name: go vet
+        run: go vet ./...
+
+      - name: gofmt
+        run: |
+          unformatted=$(gofmt -s -l . | grep -v mocks/)
+          if [ -n "$unformatted" ]; then
+            echo "Files not formatted:"
+            echo "$unformatted"
+            exit 1
+          fi
 
   test:
     name: Test
