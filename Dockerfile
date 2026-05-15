@@ -11,7 +11,11 @@ FROM golang:1.25-alpine AS builder
 RUN apk add --no-cache git ca-certificates
 WORKDIR /app
 
-# Copiar todo el código fuente
+# Capa 1: dependencias (cacheable — solo cambia si go.mod/go.sum cambian)
+COPY go.mod go.sum ./
+RUN go mod download
+
+# Capa 2: código fuente (cambia con cada commit)
 COPY . .
 
 # Compilar binario estático (sin CGO, compatible con alpine)
@@ -21,12 +25,18 @@ RUN CGO_ENABLED=0 GOOS=linux \
 # --- Stage 2: Runtime ---
 FROM alpine:3.21
 
-RUN apk add --no-cache ca-certificates tzdata
+# ca-certificates: TLS para conexiones externas (DB, APIs)
+# tzdata: zona horaria correcta en logs
+# wget: HEALTHCHECK
+RUN apk add --no-cache ca-certificates tzdata wget
+
 WORKDIR /app
 
+# Copiar binario y migraciones desde el builder
 COPY --from=builder /app/api .
 COPY --from=builder /app/migrations ./migrations
 
+# Usuario no-root
 RUN adduser -D -g '' appuser
 USER appuser
 
