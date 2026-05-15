@@ -2,7 +2,7 @@
 # Dockerfile — Go API (Clean Architecture)
 # ============================================================
 # Build multi-stage: compila binario estático y lo empaqueta
-# en una imagen mínima sin toolchain de Go (~15 MB final).
+# en una imagen mínima sin toolchain de Go (~56 MB final).
 # ============================================================
 
 # --- Stage 1: Build ---
