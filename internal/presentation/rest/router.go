@@ -1,6 +1,7 @@
 package rest
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/gorilla/mux"
@@ -30,6 +31,9 @@ func NewRouter(
 	r.Use(middleware.SecurityHeaders(appEnv))
 	// 4. CORS con orígenes configurables
 	r.Use(middleware.CORS(corsOrigins...))
+
+	// GET / — información pública de la API
+	r.HandleFunc("/", rootHandler).Methods("GET")
 
 	// Swagger UI — disponible en /swagger/index.html
 	r.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
@@ -94,4 +98,18 @@ func NewRouter(
 	permsRoute.HandleFunc("", roleHandler.CreatePermission).Methods("POST")
 
 	return r
+}
+
+// rootHandler retorna información pública de la API.
+// Útil para health checks rápidos, descubrimiento de endpoints y monitoreo.
+func rootHandler(w http.ResponseWriter, r *http.Request) {
+	w.Header().Set("Content-Type", "application/json")
+	json.NewEncoder(w).Encode(map[string]interface{}{
+		"name":        "GOAPI",
+		"version":     "1.0",
+		"status":      "ok",
+		"description": "Clean Architecture RBAC Enterprise API",
+		"docs":        "/swagger/index.html",
+		"health":      "/health/liveness",
+	})
 }
