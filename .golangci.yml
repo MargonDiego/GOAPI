@@ -32,7 +32,7 @@ linters-settings:
     locale: US
 
   goimports:
-    local-prefixes: github.com/diego/go-api
+    local-prefixes: github.com/MargonDiego/GOAPI
 
 issues:
   exclude-rules:

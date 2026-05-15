@@ -21,8 +21,8 @@ import (
 	"github.com/testcontainers/testcontainers-go/modules/postgres"
 	"github.com/testcontainers/testcontainers-go/wait"
 
-	"github.com/diego/go-api/internal/domain"
-	"github.com/diego/go-api/internal/infrastructure/persistence"
+	"github.com/MargonDiego/GOAPI/internal/domain"
+	"github.com/MargonDiego/GOAPI/internal/infrastructure/persistence"
 )
 
 func TestUserRepository_Integration(t *testing.T) {

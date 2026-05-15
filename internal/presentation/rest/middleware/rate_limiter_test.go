@@ -5,7 +5,7 @@ import (
 	"net/http/httptest"
 	"testing"
 
-	"github.com/diego/go-api/internal/presentation/rest/middleware"
+	"github.com/MargonDiego/GOAPI/internal/presentation/rest/middleware"
 	"github.com/stretchr/testify/assert"
 )
 

@@ -5,7 +5,7 @@ import (
 	"encoding/json"
 	"fmt"
 
-	"github.com/diego/go-api/internal/domain"
+	"github.com/MargonDiego/GOAPI/internal/domain"
 )
 
 // auditService encapsula la lógica de auditoría reutilizable entre servicios.

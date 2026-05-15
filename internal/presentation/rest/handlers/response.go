@@ -9,9 +9,9 @@ import (
 	"strconv"
 	"strings"
 
-	"github.com/diego/go-api/internal/application"
-	"github.com/diego/go-api/internal/domain"
-	"github.com/diego/go-api/internal/presentation/rest/middleware"
+	"github.com/MargonDiego/GOAPI/internal/application"
+	"github.com/MargonDiego/GOAPI/internal/domain"
+	"github.com/MargonDiego/GOAPI/internal/presentation/rest/middleware"
 	"github.com/go-playground/validator/v10"
 	"github.com/gorilla/mux"
 	"github.com/rs/zerolog/log"

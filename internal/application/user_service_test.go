@@ -8,10 +8,10 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	"github.com/diego/go-api/internal/application"
-	"github.com/diego/go-api/internal/domain"
-	appcrypto "github.com/diego/go-api/internal/infrastructure/crypto"
-	"github.com/diego/go-api/mocks"
+	"github.com/MargonDiego/GOAPI/internal/application"
+	"github.com/MargonDiego/GOAPI/internal/domain"
+	appcrypto "github.com/MargonDiego/GOAPI/internal/infrastructure/crypto"
+	"github.com/MargonDiego/GOAPI/mocks"
 )
 
 func setupTestEncryptorForUserService(t *testing.T) *appcrypto.Encryptor {

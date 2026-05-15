@@ -8,8 +8,8 @@ import (
 	"net/http"
 	"strings"
 
-	"github.com/diego/go-api/internal/domain"
-	"github.com/diego/go-api/internal/infrastructure/cache"
+	"github.com/MargonDiego/GOAPI/internal/domain"
+	"github.com/MargonDiego/GOAPI/internal/infrastructure/cache"
 	"github.com/golang-jwt/jwt/v5"
 )
 

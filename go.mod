@@ -1,4 +1,4 @@
-module github.com/diego/go-api
+module github.com/MargonDiego/GOAPI
 
 go 1.25.0
 

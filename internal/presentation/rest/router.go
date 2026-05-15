@@ -6,8 +6,8 @@ import (
 	"github.com/gorilla/mux"
 	httpSwagger "github.com/swaggo/http-swagger"
 
-	"github.com/diego/go-api/internal/presentation/rest/handlers"
-	"github.com/diego/go-api/internal/presentation/rest/middleware"
+	"github.com/MargonDiego/GOAPI/internal/presentation/rest/handlers"
+	"github.com/MargonDiego/GOAPI/internal/presentation/rest/middleware"
 )
 
 func NewRouter(

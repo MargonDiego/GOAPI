@@ -5,8 +5,8 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/diego/go-api/internal/domain"
-	"github.com/diego/go-api/internal/infrastructure/cache"
+	"github.com/MargonDiego/GOAPI/internal/domain"
+	"github.com/MargonDiego/GOAPI/internal/infrastructure/cache"
 )
 
 // RoleService define el contrato de la capa de aplicación para operaciones sobre roles y permisos.

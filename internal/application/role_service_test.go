@@ -8,8 +8,8 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	"github.com/diego/go-api/internal/application"
-	"github.com/diego/go-api/internal/domain"
+	"github.com/MargonDiego/GOAPI/internal/application"
+	"github.com/MargonDiego/GOAPI/internal/domain"
 )
 
 // mockRoleRepository es un mock manual de domain.RoleRepository usando testify/mock.

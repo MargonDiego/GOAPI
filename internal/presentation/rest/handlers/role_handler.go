@@ -4,8 +4,8 @@ import (
 	"errors"
 	"net/http"
 
-	"github.com/diego/go-api/internal/application"
-	"github.com/diego/go-api/internal/domain"
+	"github.com/MargonDiego/GOAPI/internal/application"
+	"github.com/MargonDiego/GOAPI/internal/domain"
 	"github.com/rs/zerolog/log"
 )
 

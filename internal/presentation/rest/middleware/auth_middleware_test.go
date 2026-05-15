@@ -7,7 +7,7 @@ import (
 	"testing"
 	"time"
 
-	"github.com/diego/go-api/internal/infrastructure/cache"
+	"github.com/MargonDiego/GOAPI/internal/infrastructure/cache"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/stretchr/testify/assert"
 )

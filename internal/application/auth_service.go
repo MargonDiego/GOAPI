@@ -8,8 +8,8 @@ import (
 	"fmt"
 	"time"
 
-	"github.com/diego/go-api/internal/domain"
-	appcrypto "github.com/diego/go-api/internal/infrastructure/crypto"
+	"github.com/MargonDiego/GOAPI/internal/domain"
+	appcrypto "github.com/MargonDiego/GOAPI/internal/infrastructure/crypto"
 	"github.com/golang-jwt/jwt/v5"
 	"golang.org/x/crypto/bcrypt"
 )

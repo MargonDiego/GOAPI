@@ -4,7 +4,7 @@ import (
 	"context"
 	"testing"
 
-	"github.com/diego/go-api/internal/domain"
+	"github.com/MargonDiego/GOAPI/internal/domain"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 )

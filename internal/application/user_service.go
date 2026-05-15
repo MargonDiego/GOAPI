@@ -5,9 +5,9 @@ import (
 	"errors"
 	"fmt"
 
-	"github.com/diego/go-api/internal/domain"
-	"github.com/diego/go-api/internal/infrastructure/cache"
-	appcrypto "github.com/diego/go-api/internal/infrastructure/crypto"
+	"github.com/MargonDiego/GOAPI/internal/domain"
+	"github.com/MargonDiego/GOAPI/internal/infrastructure/cache"
+	appcrypto "github.com/MargonDiego/GOAPI/internal/infrastructure/crypto"
 	"golang.org/x/crypto/bcrypt"
 )
 

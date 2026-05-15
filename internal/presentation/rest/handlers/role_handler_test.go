@@ -12,9 +12,9 @@ import (
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
 
-	"github.com/diego/go-api/internal/domain"
-	"github.com/diego/go-api/internal/presentation/rest/handlers"
-	"github.com/diego/go-api/mocks"
+	"github.com/MargonDiego/GOAPI/internal/domain"
+	"github.com/MargonDiego/GOAPI/internal/presentation/rest/handlers"
+	"github.com/MargonDiego/GOAPI/mocks"
 )
 
 func TestRoleHandler_CreateRole(t *testing.T) {
