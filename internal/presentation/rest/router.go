@@ -22,20 +22,20 @@ func NewRouter(
 ) *mux.Router {
 	r := mux.NewRouter()
 
-	// Middlewares globales â€” orden importa:
-	// 1. PanicRecovery DEBE ser el mÃ¡s externo
+	// Middlewares globales -- orden importa:
+	// 1. PanicRecovery DEBE ser el mas externo
 	r.Use(middleware.PanicRecovery)
 	// 2. RequestID para trazabilidad
 	r.Use(middleware.RequestID)
 	// 3. Security headers
 	r.Use(middleware.SecurityHeaders(appEnv))
-	// 4. CORS con orÃ­genes configurables
+	// 4. CORS con origenes configurables
 	r.Use(middleware.CORS(corsOrigins...))
 
-	// GET / â€” informaciÃ³n pÃºblica de la API
+	// GET / -- informacion publica de la API
 	r.HandleFunc("/", rootHandler).Methods("GET")
 
-	// Swagger UI â€” disponible en /swagger/index.html
+	// Swagger UI -- disponible en /swagger/index.html
 	r.PathPrefix("/swagger/").Handler(httpSwagger.WrapHandler)
 
 	// Healthchecks (Kubernetes/Docker probes)
@@ -46,8 +46,8 @@ func NewRouter(
 	// Protege contra DoS por usuarios autenticados ejecutando operaciones masivas.
 	apiLimiter := middleware.NewIPRateLimiter(10, 20)
 
-	// Limitador estricto para rutas de autenticaciÃ³n (protege bcrypt):
-	// 1 peticiÃ³n por segundo mÃ¡ximo, con rÃ¡fagas permitidas de hasta 5.
+	// Limitador estricto para rutas de autenticacion (protege bcrypt):
+	// 1 peticion por segundo maximo, con rafagas permitidas de hasta 5.
 	authLimiter := middleware.NewIPRateLimiter(1, 5)
 
 	// Aplicar rate limiting global a todo /api/v1
@@ -70,9 +70,9 @@ func NewRouter(
 	usersRoute.Handle("", authMw.RequirePermission("read:users")(http.HandlerFunc(userHandler.GetAll))).Methods("GET")
 	usersRoute.Handle("/deleted", authMw.RequirePermission("manage:users")(http.HandlerFunc(userHandler.GetDeletedUsers))).Methods("GET")
 	usersRoute.Handle("/{id}", authMw.RequirePermission("read:users")(http.HandlerFunc(userHandler.GetByID))).Methods("GET")
-	// CreaciÃ³n
+	// Creacion
 	usersRoute.Handle("", authMw.RequirePermission("manage:users")(http.HandlerFunc(userHandler.Create))).Methods("POST")
-	// ModificaciÃ³n
+	// Modificacion
 	usersRoute.Handle("/{id}", authMw.RequirePermission("manage:users")(http.HandlerFunc(userHandler.Update))).Methods("PUT")
 	usersRoute.Handle("/{id}", authMw.RequirePermission("manage:users")(http.HandlerFunc(userHandler.Delete))).Methods("DELETE")
 	usersRoute.Handle("/{id}/restore", authMw.RequirePermission("manage:users")(http.HandlerFunc(userHandler.RestoreUser))).Methods("POST")
@@ -100,8 +100,15 @@ func NewRouter(
 	return r
 }
 
-// rootHandler retorna informaciÃ³n pÃºblica de la API.
-// Ãštil para health checks rÃ¡pidos, descubrimiento de endpoints y monitoreo.
+// rootHandler retorna informacion publica de la API.
+// Util para health checks rapidos, descubrimiento de endpoints y monitoreo.
+//
+// @Summary      API info
+// @Description  Retorna nombre, version, estado y enlaces de la API
+// @Tags         system
+// @Produce      json
+// @Success      200 {object} map[string]interface{}
+// @Router       / [get]
 func rootHandler(w http.ResponseWriter, r *http.Request) {
 	w.Header().Set("Content-Type", "application/json")
 	json.NewEncoder(w).Encode(map[string]interface{}{

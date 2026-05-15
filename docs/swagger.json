@@ -1,7 +1,7 @@
 {
     "swagger": "2.0",
     "info": {
-        "description": "API REST con autenticación JWT y control de permisos basado en roles.",
+        "description": "API REST con autenticaciÃ³n JWT y control de permisos basado en roles.",
         "title": "Clean Architecture Go API",
         "contact": {},
         "version": "1.0"
@@ -9,6 +9,27 @@
     "host": "localhost:8080",
     "basePath": "/api/v1",
     "paths": {
+        "/": {
+            "get": {
+                "description": "Retorna nombre, version, estado y enlaces de la API",
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "system"
+                ],
+                "summary": "API info",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "type": "object",
+                            "additionalProperties": true
+                        }
+                    }
+                }
+            }
+        },
         "/login": {
             "post": {
                 "description": "Autentica credenciales y retorna un token JWT con permisos embebidos",
@@ -84,7 +105,7 @@
                 "tags": [
                     "auth"
                 ],
-                "summary": "Cerrar sesión",
+                "summary": "Cerrar sesiÃ³n",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -114,7 +135,7 @@
                         "BearerAuth": []
                     }
                 ],
-                "description": "Retorna los datos del usuario extraído del token JWT",
+                "description": "Retorna los datos del usuario extraÃ­do del token JWT",
                 "produces": [
                     "application/json"
                 ],
@@ -157,7 +178,7 @@
                         "BearerAuth": []
                     }
                 ],
-                "description": "Obtiene todos los permisos disponibles en el sistema",
+                "description": "Obtiene todos los permisos disponibles. Soporta paginaciÃ³n (?page=\u0026size=).",
                 "produces": [
                     "application/json"
                 ],
@@ -165,14 +186,27 @@
                     "roles"
                 ],
                 "summary": "Listar permisos",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "NÃºmero de pÃ¡gina",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "TamaÃ±o de pÃ¡gina",
+                        "name": "size",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/handlers.PermissionResponse"
-                            }
+                            "$ref": "#/definitions/handlers.PaginatedPermissionResponse"
                         }
                     },
                     "401": {
@@ -269,7 +303,7 @@
                 "tags": [
                     "auth"
                 ],
-                "summary": "Renovar sesión",
+                "summary": "Renovar sesiÃ³n",
                 "parameters": [
                     {
                         "description": "Refresh Token actual",
@@ -368,7 +402,7 @@
                         "BearerAuth": []
                     }
                 ],
-                "description": "Obtiene roles con sus permisos. Soporta paginación (?page=\u0026size=) y búsqueda (?search=).",
+                "description": "Obtiene roles con sus permisos. Soporta paginaciÃ³n (?page=\u0026size=) y bÃºsqueda (?search=).",
                 "produces": [
                     "application/json"
                 ],
@@ -380,14 +414,14 @@
                     {
                         "type": "integer",
                         "default": 1,
-                        "description": "Número de página",
+                        "description": "NÃºmero de pÃ¡gina",
                         "name": "page",
                         "in": "query"
                     },
                     {
                         "type": "integer",
                         "default": 10,
-                        "description": "Tamaño de página",
+                        "description": "TamaÃ±o de pÃ¡gina",
                         "name": "size",
                         "in": "query"
                     },
@@ -402,10 +436,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/handlers.RoleResponse"
-                            }
+                            "$ref": "#/definitions/handlers.PaginatedRoleResponse"
                         }
                     },
                     "401": {
@@ -549,7 +580,7 @@
                         "BearerAuth": []
                     }
                 ],
-                "description": "Retorna los datos de un rol específico",
+                "description": "Retorna los datos de un rol especÃ­fico",
                 "produces": [
                     "application/json"
                 ],
@@ -737,7 +768,7 @@
                         "BearerAuth": []
                     }
                 ],
-                "description": "Reemplaza completamente los permisos de un rol. Un array vacío elimina todos los permisos.",
+                "description": "Reemplaza completamente los permisos de un rol. Un array vacÃ­o elimina todos los permisos.",
                 "consumes": [
                     "application/json"
                 ],
@@ -877,7 +908,7 @@
                         "BearerAuth": []
                     }
                 ],
-                "description": "Retorna la lista paginada de usuarios. Soporta búsqueda (?search=) y filtro por rol (?role=).",
+                "description": "Retorna la lista paginada de usuarios. Soporta bÃºsqueda (?search=) y filtro por rol (?role=).",
                 "produces": [
                     "application/json"
                 ],
@@ -889,14 +920,14 @@
                     {
                         "type": "integer",
                         "default": 1,
-                        "description": "Número de página",
+                        "description": "NÃºmero de pÃ¡gina",
                         "name": "page",
                         "in": "query"
                     },
                     {
                         "type": "integer",
                         "default": 10,
-                        "description": "Tamaño de página",
+                        "description": "TamaÃ±o de pÃ¡gina",
                         "name": "size",
                         "in": "query"
                     },
@@ -917,10 +948,7 @@
                     "200": {
                         "description": "OK",
                         "schema": {
-                            "type": "array",
-                            "items": {
-                                "$ref": "#/definitions/handlers.UserResponse"
-                            }
+                            "$ref": "#/definitions/handlers.PaginatedUserResponse"
                         }
                     },
                     "401": {
@@ -1012,7 +1040,7 @@
                         "BearerAuth": []
                     }
                 ],
-                "description": "Asigna los mismos roles a múltiples usuarios simultáneamente. Valida existencia y scoping.",
+                "description": "Asigna los mismos roles a mÃºltiples usuarios simultÃ¡neamente. Valida existencia y scoping.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1121,7 +1149,7 @@
                         "BearerAuth": []
                     }
                 ],
-                "description": "Retorna los datos de un usuario específico",
+                "description": "Retorna los datos de un usuario especÃ­fico",
                 "produces": [
                     "application/json"
                 ],
@@ -1373,7 +1401,7 @@
                         "BearerAuth": []
                     }
                 ],
-                "description": "Actualiza los roles asociados a un usuario específico. Un array vacío elimina todos los roles.",
+                "description": "Actualiza los roles asociados a un usuario especÃ­fico. Un array vacÃ­o elimina todos los roles.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1592,6 +1620,75 @@
                 }
             }
         },
+        "handlers.PaginatedPermissionResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handlers.PermissionResponse"
+                    }
+                },
+                "page": {
+                    "type": "integer"
+                },
+                "size": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                },
+                "total_pages": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handlers.PaginatedRoleResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handlers.RoleResponse"
+                    }
+                },
+                "page": {
+                    "type": "integer"
+                },
+                "size": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                },
+                "total_pages": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handlers.PaginatedUserResponse": {
+            "type": "object",
+            "properties": {
+                "data": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/handlers.UserResponse"
+                    }
+                },
+                "page": {
+                    "type": "integer"
+                },
+                "size": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                },
+                "total_pages": {
+                    "type": "integer"
+                }
+            }
+        },
         "handlers.PermissionCreateRequest": {
             "type": "object",
             "required": [
@@ -1731,7 +1828,7 @@
     },
     "securityDefinitions": {
         "BearerAuth": {
-            "description": "Ingresá el token con el prefijo Bearer. Ejemplo: \"Bearer {token}\"",
+            "description": "IngresÃ¡ el token con el prefijo Bearer. Ejemplo: \"Bearer {token}\"",
             "type": "apiKey",
             "name": "Authorization",
             "in": "header"

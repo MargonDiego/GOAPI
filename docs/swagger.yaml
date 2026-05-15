@@ -105,6 +105,51 @@ definitions:
         example: user registered successfully
         type: string
     type: object
+  handlers.PaginatedPermissionResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/handlers.PermissionResponse'
+        type: array
+      page:
+        type: integer
+      size:
+        type: integer
+      total:
+        type: integer
+      total_pages:
+        type: integer
+    type: object
+  handlers.PaginatedRoleResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/handlers.RoleResponse'
+        type: array
+      page:
+        type: integer
+      size:
+        type: integer
+      total:
+        type: integer
+      total_pages:
+        type: integer
+    type: object
+  handlers.PaginatedUserResponse:
+    properties:
+      data:
+        items:
+          $ref: '#/definitions/handlers.UserResponse'
+        type: array
+      page:
+        type: integer
+      size:
+        type: integer
+      total:
+        type: integer
+      total_pages:
+        type: integer
+    type: object
   handlers.PermissionCreateRequest:
     properties:
       description:
@@ -203,10 +248,24 @@ definitions:
 host: localhost:8080
 info:
   contact: {}
-  description: API REST con autenticación JWT y control de permisos basado en roles.
+  description: API REST con autenticaciÃ³n JWT y control de permisos basado en roles.
   title: Clean Architecture Go API
   version: "1.0"
 paths:
+  /:
+    get:
+      description: Retorna nombre, version, estado y enlaces de la API
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            additionalProperties: true
+            type: object
+      summary: API info
+      tags:
+      - system
   /login:
     post:
       consumes:
@@ -267,12 +326,12 @@ paths:
             $ref: '#/definitions/handlers.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Cerrar sesión
+      summary: Cerrar sesiÃ³n
       tags:
       - auth
   /me:
     get:
-      description: Retorna los datos del usuario extraído del token JWT
+      description: Retorna los datos del usuario extraÃ­do del token JWT
       produces:
       - application/json
       responses:
@@ -299,16 +358,25 @@ paths:
       - users
   /permissions:
     get:
-      description: Obtiene todos los permisos disponibles en el sistema
+      description: Obtiene todos los permisos disponibles. Soporta paginaciÃ³n (?page=&size=).
+      parameters:
+      - default: 1
+        description: NÃºmero de pÃ¡gina
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: TamaÃ±o de pÃ¡gina
+        in: query
+        name: size
+        type: integer
       produces:
       - application/json
       responses:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/handlers.PermissionResponse'
-            type: array
+            $ref: '#/definitions/handlers.PaginatedPermissionResponse'
         "401":
           description: Unauthorized
           schema:
@@ -397,7 +465,7 @@ paths:
           description: Internal Server Error
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
-      summary: Renovar sesión
+      summary: Renovar sesiÃ³n
       tags:
       - auth
   /register:
@@ -436,16 +504,16 @@ paths:
       - auth
   /roles:
     get:
-      description: Obtiene roles con sus permisos. Soporta paginación (?page=&size=)
-        y búsqueda (?search=).
+      description: Obtiene roles con sus permisos. Soporta paginaciÃ³n (?page=&size=)
+        y bÃºsqueda (?search=).
       parameters:
       - default: 1
-        description: Número de página
+        description: NÃºmero de pÃ¡gina
         in: query
         name: page
         type: integer
       - default: 10
-        description: Tamaño de página
+        description: TamaÃ±o de pÃ¡gina
         in: query
         name: size
         type: integer
@@ -459,9 +527,7 @@ paths:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/handlers.RoleResponse'
-            type: array
+            $ref: '#/definitions/handlers.PaginatedRoleResponse'
         "401":
           description: Unauthorized
           schema:
@@ -560,7 +626,7 @@ paths:
       tags:
       - roles
     get:
-      description: Retorna los datos de un rol específico
+      description: Retorna los datos de un rol especÃ­fico
       parameters:
       - description: Role ID
         in: path
@@ -647,7 +713,7 @@ paths:
     put:
       consumes:
       - application/json
-      description: Reemplaza completamente los permisos de un rol. Un array vacío
+      description: Reemplaza completamente los permisos de un rol. Un array vacÃ­o
         elimina todos los permisos.
       parameters:
       - description: Role ID
@@ -765,16 +831,16 @@ paths:
       - roles
   /users:
     get:
-      description: Retorna la lista paginada de usuarios. Soporta búsqueda (?search=)
+      description: Retorna la lista paginada de usuarios. Soporta bÃºsqueda (?search=)
         y filtro por rol (?role=).
       parameters:
       - default: 1
-        description: Número de página
+        description: NÃºmero de pÃ¡gina
         in: query
         name: page
         type: integer
       - default: 10
-        description: Tamaño de página
+        description: TamaÃ±o de pÃ¡gina
         in: query
         name: size
         type: integer
@@ -792,9 +858,7 @@ paths:
         "200":
           description: OK
           schema:
-            items:
-              $ref: '#/definitions/handlers.UserResponse'
-            type: array
+            $ref: '#/definitions/handlers.PaginatedUserResponse'
         "401":
           description: Unauthorized
           schema:
@@ -889,7 +953,7 @@ paths:
       tags:
       - users
     get:
-      description: Retorna los datos de un usuario específico
+      description: Retorna los datos de un usuario especÃ­fico
       parameters:
       - description: User ID
         in: path
@@ -1017,8 +1081,8 @@ paths:
     put:
       consumes:
       - application/json
-      description: Actualiza los roles asociados a un usuario específico. Un array
-        vacío elimina todos los roles.
+      description: Actualiza los roles asociados a un usuario especÃ­fico. Un array
+        vacÃ­o elimina todos los roles.
       parameters:
       - description: User ID
         in: path
@@ -1067,8 +1131,8 @@ paths:
     post:
       consumes:
       - application/json
-      description: Asigna los mismos roles a múltiples usuarios simultáneamente. Valida
-        existencia y scoping.
+      description: Asigna los mismos roles a mÃºltiples usuarios simultÃ¡neamente.
+        Valida existencia y scoping.
       parameters:
       - description: IDs de usuarios y roles
         in: body
@@ -1135,7 +1199,7 @@ paths:
       - users
 securityDefinitions:
   BearerAuth:
-    description: 'Ingresá el token con el prefijo Bearer. Ejemplo: "Bearer {token}"'
+    description: 'IngresÃ¡ el token con el prefijo Bearer. Ejemplo: "Bearer {token}"'
     in: header
     name: Authorization
     type: apiKey
