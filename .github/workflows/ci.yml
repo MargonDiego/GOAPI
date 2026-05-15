@@ -22,10 +22,12 @@ jobs:
 
       - name: gofmt
         run: |
-          unformatted=$(gofmt -s -l . | grep -v mocks/)
-          if [ -n "$unformatted" ]; then
+          gofmt -s -w .
+          if ! git diff --quiet -- '*.go' ':!mocks/'; then
             echo "Files not formatted:"
-            echo "$unformatted"
+            git diff --name-only -- '*.go' ':!mocks/'
+            echo ""
+            echo "Run 'gofmt -s -w .' locally to fix."
             exit 1
           fi
 
