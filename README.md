@@ -54,7 +54,8 @@ go run cmd/api/main.go
 - **PII Protection**: Emails cifrados con AES-256-GCM, buscables por HMAC-SHA256 determinista
 - **Rate Limiting**: 1 req/s con ráfagas de 5 en rutas de autenticación (protección bcrypt)
 - **Token Version Cache**: Cache en memoria con TTL 30s para validar `token_version` sin hits a DB
-- **Refresh Token Rotation**: Tokens de uso único, previenen replay attacks
+- **Refresh Token Rotation**: Tokens de uso unico, previenen replay attacks
+- **HttpOnly Cookies + CSRF**: Access token en cookie HttpOnly (inmune a XSS) con validacion de Origin en mutations
 
 ### Operaciones Administrativas
 - **Paginación**: Todos los listados soportan `?page=` y `?size=` (máx 100)
@@ -295,9 +296,10 @@ Los middlewares se ejecutan en orden — del más externo al más interno:
 | 2 | `RequestID` | UUID por request. Acepta `X-Request-ID` del cliente |
 | 3 | `SecurityHeaders` | `X-Content-Type-Options`, `X-Frame-Options`, HSTS (prod), CSP |
 | 4 | `CORS` | Orígenes configurables vía `CORS_ORIGINS` |
-| 5 | `RequestLogger` | Log estructurado: método, path, status, duración, request_id |
+| 5 | `RequestLogger` | Log estructurado: metodo, path, status, duracion, request_id |
 | 6 | `IPRateLimiter` | Token bucket por IP (10 req/s global, 1 req/s en auth) |
-| 7 | `AuthMiddleware` | JWT + validación `token_version` + permisos en memoria |
+| 7 | `AuthMiddleware` | JWT via cookie HttpOnly (primario) o Bearer header (fallback) + validacion token_version + permisos en memoria |
+| 8 | `CSRF` | Validacion de Origin/Referer en mutations (POST/PUT/DELETE) |
 
 ## Seguridad: Scoping Administrativo
 

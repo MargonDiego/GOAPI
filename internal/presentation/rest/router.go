@@ -54,10 +54,14 @@ func NewRouter(
 	api := r.PathPrefix("/api/v1").Subrouter()
 	api.Use(apiLimiter.Middleware)
 	api.Use(authMw.RequireAuth())
+	// CSRF protection en mutations (POST/PUT/DELETE) — valida Origin contra CORS_ORIGINS
+	api.Use(middleware.CSRF(corsOrigins))
 
-	r.Handle("/api/v1/register", authLimiter.Middleware(http.HandlerFunc(authHandler.Register))).Methods("POST")
-	r.Handle("/api/v1/login", authLimiter.Middleware(http.HandlerFunc(authHandler.Login))).Methods("POST")
-	r.Handle("/api/v1/refresh", authLimiter.Middleware(http.HandlerFunc(authHandler.Refresh))).Methods("POST")
+	// Auth routes: rate limit estricto + CSRF protection
+	authCSRF := middleware.CSRF(corsOrigins)
+	r.Handle("/api/v1/register", authLimiter.Middleware(authCSRF(http.HandlerFunc(authHandler.Register)))).Methods("POST")
+	r.Handle("/api/v1/login", authLimiter.Middleware(authCSRF(http.HandlerFunc(authHandler.Login)))).Methods("POST")
+	r.Handle("/api/v1/refresh", authLimiter.Middleware(authCSRF(http.HandlerFunc(authHandler.Refresh)))).Methods("POST")
 
 	// Logout: requiere auth + rate limit estricto
 	api.Handle("/logout", authLimiter.Middleware(http.HandlerFunc(authHandler.Logout))).Methods("POST")

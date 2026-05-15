@@ -74,7 +74,8 @@ func (h *AuthHandler) Register(w http.ResponseWriter, r *http.Request) {
 // Login autentica un usuario y devuelve un JWT.
 //
 // @Summary      Login de usuario
-// @Description  Autentica credenciales y retorna un token JWT con permisos embebidos
+// @Description  Autentica credenciales y retorna un token JWT con permisos embebidos.
+// @Description  Setea cookie HttpOnly access_token (anti-XSS) + SameSite=Strict (anti-CSRF).
 // @Tags         auth
 // @Accept       json
 // @Produce      json
@@ -98,6 +99,11 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	// Setear cookie HttpOnly (protege contra XSS)
+	setAccessTokenCookie(w, accessToken, r.TLS != nil)
+
+	// Devolver refresh_token en JSON para que el frontend lo almacene
+	// y lo use en el endpoint /refresh
 	RespondJSON(w, http.StatusOK, AuthResponse{
 		AccessToken:  accessToken,
 		RefreshToken: refreshToken,
@@ -126,10 +132,13 @@ func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 
 	newAccess, newRefresh, err := h.authService.RefreshTokens(r.Context(), req.RefreshToken)
 	if err != nil {
-		// Retornar 401 si el refresh token es invÃ¡lido/expirado, obliga al front a hacer relogin
+		// Retornar 401 si el refresh token es invalido/expirado, obliga al front a hacer relogin
 		RespondError(w, http.StatusUnauthorized, "invalid or expired refresh token")
 		return
 	}
+
+	// Renovar cookie HttpOnly
+	setAccessTokenCookie(w, newAccess, r.TLS != nil)
 
 	RespondJSON(w, http.StatusOK, AuthResponse{
 		AccessToken:  newAccess,
@@ -160,6 +169,9 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 		RespondError(w, http.StatusInternalServerError, "failed to logout")
 		return
 	}
+
+	// Limpiar cookie de sesion
+	clearAccessTokenCookie(w)
 
 	RespondJSON(w, http.StatusOK, MessageResponse{
 		Message: "logged out successfully",

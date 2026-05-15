@@ -81,21 +81,35 @@ func respondError(w http.ResponseWriter, status int, message string) {
 	_ = json.NewEncoder(w).Encode(map[string]string{"error": message})
 }
 
-// RequireAuth valida el JWT y verifica que su token_version coincida con la versiÃ³n actual.
+// RequireAuth valida el JWT y verifica que su token_version coincida con la version actual.
+//
+// Estrategia de autenticacion (en orden de prioridad):
+//  1. Cookie HttpOnly access_token -- primario, inmune a XSS.
+//  2. Header Authorization: Bearer -- fallback para mobile apps / Swagger.
 //
 // Flujo por request:
-//  1. Extraer y parsear el Bearer token (firma HMAC-SHA256).
+//  1. Extraer y parsear el token (cookie o header).
 //  2. Leer claims: sub, uid, ver, permissions.
-//  3. Validar token_version: cache hit â†’ O(1), cache miss â†’ SELECT + cache fill.
-//  4. Si JWT.ver != currentVersion â†’ 401 (permisos revocados, re-login requerido).
+//  3. Validar token_version: cache hit -> O(1), cache miss -> SELECT + cache fill.
+//  4. Si JWT.ver != currentVersion -> 401 (permisos revocados, re-login requerido).
 //  5. Inyectar UserSession en el contexto para los handlers downstream.
 func (m *AuthMiddleware) RequireAuth() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			tokenString, err := extractBearerToken(r.Header.Get("Authorization"))
-			if err != nil {
-				respondError(w, http.StatusUnauthorized, err.Error())
-				return
+			// 1. Intentar extraer token de cookie HttpOnly (anti-XSS)
+			tokenString := ""
+			if cookie, err := r.Cookie("access_token"); err == nil {
+				tokenString = cookie.Value
+			}
+
+			// 2. Fallback: header Authorization Bearer (mobile apps, Swagger)
+			if tokenString == "" {
+				var err error
+				tokenString, err = extractBearerToken(r.Header.Get("Authorization"))
+				if err != nil {
+					respondError(w, http.StatusUnauthorized, err.Error())
+					return
+				}
 			}
 
 			claims := jwt.MapClaims{}
