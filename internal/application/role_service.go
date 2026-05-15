@@ -9,17 +9,17 @@ import (
 	"github.com/MargonDiego/GOAPI/internal/infrastructure/cache"
 )
 
-// RoleService define el contrato de la capa de aplicación para operaciones sobre roles y permisos.
-// Centraliza la lógica de validación y orquestación, dejando los handlers libres de reglas de negocio.
+// RoleService define el contrato de la capa de aplicaciÃ³n para operaciones sobre roles y permisos.
+// Centraliza la lÃ³gica de validaciÃ³n y orquestaciÃ³n, dejando los handlers libres de reglas de negocio.
 type RoleService interface {
-	// CreateRole crea un nuevo rol con el nombre y descripción indicados.
-	// Retorna domain.ErrInvalidInput si el nombre está vacío.
+	// CreateRole crea un nuevo rol con el nombre y descripciÃ³n indicados.
+	// Retorna domain.ErrInvalidInput si el nombre estÃ¡ vacÃ­o.
 	CreateRole(ctx context.Context, name, description string) (*domain.Role, error)
 
 	// GetRoles retorna todos los roles del sistema con sus permisos asociados.
 	GetRoles(ctx context.Context) ([]domain.Role, error)
 
-	// GetRolesPaginated retorna una página de roles con metadatos de paginación.
+	// GetRolesPaginated retorna una pÃ¡gina de roles con metadatos de paginaciÃ³n.
 	GetRolesPaginated(ctx context.Context, page, size int) (domain.PaginatedResult[domain.Role], error)
 
 	// SearchRoles busca roles por nombre (case-insensitive).
@@ -38,24 +38,24 @@ type RoleService interface {
 	// GetPermissions retorna todos los permisos disponibles en el sistema.
 	GetPermissions(ctx context.Context) ([]domain.Permission, error)
 
-	// GetPermissionsPaginated retorna una página de permisos con metadatos.
+	// GetPermissionsPaginated retorna una pÃ¡gina de permisos con metadatos.
 	GetPermissionsPaginated(ctx context.Context, page, size int) (domain.PaginatedResult[domain.Permission], error)
 
-	// CreatePermission crea un nuevo permiso con nombre y descripción.
-	// Retorna domain.ErrInvalidInput si el nombre está vacío.
+	// CreatePermission crea un nuevo permiso con nombre y descripciÃ³n.
+	// Retorna domain.ErrInvalidInput si el nombre estÃ¡ vacÃ­o.
 	CreatePermission(ctx context.Context, name, description string) error
 
-	// UpdatePermission actualiza nombre y descripción de un permiso.
+	// UpdatePermission actualiza nombre y descripciÃ³n de un permiso.
 	UpdatePermission(ctx context.Context, permID uint, name, description string) error
 
 	// AssignPermissionsToRole reemplaza completamente los permisos de un rol.
-	// Pasar un slice vacío elimina todos sus permisos.
+	// Pasar un slice vacÃ­o elimina todos sus permisos.
 	// Retorna domain.ErrRoleNotFound si el rol no existe,
-	// domain.ErrInvalidInput si algún permissionID no existe en la base de datos.
+	// domain.ErrInvalidInput si algÃºn permissionID no existe en la base de datos.
 	AssignPermissionsToRole(ctx context.Context, roleID uint, permissionIDs []uint) error
 
-	// UpdateRole actualiza nombre y descripción de un rol existente.
-	// Retorna domain.ErrRoleNotFound si no existe, domain.ErrInvalidInput si el nombre está vacío.
+	// UpdateRole actualiza nombre y descripciÃ³n de un rol existente.
+	// Retorna domain.ErrRoleNotFound si no existe, domain.ErrInvalidInput si el nombre estÃ¡ vacÃ­o.
 	UpdateRole(ctx context.Context, roleID uint, name, description string) error
 
 	// DeleteRole elimina un rol del sistema.
@@ -66,19 +66,19 @@ type RoleService interface {
 type roleService struct {
 	repo         domain.RoleRepository
 	userRepo     domain.UserRepository    // para invalidar tokens al cambiar permisos de un rol
-	versionCache *cache.TokenVersionCache // nil-safe: invalidación explícita post-cambio
+	versionCache *cache.TokenVersionCache // nil-safe: invalidaciÃ³n explÃ­cita post-cambio
 	audit        auditService
 }
 
 // NewRoleService construye un RoleService con sus dependencias inyectadas.
 // userRepo se usa para incrementar token_version de los usuarios afectados cuando cambian los permisos de un rol.
-// versionCache puede ser nil (el sistema funciona con el TTL del cache como ventana máxima).
-// auditRepo puede ser nil (auditoría se ignora silenciosamente).
+// versionCache puede ser nil (el sistema funciona con el TTL del cache como ventana mÃ¡xima).
+// auditRepo puede ser nil (auditorÃ­a se ignora silenciosamente).
 func NewRoleService(repo domain.RoleRepository, userRepo domain.UserRepository, versionCache *cache.TokenVersionCache, auditRepo domain.AuditRepository) RoleService {
 	return &roleService{repo: repo, userRepo: userRepo, versionCache: versionCache, audit: newAuditService(auditRepo)}
 }
 
-// CreateRole valida que el nombre no sea vacío y que no exista ya en el sistema
+// CreateRole valida que el nombre no sea vacÃ­o y que no exista ya en el sistema
 // antes de persistir el nuevo rol.
 // Retorna domain.ErrRoleAlreadyExists si ya existe un rol con ese nombre.
 func (s *roleService) CreateRole(ctx context.Context, name, description string) (*domain.Role, error) {
@@ -102,7 +102,7 @@ func (s *roleService) CreateRole(ctx context.Context, name, description string) 
 }
 
 // GetRoles retorna todos los roles con sus permisos pre-cargados.
-// Respeta el scoping del actor: solo retorna roles de su scope o scope vacío.
+// Respeta el scoping del actor: solo retorna roles de su scope o scope vacÃ­o.
 func (s *roleService) GetRoles(ctx context.Context) ([]domain.Role, error) {
 	actorScope, hasScope := ScopeFromContext(ctx)
 	var roles []domain.Role
@@ -129,9 +129,9 @@ func (s *roleService) GetPermissions(ctx context.Context) ([]domain.Permission, 
 }
 
 // AssignPermissionsToRole valida la existencia del rol y de cada permiso antes de reemplazar
-// la relación Many-to-Many. Un slice vacío de IDs es válido y limpia todos los permisos del rol.
+// la relaciÃ³n Many-to-Many. Un slice vacÃ­o de IDs es vÃ¡lido y limpia todos los permisos del rol.
 // Tras actualizar, incrementa token_version de todos los usuarios con ese rol para invalidar
-// sus JWT activos — incluso si los cambios son solo adiciones, se invalida por consistencia.
+// sus JWT activos â€” incluso si los cambios son solo adiciones, se invalida por consistencia.
 func (s *roleService) AssignPermissionsToRole(ctx context.Context, roleID uint, permissionIDs []uint) error {
 	role, err := s.repo.FindByID(ctx, roleID)
 	if err != nil {
@@ -198,14 +198,14 @@ func (s *roleService) GetRoleByID(ctx context.Context, id uint) (*domain.Role, e
 	return role, nil
 }
 
-// CreatePermission valida que el nombre no sea vacío y que no exista ya en el sistema.
+// CreatePermission valida que el nombre no sea vacÃ­o y que no exista ya en el sistema.
 // Retorna domain.ErrPermissionAlreadyExists si ya existe un permiso con ese nombre.
 func (s *roleService) CreatePermission(ctx context.Context, name, description string) error {
 	if name == "" {
 		return fmt.Errorf("%w: permission name cannot be empty", domain.ErrInvalidInput)
 	}
 
-	// Verificar unicidad con búsqueda puntual en DB en lugar de cargar todos los permisos.
+	// Verificar unicidad con bÃºsqueda puntual en DB en lugar de cargar todos los permisos.
 	existing, err := s.repo.FindPermissionByName(ctx, name)
 	if err != nil && !errors.Is(err, domain.ErrPermissionNotFound) {
 		return fmt.Errorf("failed to check permission uniqueness: %w", err)
@@ -229,8 +229,8 @@ func (s *roleService) CreatePermission(ctx context.Context, name, description st
 }
 
 // UpdateRole valida el nuevo nombre y reemplaza el campo en la base de datos.
-// No modifica los permisos del rol — usar AssignPermissionsToRole para eso.
-// Los roles de sistema (IsSystem) solo permiten cambiar descripción, NO nombre.
+// No modifica los permisos del rol â€” usar AssignPermissionsToRole para eso.
+// Los roles de sistema (IsSystem) solo permiten cambiar descripciÃ³n, NO nombre.
 func (s *roleService) UpdateRole(ctx context.Context, roleID uint, name, description string) error {
 	if name == "" {
 		return fmt.Errorf("%w: role name cannot be empty", domain.ErrInvalidInput)
@@ -286,7 +286,7 @@ func (s *roleService) DeleteRole(ctx context.Context, roleID uint) error {
 	return nil
 }
 
-// GetRolesPaginated retorna una página de roles con sus permisos y metadatos de paginación.
+// GetRolesPaginated retorna una pÃ¡gina de roles con sus permisos y metadatos de paginaciÃ³n.
 // Respeta el scoping del actor.
 func (s *roleService) GetRolesPaginated(ctx context.Context, page, size int) (domain.PaginatedResult[domain.Role], error) {
 	if page < 1 {
@@ -367,7 +367,7 @@ func (s *roleService) RestoreRole(ctx context.Context, roleID uint) error {
 	return nil
 }
 
-// GetPermissionsPaginated retorna una página de permisos con metadatos de paginación.
+// GetPermissionsPaginated retorna una pÃ¡gina de permisos con metadatos de paginaciÃ³n.
 func (s *roleService) GetPermissionsPaginated(ctx context.Context, page, size int) (domain.PaginatedResult[domain.Permission], error) {
 	if page < 1 {
 		page = 1
@@ -382,7 +382,7 @@ func (s *roleService) GetPermissionsPaginated(ctx context.Context, page, size in
 	return result, nil
 }
 
-// UpdatePermission actualiza nombre y descripción de un permiso.
+// UpdatePermission actualiza nombre y descripciÃ³n de un permiso.
 func (s *roleService) UpdatePermission(ctx context.Context, permID uint, name, description string) error {
 	if name == "" {
 		return fmt.Errorf("%w: permission name cannot be empty", domain.ErrInvalidInput)

@@ -8,14 +8,14 @@ type actorKey struct{}
 // scopeKey es un tipo privado para el scoping administrativo.
 type scopeKey struct{}
 
-// ipKey es un tipo privado para la dirección IP del cliente.
+// ipKey es un tipo privado para la direcciÃ³n IP del cliente.
 type ipKey struct{}
 
 // uaKey es un tipo privado para el User-Agent del cliente.
 type uaKey struct{}
 
 // WithActor inyecta el ID del usuario autenticado en el contexto.
-// Debe llamarse en los handlers antes de invocar servicios que requieren auditoría.
+// Debe llamarse en los handlers antes de invocar servicios que requieren auditorÃ­a.
 func WithActor(ctx context.Context, userID uint) context.Context {
 	return context.WithValue(ctx, actorKey{}, userID)
 }
@@ -39,7 +39,7 @@ func ScopeFromContext(ctx context.Context) (string, bool) {
 	return scope, ok
 }
 
-// WithIP inyecta la dirección IP del cliente en el contexto.
+// WithIP inyecta la direcciÃ³n IP del cliente en el contexto.
 func WithIP(ctx context.Context, ip string) context.Context {
 	return context.WithValue(ctx, ipKey{}, ip)
 }

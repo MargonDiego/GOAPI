@@ -13,7 +13,7 @@ import (
 )
 
 // mockRoleRepository es un mock manual de domain.RoleRepository usando testify/mock.
-// Permite aislar la capa de aplicación sin tocar la base de datos PostgreSQL.
+// Permite aislar la capa de aplicaciÃ³n sin tocar la base de datos PostgreSQL.
 type mockRoleRepository struct {
 	mock.Mock
 }
@@ -200,8 +200,8 @@ func TestRoleService_CreateRole(t *testing.T) {
 	t.Parallel()
 
 	// Tipo de Test: Unit Test (Caja blanca)
-	// Propósito: Validar que el caso de uso CreateRole verifique el input,
-	// llame al repositorio subyacente correctamente, y propague errores según corresponda.
+	// PropÃ³sito: Validar que el caso de uso CreateRole verifique el input,
+	// llame al repositorio subyacente correctamente, y propague errores segÃºn corresponda.
 
 	// Casos definidos mediante Table-Driven Tests
 	tests := []struct {
@@ -212,7 +212,7 @@ func TestRoleService_CreateRole(t *testing.T) {
 		expectedRole  *domain.Role
 	}{
 		{
-			name:     "Éxito al crear rol",
+			name:     "Ã‰xito al crear rol",
 			roleName: "Manager",
 			setupMock: func(m *mockRoleRepository) {
 				// El servicio primero verifica unicidad llamando a FindByName.
@@ -229,9 +229,9 @@ func TestRoleService_CreateRole(t *testing.T) {
 			expectedRole:  &domain.Role{ID: 1, Name: "Manager"},
 		},
 		{
-			name:          "Falla por nombre vacío",
+			name:          "Falla por nombre vacÃ­o",
 			roleName:      "",
-			setupMock:     func(m *mockRoleRepository) {}, // Validación previa: no debe llamar al repo.
+			setupMock:     func(m *mockRoleRepository) {}, // ValidaciÃ³n previa: no debe llamar al repo.
 			expectedError: domain.ErrInvalidInput,
 			expectedRole:  nil,
 		},
@@ -239,7 +239,7 @@ func TestRoleService_CreateRole(t *testing.T) {
 			name:     "Falla por rol duplicado",
 			roleName: "Admin",
 			setupMock: func(m *mockRoleRepository) {
-				// FindByName retorna el rol existente → debe fallar con ErrRoleAlreadyExists.
+				// FindByName retorna el rol existente â†’ debe fallar con ErrRoleAlreadyExists.
 				m.On("FindByName", mock.Anything, "Admin").Return(&domain.Role{ID: 1, Name: "Admin"}, nil)
 			},
 			expectedError: domain.ErrRoleAlreadyExists,
@@ -279,7 +279,7 @@ func TestRoleService_CreateRole(t *testing.T) {
 				assert.Contains(t, err.Error(), tt.expectedError.Error())
 				assert.Nil(t, got)
 			} else {
-				// Caso éxito: verificar que se retorna el rol con los valores correctos.
+				// Caso Ã©xito: verificar que se retorna el rol con los valores correctos.
 				assert.NoError(t, err)
 				assert.NotNil(t, got)
 				assert.Equal(t, tt.expectedRole.ID, got.ID)
@@ -312,10 +312,10 @@ func TestRoleService_CreatePermission(t *testing.T) {
 			expectedError: nil,
 		},
 		{
-			name:     "Nombre vacío",
+			name:     "Nombre vacÃ­o",
 			permName: "",
 			setupMock: func(m *mockRoleRepository) {
-				// Validación previa: no debe llamar al repo.
+				// ValidaciÃ³n previa: no debe llamar al repo.
 			},
 			expectedError: domain.ErrInvalidInput,
 		},
@@ -323,7 +323,7 @@ func TestRoleService_CreatePermission(t *testing.T) {
 			name:     "Falla por permiso duplicado",
 			permName: "read:users",
 			setupMock: func(m *mockRoleRepository) {
-				// FindPermissionByName retorna el permiso existente → duplicado.
+				// FindPermissionByName retorna el permiso existente â†’ duplicado.
 				m.On("FindPermissionByName", mock.Anything, "read:users").Return(
 					&domain.Permission{ID: 1, Name: "read:users"}, nil,
 				)
@@ -434,7 +434,7 @@ func TestRoleService_UpdateRole(t *testing.T) {
 			expectedError: nil,
 		},
 		{
-			name:    "Nombre vacío",
+			name:    "Nombre vacÃ­o",
 			roleID:  1,
 			newName: "",
 			setupMock: func(m *mockRoleRepository) {

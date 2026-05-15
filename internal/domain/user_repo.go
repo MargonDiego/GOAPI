@@ -2,7 +2,7 @@ package domain
 
 import "context"
 
-// --- Interfaces segregadas (Principio de Segregación de Interfaces) ---
+// --- Interfaces segregadas (Principio de SegregaciÃ³n de Interfaces) ---
 //
 // UserRepository se descompone en tres contratos especializados.
 // Los consumidores que solo necesitan lectura (ej: AuthMiddleware) pueden
@@ -27,14 +27,14 @@ type UserReader interface {
 	GetTokenVersion(ctx context.Context, userID uint) (int, error)
 	FindUserIDsByRoleID(ctx context.Context, roleID uint) ([]uint, error)
 
-	// Contadores para metadatos de paginación
+	// Contadores para metadatos de paginaciÃ³n
 	CountUsers(ctx context.Context) (int64, error)
 	CountUsersByScope(ctx context.Context, scope string) (int64, error)
 	CountSearchUsers(ctx context.Context, query, roleName string) (int64, error)
 	CountSearchUsersByScope(ctx context.Context, query, roleName, scope string) (int64, error)
 }
 
-// UserWriter agrupa las operaciones de mutación sobre usuarios.
+// UserWriter agrupa las operaciones de mutaciÃ³n sobre usuarios.
 type UserWriter interface {
 	Create(ctx context.Context, u *User) error
 	UpdateProfile(ctx context.Context, u *User) error

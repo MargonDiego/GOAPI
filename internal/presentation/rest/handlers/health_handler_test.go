@@ -49,7 +49,7 @@ func TestHealthHandler_Readiness(t *testing.T) {
 			expectedBody:   "READY",
 		},
 		{
-			name:           "BD caída",
+			name:           "BD caÃ­da",
 			pinger:         &mockPinger{err: errors.New("timeout")},
 			expectedStatus: http.StatusServiceUnavailable,
 			expectedBody:   "Database Unavailable",

@@ -1,17 +1,17 @@
 package domain
 
-// --- Entidades de Autorización (Role y Permission) ---
+// --- Entidades de AutorizaciÃ³n (Role y Permission) ---
 
-// Permission representa un permiso atómico del sistema (ej: "read:users", "manage:roles").
+// Permission representa un permiso atÃ³mico del sistema (ej: "read:users", "manage:roles").
 type Permission struct {
 	ID          uint
 	Name        string
 	Description string
 }
 
-// Role agrupa permisos. Un usuario puede tener múltiples roles.
-// IsSystem = true indica roles críticos que NO se pueden eliminar (ej: Admin, User).
-// Scope restringe la visibilidad y gestión del rol a administradores de ese dominio.
+// Role agrupa permisos. Un usuario puede tener mÃºltiples roles.
+// IsSystem = true indica roles crÃ­ticos que NO se pueden eliminar (ej: Admin, User).
+// Scope restringe la visibilidad y gestiÃ³n del rol a administradores de ese dominio.
 type Role struct {
 	ID          uint
 	Name        string

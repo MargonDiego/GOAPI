@@ -54,7 +54,7 @@ func TestUserHandler_GetMe(t *testing.T) {
 			expectedBody:   "internal server error",
 		},
 		{
-			name:    "Éxito al obtener perfil",
+			name:    "Ã‰xito al obtener perfil",
 			session: &middleware.UserSession{Username: "johndoe"},
 			setupMock: func(m *mocks.MockUserService) {
 				user := &domain.User{ID: 1, Username: "johndoe"}
@@ -101,7 +101,7 @@ func TestUserHandler_GetAll(t *testing.T) {
 		expectedBody   string
 	}{
 		{
-			name:  "Paginación correcta",
+			name:  "PaginaciÃ³n correcta",
 			query: "?page=2&size=5",
 			setupMock: func(m *mocks.MockUserService) {
 				users := []domain.User{{ID: 1, Username: "u1"}}
@@ -111,7 +111,7 @@ func TestUserHandler_GetAll(t *testing.T) {
 			expectedBody:   "u1",
 		},
 		{
-			name:  "Paginación con fallbacks por defecto",
+			name:  "PaginaciÃ³n con fallbacks por defecto",
 			query: "?page=invalid&size=-1",
 			setupMock: func(m *mocks.MockUserService) {
 				users := []domain.User{{ID: 2, Username: "u2"}}
@@ -164,7 +164,7 @@ func TestUserHandler_AssignRoles(t *testing.T) {
 		expectedBody   string
 	}{
 		{
-			name:           "ID inválido en URL",
+			name:           "ID invÃ¡lido en URL",
 			urlID:          "invalid",
 			payload:        handlers.AssignRolesRequest{RoleIDs: []uint{1, 2}},
 			setupMock:      func(m *mocks.MockUserService) {},
@@ -172,7 +172,7 @@ func TestUserHandler_AssignRoles(t *testing.T) {
 			expectedBody:   "invalid user id",
 		},
 		{
-			name:           "JSON inválido",
+			name:           "JSON invÃ¡lido",
 			urlID:          "1",
 			payload:        "invalid json",
 			setupMock:      func(m *mocks.MockUserService) {},
@@ -190,7 +190,7 @@ func TestUserHandler_AssignRoles(t *testing.T) {
 			expectedBody:   domain.ErrInvalidInput.Error(),
 		},
 		{
-			name:    "Éxito",
+			name:    "Ã‰xito",
 			urlID:   "1",
 			payload: handlers.AssignRolesRequest{RoleIDs: []uint{1, 2}},
 			setupMock: func(m *mocks.MockUserService) {

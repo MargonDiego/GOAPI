@@ -14,8 +14,8 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// AuthService define el contrato de la capa de aplicación para el ciclo de vida
-// de autenticación: registro, login, renovación de tokens y cierre de sesión.
+// AuthService define el contrato de la capa de aplicaciÃ³n para el ciclo de vida
+// de autenticaciÃ³n: registro, login, renovaciÃ³n de tokens y cierre de sesiÃ³n.
 //
 // Todas las operaciones son context-aware y propagan timeouts hacia la capa de
 // infraestructura para evitar bloqueos ante latencia de red o base de datos.
@@ -23,29 +23,29 @@ type AuthService interface {
 	// Register crea un nuevo usuario con el rol "User" por defecto.
 	// Valida unicidad de username y email antes de persistir.
 	// El email se almacena cifrado (AES-256-GCM) y su hash (HMAC-SHA256) se usa
-	// para búsquedas sin exponer datos en claro.
+	// para bÃºsquedas sin exponer datos en claro.
 	Register(ctx context.Context, username, password, email string) error
 
 	// Login autentica las credenciales del usuario y emite un par de tokens:
-	// un Access Token (Fat JWT, TTL 15 min) y un Refresh Token (TTL 7 días).
-	// Aplica account lockout: tras el máximo de intentos fallidos configurado en
+	// un Access Token (Fat JWT, TTL 15 min) y un Refresh Token (TTL 7 dÃ­as).
+	// Aplica account lockout: tras el mÃ¡ximo de intentos fallidos configurado en
 	// domain.MaxFailedAttempts, la cuenta queda bloqueada hasta que expire el
-	// período domain.LockDuration.
+	// perÃ­odo domain.LockDuration.
 	Login(ctx context.Context, username, password string) (accessToken string, refreshToken string, err error)
 
-	// RefreshTokens implementa rotación estricta de tokens: invalida el Refresh Token
+	// RefreshTokens implementa rotaciÃ³n estricta de tokens: invalida el Refresh Token
 	// recibido y emite un par nuevo. El nuevo Access Token refleja la token_version
 	// actual del usuario, incorporando cualquier cambio de roles ocurrido desde el
 	// login original.
 	RefreshTokens(ctx context.Context, refreshToken string) (accessToken string, newRefreshToken string, err error)
 
 	// Logout invalida todos los Refresh Tokens activos del usuario, forzando
-	// re-autenticación en todos los dispositivos. Los Access Tokens en circulación
-	// expiran por TTL natural (máx. 15 min).
+	// re-autenticaciÃ³n en todos los dispositivos. Los Access Tokens en circulaciÃ³n
+	// expiran por TTL natural (mÃ¡x. 15 min).
 	Logout(ctx context.Context, userID uint) error
 }
 
-// authService es la implementación concreta de AuthService.
+// authService es la implementaciÃ³n concreta de AuthService.
 // Orquesta los repositorios de usuarios y roles, la firma JWT y el cifrado de emails.
 type authService struct {
 	repo      domain.UserRepository
@@ -55,10 +55,10 @@ type authService struct {
 }
 
 // NewAuthService construye un authService con todas sus dependencias inyectadas.
-//   - repo: repositorio de usuarios (acceso a Postgres vía GORM).
+//   - repo: repositorio de usuarios (acceso a Postgres vÃ­a GORM).
 //   - roleRepo: repositorio de roles (para obtener el rol "User" por defecto).
-//   - secret: clave HMAC-SHA256 para firmar y verificar JWTs; debe tener ≥ 64 bytes.
-//   - enc: encriptador AES-256-GCM para cifrar emails y calcular su hash de búsqueda.
+//   - secret: clave HMAC-SHA256 para firmar y verificar JWTs; debe tener â‰¥ 64 bytes.
+//   - enc: encriptador AES-256-GCM para cifrar emails y calcular su hash de bÃºsqueda.
 func NewAuthService(repo domain.UserRepository, roleRepo domain.RoleRepository, secret []byte, enc *appcrypto.Encryptor) AuthService {
 	return &authService{repo: repo, roleRepo: roleRepo, jwtSecret: secret, enc: enc}
 }
@@ -66,11 +66,11 @@ func NewAuthService(repo domain.UserRepository, roleRepo domain.RoleRepository, 
 // Register implementa AuthService.Register.
 //
 // Flujo de seguridad:
-//  1. Valida longitud de contraseña (8-72 chars) para evitar CPU starvation pre-bcrypt.
-//  2. Verifica unicidad de username vía consulta directa.
-//  3. Si se proveyó email, verifica unicidad por HMAC-SHA256 sin exponer el valor en claro.
+//  1. Valida longitud de contraseÃ±a (8-72 chars) para evitar CPU starvation pre-bcrypt.
+//  2. Verifica unicidad de username vÃ­a consulta directa.
+//  3. Si se proveyÃ³ email, verifica unicidad por HMAC-SHA256 sin exponer el valor en claro.
 //  4. Cifra el email con AES-256-GCM antes de persistirlo.
-//  5. Hashea la contraseña con bcrypt (DefaultCost).
+//  5. Hashea la contraseÃ±a con bcrypt (DefaultCost).
 //  6. Asigna el rol "User" por defecto al nuevo usuario.
 //
 // Errores posibles: domain.ErrInvalidInput, domain.ErrUserAlreadyExists,
@@ -94,7 +94,7 @@ func (s *authService) Register(ctx context.Context, username, password, email st
 		return fmt.Errorf("unexpected database error checking username: %w", err)
 	}
 
-	// Si el usuario proveyó email, verificar duplicado por hash antes de cifrar.
+	// Si el usuario proveyÃ³ email, verificar duplicado por hash antes de cifrar.
 	var emailEncrypted, emailHash string
 	if email != "" {
 		emailHash = s.enc.HashEmail(email)
@@ -141,14 +141,14 @@ func (s *authService) Register(ctx context.Context, username, password, email st
 // Login implementa AuthService.Login.
 //
 // Flujo de seguridad:
-//  1. Rechaza contraseñas > 72 chars antes de llegar a bcrypt (prevención DoS).
-//  2. Verifica account lockout ANTES de comparar la contraseña para no revelar
-//     si las credenciales son válidas cuando la cuenta está bloqueada (timing attack).
-//  3. Compara la contraseña con bcrypt; en fallo, incrementa el contador de intentos
+//  1. Rechaza contraseÃ±as > 72 chars antes de llegar a bcrypt (prevenciÃ³n DoS).
+//  2. Verifica account lockout ANTES de comparar la contraseÃ±a para no revelar
+//     si las credenciales son vÃ¡lidas cuando la cuenta estÃ¡ bloqueada (timing attack).
+//  3. Compara la contraseÃ±a con bcrypt; en fallo, incrementa el contador de intentos
 //     y bloquea la cuenta si se alcanza domain.MaxFailedAttempts.
-//  4. En éxito, resetea el contador y emite un Fat JWT con permisos embebidos y
-//     el campo "ver" (token_version) para soporte de invalidación inmediata.
-//  5. Genera y persiste un Refresh Token criptográficamente seguro (256 bits, base64).
+//  4. En Ã©xito, resetea el contador y emite un Fat JWT con permisos embebidos y
+//     el campo "ver" (token_version) para soporte de invalidaciÃ³n inmediata.
+//  5. Genera y persiste un Refresh Token criptogrÃ¡ficamente seguro (256 bits, base64).
 //
 // Errores posibles: domain.ErrInvalidCreds, domain.ErrAccountLocked.
 func (s *authService) Login(ctx context.Context, username, password string) (string, string, error) {
@@ -167,19 +167,19 @@ func (s *authService) Login(ctx context.Context, username, password string) (str
 		return "", "", fmt.Errorf("database fetch failure: %w", err)
 	}
 
-	// 1. Verificar bloqueo de cuenta ANTES de comparar la contraseña.
-	// No revelar si la contraseña es correcta cuando la cuenta está bloqueada:
+	// 1. Verificar bloqueo de cuenta ANTES de comparar la contraseÃ±a.
+	// No revelar si la contraseÃ±a es correcta cuando la cuenta estÃ¡ bloqueada:
 	// evitamos el timing attack donde el atacante deduce que la cuenta existe.
 	if user.IsLocked() {
 		return "", "", domain.ErrAccountLocked
 	}
 
-	// 2. Verificar contraseña.
+	// 2. Verificar contraseÃ±a.
 	if err := bcrypt.CompareHashAndPassword([]byte(user.PasswordHash), []byte(password)); err != nil {
-		// Contraseña incorrecta → incrementar contador de intentos fallidos.
+		// ContraseÃ±a incorrecta â†’ incrementar contador de intentos fallidos.
 		locked := user.RecordFailedAttempt()
-		// Persistir el nuevo estado del contador en la BD (fire-and-forget el error aquí,
-		// pero loguearlo en producción para detectar problemas de escritura).
+		// Persistir el nuevo estado del contador en la BD (fire-and-forget el error aquÃ­,
+		// pero loguearlo en producciÃ³n para detectar problemas de escritura).
 		_ = s.repo.Update(ctxTimeout, user)
 		if locked {
 			return "", "", domain.ErrAccountLocked
@@ -187,19 +187,19 @@ func (s *authService) Login(ctx context.Context, username, password string) (str
 		return "", "", domain.ErrInvalidCreds
 	}
 
-	// 3. Login exitoso → resetear contador.
+	// 3. Login exitoso â†’ resetear contador.
 	user.ResetFailedAttempts()
 	_ = s.repo.Update(ctxTimeout, user)
 
 	// 4. "Fat JWT": Integramos los permisos en el token para evitar viajes a DB en los handlers.
-	// "ver" embebe token_version para permitir invalidación inmediata si cambian los permisos.
-	// El middleware valida que JWT.ver == DB.token_version; si no coincide → 401.
+	// "ver" embebe token_version para permitir invalidaciÃ³n inmediata si cambian los permisos.
+	// El middleware valida que JWT.ver == DB.token_version; si no coincide â†’ 401.
 	permArray := buildPermArray(user)
 
 	claims := jwt.MapClaims{
 		"sub":         user.Username,
 		"uid":         user.ID,
-		"ver":         user.TokenVersion, // Token version — invalidación por cambio de roles
+		"ver":         user.TokenVersion, // Token version â€” invalidaciÃ³n por cambio de roles
 		"scope":       user.Scope,        // Scoping administrativo
 		"exp":         time.Now().Add(15 * time.Minute).Unix(),
 		"permissions": permArray,
@@ -211,7 +211,7 @@ func (s *authService) Login(ctx context.Context, username, password string) (str
 		return "", "", fmt.Errorf("failed to sign jwt auth token: %w", err)
 	}
 
-	// 5. Generar y guardar Refresh Token (7 días).
+	// 5. Generar y guardar Refresh Token (7 dÃ­as).
 	refreshToken := generateSecureToken()
 	rt := &domain.RefreshToken{
 		Token:     refreshToken,
@@ -228,14 +228,14 @@ func (s *authService) Login(ctx context.Context, username, password string) (str
 
 // RefreshTokens implementa AuthService.RefreshTokens.
 //
-// Aplica rotación estricta (Refresh Token Rotation):
+// Aplica rotaciÃ³n estricta (Refresh Token Rotation):
 //  1. Valida que el token exista en BD y no haya expirado.
-//  2. Borra el token recibido inmediatamente (uso único — previene replay attacks).
+//  2. Borra el token recibido inmediatamente (uso Ãºnico â€” previene replay attacks).
 //  3. Emite un nuevo Access Token (Fat JWT, TTL 15 min) con la token_version actual
-//     del usuario, reflejando cambios de roles ocurridos desde el último login.
-//  4. Emite y persiste un nuevo Refresh Token (TTL 7 días).
+//     del usuario, reflejando cambios de roles ocurridos desde el Ãºltimo login.
+//  4. Emite y persiste un nuevo Refresh Token (TTL 7 dÃ­as).
 //
-// Errores posibles: domain.ErrInvalidToken si el token no existe o expiró.
+// Errores posibles: domain.ErrInvalidToken si el token no existe o expirÃ³.
 func (s *authService) RefreshTokens(ctx context.Context, refreshToken string) (string, string, error) {
 	ctxTimeout, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()
@@ -257,13 +257,13 @@ func (s *authService) RefreshTokens(ctx context.Context, refreshToken string) (s
 		return "", "", fmt.Errorf("could not find user for refresh token: %w", err)
 	}
 
-	// 3. Rotación Estricta: Borrar el token viejo para que solo se use 1 vez.
+	// 3. RotaciÃ³n Estricta: Borrar el token viejo para que solo se use 1 vez.
 	if err := s.repo.DeleteRefreshToken(ctxTimeout, refreshToken); err != nil {
 		return "", "", fmt.Errorf("failed to delete old refresh token: %w", err)
 	}
 
 	// 4. Generar nuevo Access Token (Fat JWT) con la token_version actualizada.
-	// Al refrescar, el nuevo token ya refleja la versión actual del usuario en DB,
+	// Al refrescar, el nuevo token ya refleja la versiÃ³n actual del usuario en DB,
 	// incluyendo cualquier cambio de roles que haya ocurrido desde el login anterior.
 	permArray := buildPermArray(user)
 
@@ -313,7 +313,7 @@ func buildPermArray(user *domain.User) []string {
 	return permArray
 }
 
-// generateSecureToken genera un token de 256 bits criptográficamente seguro,
+// generateSecureToken genera un token de 256 bits criptogrÃ¡ficamente seguro,
 // codificado en base64 URL-safe. Usado para emitir Refresh Tokens.
 func generateSecureToken() string {
 	b := make([]byte, 32)
@@ -323,9 +323,9 @@ func generateSecureToken() string {
 
 // Logout implementa AuthService.Logout.
 // Invalida todos los Refresh Tokens activos del usuario en base de datos.
-// Los Access Tokens existentes no se pueden revocar activamente — expiran
-// por TTL natural (máx. 15 min). Para invalidación inmediata de permisos,
-// usar la lógica de token_version en AssignRoles/AssignPermissions.
+// Los Access Tokens existentes no se pueden revocar activamente â€” expiran
+// por TTL natural (mÃ¡x. 15 min). Para invalidaciÃ³n inmediata de permisos,
+// usar la lÃ³gica de token_version en AssignRoles/AssignPermissions.
 func (s *authService) Logout(ctx context.Context, userID uint) error {
 	ctxTimeout, cancel := context.WithTimeout(ctx, 3*time.Second)
 	defer cancel()

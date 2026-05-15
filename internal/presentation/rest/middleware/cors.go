@@ -5,8 +5,8 @@ import (
 )
 
 // CORS retorna un middleware que aplica cabeceras CORS restrictivas.
-// Recibe los orígenes permitidos como parámetros (desde configuración).
-// En producción, pasar los dominios exactos del frontend (ej: "https://miapp.com").
+// Recibe los orÃ­genes permitidos como parÃ¡metros (desde configuraciÃ³n).
+// En producciÃ³n, pasar los dominios exactos del frontend (ej: "https://miapp.com").
 // Nunca usar wildcard con credentials.
 //
 // Ejemplo: r.Use(middleware.CORS("http://localhost:3000", "https://miapp.com"))

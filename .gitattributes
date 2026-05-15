@@ -1,0 +1,12 @@
+# Go source files always LF (gofmt requirement)
+*.go text eol=lf
+
+# Shell scripts always LF
+*.sh text eol=lf
+
+# Config files LF
+*.yml text eol=lf
+*.yaml text eol=lf
+Makefile text eol=lf
+Dockerfile text eol=lf
+.env.example text eol=lf

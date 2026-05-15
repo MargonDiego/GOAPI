@@ -28,7 +28,7 @@ func NewUserHandler(s application.UserService) *UserHandler {
 // GetMe retorna el perfil del usuario autenticado.
 //
 // @Summary      Mi perfil
-// @Description  Retorna los datos del usuario extraído del token JWT
+// @Description  Retorna los datos del usuario extraÃ­do del token JWT
 // @Tags         users
 // @Produce      json
 // @Success      200 {object} UserResponse
@@ -67,14 +67,14 @@ type PaginatedUserResponse struct {
 	TotalPages int            `json:"total_pages"`
 }
 
-// GetAll lista usuarios paginados, con soporte de búsqueda y filtro por rol.
+// GetAll lista usuarios paginados, con soporte de bÃºsqueda y filtro por rol.
 //
 // @Summary      Listar usuarios
-// @Description  Retorna la lista paginada de usuarios. Soporta búsqueda (?search=) y filtro por rol (?role=).
+// @Description  Retorna la lista paginada de usuarios. Soporta bÃºsqueda (?search=) y filtro por rol (?role=).
 // @Tags         users
 // @Produce      json
-// @Param        page query int false "Número de página" default(1)
-// @Param        size query int false "Tamaño de página" default(10)
+// @Param        page query int false "NÃºmero de pÃ¡gina" default(1)
+// @Param        size query int false "TamaÃ±o de pÃ¡gina" default(10)
 // @Param        search query string false "Buscar por username/email"
 // @Param        role query string false "Filtrar por nombre de rol"
 // @Success      200 {object} PaginatedUserResponse
@@ -127,16 +127,16 @@ type AssignRolesRequest struct {
 	RoleIDs []uint `json:"role_ids" validate:"required,dive,gt=0" example:"1,2"`
 }
 
-// BulkAssignRolesRequest es el DTO para asignar roles a múltiples usuarios.
+// BulkAssignRolesRequest es el DTO para asignar roles a mÃºltiples usuarios.
 type BulkAssignRolesRequest struct {
 	UserIDs []uint `json:"user_ids" validate:"required,dive,gt=0" example:"1,2,3"`
 	RoleIDs []uint `json:"role_ids" validate:"required,dive,gt=0" example:"4,5"`
 }
 
-// AssignRoles asigna uno o más roles a un usuario.
+// AssignRoles asigna uno o mÃ¡s roles a un usuario.
 //
 // @Summary      Asignar roles a usuario
-// @Description  Actualiza los roles asociados a un usuario específico. Un array vacío elimina todos los roles.
+// @Description  Actualiza los roles asociados a un usuario especÃ­fico. Un array vacÃ­o elimina todos los roles.
 // @Tags         users
 // @Accept       json
 // @Produce      json
@@ -180,10 +180,10 @@ func (h *UserHandler) AssignRoles(w http.ResponseWriter, r *http.Request) {
 	RespondJSON(w, http.StatusOK, MessageResponse{Message: "roles assigned successfully"})
 }
 
-// BulkAssignRoles asigna roles a múltiples usuarios en una sola operación.
+// BulkAssignRoles asigna roles a mÃºltiples usuarios en una sola operaciÃ³n.
 //
 // @Summary      Asignar roles en bulk
-// @Description  Asigna los mismos roles a múltiples usuarios simultáneamente. Valida existencia y scoping.
+// @Description  Asigna los mismos roles a mÃºltiples usuarios simultÃ¡neamente. Valida existencia y scoping.
 // @Tags         users
 // @Accept       json
 // @Produce      json
@@ -229,7 +229,7 @@ type CreateUserRequest struct {
 // GetByID Obtiene un usuario por su ID.
 //
 // @Summary      Obtener usuario por ID
-// @Description  Retorna los datos de un usuario específico
+// @Description  Retorna los datos de un usuario especÃ­fico
 // @Tags         users
 // @Produce      json
 // @Param        id path int true "User ID"

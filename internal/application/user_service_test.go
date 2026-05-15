@@ -93,7 +93,7 @@ func TestUserService_GetAllUsers(t *testing.T) {
 		expectedError  error
 	}{
 		{
-			name: "Éxito con paginación válida",
+			name: "Ã‰xito con paginaciÃ³n vÃ¡lida",
 			page: 2,
 			size: 5,
 			setupMock: func(m *mocks.MockUserRepository) {
@@ -105,7 +105,7 @@ func TestUserService_GetAllUsers(t *testing.T) {
 			expectedError:  nil,
 		},
 		{
-			name: "Sanitización de página inválida y tamaño inválido",
+			name: "SanitizaciÃ³n de pÃ¡gina invÃ¡lida y tamaÃ±o invÃ¡lido",
 			page: -5,
 			size: 200,
 			setupMock: func(m *mocks.MockUserRepository) {
@@ -194,7 +194,7 @@ func TestUserService_AssignRolesToUser(t *testing.T) {
 			expectedError: domain.ErrInvalidInput,
 		},
 		{
-			name:    "Éxito al asignar roles",
+			name:    "Ã‰xito al asignar roles",
 			userID:  1,
 			roleIDs: []uint{1, 2},
 			setupUserMock: func(m *mocks.MockUserRepository) {
@@ -210,12 +210,12 @@ func TestUserService_AssignRolesToUser(t *testing.T) {
 			expectedError: nil,
 		},
 		{
-			name:    "Éxito limpiando roles (lista vacía)",
+			name:    "Ã‰xito limpiando roles (lista vacÃ­a)",
 			userID:  1,
 			roleIDs: []uint{},
 			setupUserMock: func(m *mocks.MockUserRepository) {
 				m.On("FindByID", mock.Anything, uint(1)).Return(&domain.User{ID: 1}, nil)
-				var roles []domain.Role // nil o slice vacío
+				var roles []domain.Role // nil o slice vacÃ­o
 				m.On("UpdateRoles", mock.Anything, uint(1), roles).Return(nil)
 				m.On("IncrementTokenVersion", mock.Anything, uint(1)).Return(1, nil)
 			},
@@ -245,7 +245,7 @@ func TestUserService_AssignRolesToUser(t *testing.T) {
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)
-				// validamos que en la cadena de errores esté el error real (Is)
+				// validamos que en la cadena de errores estÃ© el error real (Is)
 				if errors.Is(tt.expectedError, domain.ErrUserNotFound) || errors.Is(tt.expectedError, domain.ErrInvalidInput) {
 					assert.ErrorIs(t, err, tt.expectedError)
 				} else {

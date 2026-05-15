@@ -9,7 +9,7 @@ import (
 	"golang.org/x/time/rate"
 )
 
-// visitor mantiene el token bucket y la última vez que la IP fue vista
+// visitor mantiene el token bucket y la Ãºltima vez que la IP fue vista
 type visitor struct {
 	limiter  *rate.Limiter
 	lastSeen time.Time
@@ -20,7 +20,7 @@ type IPRateLimiter struct {
 	ips map[string]*visitor
 	mu  sync.Mutex
 	r   rate.Limit // Requests por segundo
-	b   int        // Ráfaga (burst) permitida
+	b   int        // RÃ¡faga (burst) permitida
 }
 
 // NewIPRateLimiter crea un nuevo limitador y lanza una goroutine para limpiar memoria
@@ -32,7 +32,7 @@ func NewIPRateLimiter(r rate.Limit, b int) *IPRateLimiter {
 	}
 
 	// Goroutine en background que limpia IPs inactivas cada minuto
-	// Esto previene memory leaks si recibimos requests de muchas IPs únicas
+	// Esto previene memory leaks si recibimos requests de muchas IPs Ãºnicas
 	go i.cleanupVisitors()
 
 	return i
@@ -59,7 +59,7 @@ func (i *IPRateLimiter) cleanupVisitors() {
 
 		i.mu.Lock()
 		for ip, v := range i.ips {
-			// Si la IP no hizo requests en los últimos 3 minutos, la borramos
+			// Si la IP no hizo requests en los Ãºltimos 3 minutos, la borramos
 			if time.Since(v.lastSeen) > 3*time.Minute {
 				delete(i.ips, ip)
 			}
@@ -68,7 +68,7 @@ func (i *IPRateLimiter) cleanupVisitors() {
 	}
 }
 
-// Middleware retorna la función handler para interceptar el request HTTP
+// Middleware retorna la funciÃ³n handler para interceptar el request HTTP
 func (i *IPRateLimiter) Middleware(next http.Handler) http.Handler {
 	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		// Extraer IP limpia (sin puerto)
@@ -79,7 +79,7 @@ func (i *IPRateLimiter) Middleware(next http.Handler) http.Handler {
 
 		limiter := i.getVisitor(ip)
 
-		// Si se excedió el límite, rechazamos con 429 Too Many Requests
+		// Si se excediÃ³ el lÃ­mite, rechazamos con 429 Too Many Requests
 		if !limiter.Allow() {
 			respondError(w, http.StatusTooManyRequests, "too many requests, please slow down")
 			return

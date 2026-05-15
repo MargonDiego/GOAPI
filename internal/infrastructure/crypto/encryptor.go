@@ -1,15 +1,15 @@
 // Package crypto provee utilidades de cifrado para proteger PII (Personal Identifiable Information).
 //
-// Estrategia de doble representación para campos buscables:
-//   - EmailEncrypted: AES-256-GCM con IV aleatorio → para mostrar al usuario.
-//   - EmailHash: HMAC-SHA256 determinista → para buscar en la BD con O(log n).
+// Estrategia de doble representaciÃ³n para campos buscables:
+//   - EmailEncrypted: AES-256-GCM con IV aleatorio â†’ para mostrar al usuario.
+//   - EmailHash: HMAC-SHA256 determinista â†’ para buscar en la BD con O(log n).
 //
-// Esta separación resuelve el problema fundamental del cifrado simétrico:
+// Esta separaciÃ³n resuelve el problema fundamental del cifrado simÃ©trico:
 // si usamos un IV aleatorio, dos cifrados del mismo email dan resultados diferentes,
 // imposibilitando el WHERE email = ?, pero si usamos IV fijo, perdemos el nonce y
-// el cifrado es determinista (vulnerable a análisis de frecuencia).
+// el cifrado es determinista (vulnerable a anÃ¡lisis de frecuencia).
 //
-// La solución: cifrar para confidencialidad (IV aleatorio) y hashear para búsqueda (HMAC).
+// La soluciÃ³n: cifrar para confidencialidad (IV aleatorio) y hashear para bÃºsqueda (HMAC).
 package crypto
 
 import (
@@ -33,7 +33,7 @@ type Encryptor struct {
 }
 
 // NewEncryptor valida y crea un Encryptor desde la clave de entorno.
-// Falla rápido en startup si la clave no tiene el tamaño correcto.
+// Falla rÃ¡pido en startup si la clave no tiene el tamaÃ±o correcto.
 func NewEncryptor(key []byte) (*Encryptor, error) {
 	if len(key) != 32 {
 		return nil, fmt.Errorf("%w: got %d bytes", ErrInvalidKey, len(key))
@@ -42,7 +42,7 @@ func NewEncryptor(key []byte) (*Encryptor, error) {
 }
 
 // EncryptEmail cifra el email con AES-256-GCM usando un nonce aleatorio.
-// El resultado es: base64(nonce || ciphertext || tag) — todo en un solo campo.
+// El resultado es: base64(nonce || ciphertext || tag) â€” todo en un solo campo.
 // Cada llamada produce un resultado DIFERENTE aunque el email sea el mismo.
 func (e *Encryptor) EncryptEmail(email string) (string, error) {
 	block, err := aes.NewCipher(e.key)
@@ -55,7 +55,7 @@ func (e *Encryptor) EncryptEmail(email string) (string, error) {
 		return "", fmt.Errorf("aes-gcm init: %w", err)
 	}
 
-	// Nonce aleatorio de 12 bytes (estándar GCM).
+	// Nonce aleatorio de 12 bytes (estÃ¡ndar GCM).
 	nonce := make([]byte, aesGCM.NonceSize())
 	if _, err := io.ReadFull(rand.Reader, nonce); err != nil {
 		return "", fmt.Errorf("nonce generation: %w", err)
@@ -101,11 +101,11 @@ func (e *Encryptor) DecryptEmail(encrypted string) (string, error) {
 
 // HashEmail genera un HMAC-SHA256 del email usando la misma clave del encryptor.
 // El resultado es DETERMINISTA: el mismo email siempre da el mismo hash.
-// Se usa como índice único en la BD para hacer WHERE email_hash = ? de forma segura.
+// Se usa como Ã­ndice Ãºnico en la BD para hacer WHERE email_hash = ? de forma segura.
 //
 // Importante: NO se debe usar SHA256 sin clave (vulnerable a rainbow tables).
-// HMAC agrega la clave como secreto, haciendo que la tabla de hashes sea inútil
-// sin conocer la clave de la aplicación.
+// HMAC agrega la clave como secreto, haciendo que la tabla de hashes sea inÃºtil
+// sin conocer la clave de la aplicaciÃ³n.
 func (e *Encryptor) HashEmail(email string) string {
 	mac := hmac.New(sha256.New, e.key)
 	mac.Write([]byte(email))

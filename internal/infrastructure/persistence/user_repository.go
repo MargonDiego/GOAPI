@@ -13,13 +13,13 @@ type userRepository struct {
 	db *gorm.DB
 }
 
-// NewUserRepository construye un userRepository con la conexión GORM inyectada.
+// NewUserRepository construye un userRepository con la conexiÃ³n GORM inyectada.
 func NewUserRepository(db *gorm.DB) domain.UserRepository {
 	return &userRepository{db: db}
 }
 
 // Create inserta un nuevo usuario y propaga el ID generado al objeto de dominio.
-// Pensado exclusivamente para INSERTS — si el usuario ya tiene ID, se ignora (GORM trata ID>0 como update).
+// Pensado exclusivamente para INSERTS â€” si el usuario ya tiene ID, se ignora (GORM trata ID>0 como update).
 func (r *userRepository) Create(ctx context.Context, u *domain.User) error {
 	dbUser := toDBUser(u)
 	if err := r.db.WithContext(ctx).Create(dbUser).Error; err != nil {
@@ -30,7 +30,7 @@ func (r *userRepository) Create(ctx context.Context, u *domain.User) error {
 }
 
 // UpdateProfile actualiza selectivamente los campos de perfil (username, email) de un usuario existente.
-// Usa Select explícito para evitar sobrescribir password, failed_attempts y campos de seguridad.
+// Usa Select explÃ­cito para evitar sobrescribir password, failed_attempts y campos de seguridad.
 func (r *userRepository) UpdateProfile(ctx context.Context, u *domain.User) error {
 	dbUser := toDBUser(u)
 	if err := r.db.WithContext(ctx).
@@ -44,7 +44,7 @@ func (r *userRepository) UpdateProfile(ctx context.Context, u *domain.User) erro
 
 // Update persiste los campos de seguridad de un usuario existente: intentos fallidos,
 // bloqueo de cuenta y email cifrado/hasheado.
-// Usamos Select explícito para evitar sobrescribir campos sensibles por accidente
+// Usamos Select explÃ­cito para evitar sobrescribir campos sensibles por accidente
 // (ej: un update de intentos fallidos no debe borrar el password ni el username).
 func (r *userRepository) Update(ctx context.Context, u *domain.User) error {
 	result := r.db.WithContext(ctx).
@@ -62,8 +62,8 @@ func (r *userRepository) Update(ctx context.Context, u *domain.User) error {
 	return nil
 }
 
-// UpdateRoles reemplaza completamente la relación Many-to-Many usuario↔roles.
-// Pasar un slice vacío elimina todos los roles del usuario.
+// UpdateRoles reemplaza completamente la relaciÃ³n Many-to-Many usuarioâ†”roles.
+// Pasar un slice vacÃ­o elimina todos los roles del usuario.
 // Retorna domain.ErrUserNotFound si el usuario no existe.
 func (r *userRepository) UpdateRoles(ctx context.Context, userID uint, roles []domain.Role) error {
 	var dbUser User
@@ -83,7 +83,7 @@ func (r *userRepository) UpdateRoles(ctx context.Context, userID uint, roles []d
 }
 
 // FindByUsername retorna el usuario con sus roles y permisos pre-cargados.
-// Retorna domain.ErrUserNotFound si no existe ningún usuario con ese username.
+// Retorna domain.ErrUserNotFound si no existe ningÃºn usuario con ese username.
 func (r *userRepository) FindByUsername(ctx context.Context, username string) (*domain.User, error) {
 	var u User
 	if err := r.db.WithContext(ctx).Preload("Roles.Permissions").Where("username = ?", username).First(&u).Error; err != nil {
@@ -97,7 +97,7 @@ func (r *userRepository) FindByUsername(ctx context.Context, username string) (*
 
 // FindByEmailHash busca un usuario por el HMAC-SHA256 de su email.
 // Se usa para verificar unicidad de email sin exponer datos en claro.
-// Retorna domain.ErrUserNotFound si no existe ningún usuario con ese hash.
+// Retorna domain.ErrUserNotFound si no existe ningÃºn usuario con ese hash.
 func (r *userRepository) FindByEmailHash(ctx context.Context, emailHash string) (*domain.User, error) {
 	var u User
 	if err := r.db.WithContext(ctx).Preload("Roles.Permissions").
@@ -111,7 +111,7 @@ func (r *userRepository) FindByEmailHash(ctx context.Context, emailHash string) 
 }
 
 // FindByID retorna el usuario con sus roles y permisos pre-cargados.
-// Retorna domain.ErrUserNotFound si no existe ningún usuario con ese ID.
+// Retorna domain.ErrUserNotFound si no existe ningÃºn usuario con ese ID.
 func (r *userRepository) FindByID(ctx context.Context, id uint) (*domain.User, error) {
 	var u User
 	if err := r.db.WithContext(ctx).Preload("Roles.Permissions").First(&u, id).Error; err != nil {
@@ -123,7 +123,7 @@ func (r *userRepository) FindByID(ctx context.Context, id uint) (*domain.User, e
 	return toDomainUser(&u), nil
 }
 
-// FindAll retorna una página de usuarios con roles y permisos pre-cargados.
+// FindAll retorna una pÃ¡gina de usuarios con roles y permisos pre-cargados.
 // page empieza en 1; el offset se calcula como (page-1)*size.
 func (r *userRepository) FindAll(ctx context.Context, page, size int) ([]domain.User, error) {
 	var users []User
@@ -144,7 +144,7 @@ func (r *userRepository) FindAll(ctx context.Context, page, size int) ([]domain.
 // Retorna domain.ErrRoleNotFound si no existe.
 // IncrementTokenVersion incrementa en 1 el token_version del usuario y retorna el nuevo valor.
 // Debe llamarse siempre que cambien los roles o permisos de un usuario para invalidar
-// sus JWT activos. La operación es atómica a nivel de base de datos.
+// sus JWT activos. La operaciÃ³n es atÃ³mica a nivel de base de datos.
 func (r *userRepository) IncrementTokenVersion(ctx context.Context, userID uint) (int, error) {
 	result := r.db.WithContext(ctx).
 		Model(&User{}).
@@ -229,7 +229,7 @@ func (r *userRepository) GetRefreshToken(ctx context.Context, token string) (*do
 	}, nil
 }
 
-// DeleteRefreshToken elimina un refresh token específico (logout de una sesión).
+// DeleteRefreshToken elimina un refresh token especÃ­fico (logout de una sesiÃ³n).
 func (r *userRepository) DeleteRefreshToken(ctx context.Context, token string) error {
 	return r.db.WithContext(ctx).Where("token = ?", token).Delete(&RefreshToken{}).Error
 }
@@ -253,8 +253,8 @@ func (r *userRepository) Delete(ctx context.Context, id uint) error {
 }
 
 // SearchUsers busca usuarios por username/email y filtra por nombre de rol.
-// La búsqueda es case-insensitive en username. Si query está vacío, lista todos.
-// Si roleName está vacío, no filtra por rol.
+// La bÃºsqueda es case-insensitive en username. Si query estÃ¡ vacÃ­o, lista todos.
+// Si roleName estÃ¡ vacÃ­o, no filtra por rol.
 func (r *userRepository) SearchUsers(ctx context.Context, query, roleName string, page, size int) ([]domain.User, error) {
 	var users []User
 	db := r.db.WithContext(ctx).Preload("Roles.Permissions")
@@ -344,7 +344,7 @@ func (r *userRepository) CountUsersByScope(ctx context.Context, scope string) (i
 	return count, nil
 }
 
-// CountSearchUsers retorna el total de usuarios que coinciden con los criterios de búsqueda.
+// CountSearchUsers retorna el total de usuarios que coinciden con los criterios de bÃºsqueda.
 func (r *userRepository) CountSearchUsers(ctx context.Context, query, roleName string) (int64, error) {
 	db := r.db.WithContext(ctx).Model(&User{})
 
@@ -365,7 +365,7 @@ func (r *userRepository) CountSearchUsers(ctx context.Context, query, roleName s
 	return count, nil
 }
 
-// CountSearchUsersByScope retorna el total de usuarios que coinciden con los criterios de búsqueda filtrados por scope.
+// CountSearchUsersByScope retorna el total de usuarios que coinciden con los criterios de bÃºsqueda filtrados por scope.
 func (r *userRepository) CountSearchUsersByScope(ctx context.Context, query, roleName, scope string) (int64, error) {
 	db := r.db.WithContext(ctx).Model(&User{}).Where("users.scope = ? OR users.scope = ''", scope)
 

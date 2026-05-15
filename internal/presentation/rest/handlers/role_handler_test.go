@@ -28,7 +28,7 @@ func TestRoleHandler_CreateRole(t *testing.T) {
 		expectedBody   string
 	}{
 		{
-			name:           "JSON inválido",
+			name:           "JSON invÃ¡lido",
 			payload:        "invalid",
 			setupMock:      func(m *mocks.MockRoleService) {},
 			expectedStatus: http.StatusBadRequest,
@@ -44,7 +44,7 @@ func TestRoleHandler_CreateRole(t *testing.T) {
 			expectedBody:   "name is required",
 		},
 		{
-			name:    "Éxito al crear rol",
+			name:    "Ã‰xito al crear rol",
 			payload: handlers.RoleCreateRequest{Name: "Admin"},
 			setupMock: func(m *mocks.MockRoleService) {
 				m.On("CreateRole", mock.Anything, "Admin", "").Return(&domain.Role{ID: 1, Name: "Admin"}, nil)
@@ -100,7 +100,7 @@ func TestRoleHandler_GetRoles(t *testing.T) {
 			expectedBody:   "failed to get roles",
 		},
 		{
-			name: "Éxito (Lista vacía no debe ser null)",
+			name: "Ã‰xito (Lista vacÃ­a no debe ser null)",
 			setupMock: func(m *mocks.MockRoleService) {
 				m.On("GetRoles", mock.Anything).Return([]domain.Role{}, nil)
 			},
@@ -108,7 +108,7 @@ func TestRoleHandler_GetRoles(t *testing.T) {
 			expectedBody:   `"data":[]`,
 		},
 		{
-			name: "Éxito con roles",
+			name: "Ã‰xito con roles",
 			setupMock: func(m *mocks.MockRoleService) {
 				roles := []domain.Role{
 					{ID: 1, Name: "Admin", Permissions: []domain.Permission{{ID: 1, Name: "all"}}},
@@ -159,7 +159,7 @@ func TestRoleHandler_GetPermissions(t *testing.T) {
 			expectedBody:   "failed to get permissions",
 		},
 		{
-			name: "Éxito con permisos",
+			name: "Ã‰xito con permisos",
 			setupMock: func(m *mocks.MockRoleService) {
 				perms := []domain.Permission{{ID: 1, Name: "read:users"}}
 				m.On("GetPermissions", mock.Anything).Return(perms, nil)
@@ -202,7 +202,7 @@ func TestRoleHandler_AssignPermissions(t *testing.T) {
 		expectedBody   string
 	}{
 		{
-			name:           "ID inválido en URL",
+			name:           "ID invÃ¡lido en URL",
 			urlID:          "invalid",
 			payload:        handlers.AssignPermissionsRequest{PermissionIDs: []uint{1}},
 			setupMock:      func(m *mocks.MockRoleService) {},
@@ -210,7 +210,7 @@ func TestRoleHandler_AssignPermissions(t *testing.T) {
 			expectedBody:   "invalid role id",
 		},
 		{
-			name:           "JSON inválido",
+			name:           "JSON invÃ¡lido",
 			urlID:          "1",
 			payload:        "invalid json",
 			setupMock:      func(m *mocks.MockRoleService) {},
@@ -228,7 +228,7 @@ func TestRoleHandler_AssignPermissions(t *testing.T) {
 			expectedBody:   domain.ErrInvalidInput.Error(),
 		},
 		{
-			name:    "Éxito",
+			name:    "Ã‰xito",
 			urlID:   "1",
 			payload: handlers.AssignPermissionsRequest{PermissionIDs: []uint{1, 2}},
 			setupMock: func(m *mocks.MockRoleService) {

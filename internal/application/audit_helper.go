@@ -8,7 +8,7 @@ import (
 	"github.com/MargonDiego/GOAPI/internal/domain"
 )
 
-// auditService encapsula la lógica de auditoría reutilizable entre servicios.
+// auditService encapsula la lÃ³gica de auditorÃ­a reutilizable entre servicios.
 type auditService struct {
 	auditRepo domain.AuditRepository
 }
@@ -19,8 +19,8 @@ func newAuditService(auditRepo domain.AuditRepository) auditService {
 	return auditService{auditRepo: auditRepo}
 }
 
-// log registra una acción de auditoría si hay un actor en el contexto y un auditRepo configurado.
-// oldValue y newValue se serializan a JSON; si fallan, se almacenan como string vacío.
+// log registra una acciÃ³n de auditorÃ­a si hay un actor en el contexto y un auditRepo configurado.
+// oldValue y newValue se serializan a JSON; si fallan, se almacenan como string vacÃ­o.
 func (a *auditService) log(ctx context.Context, action, targetType string, targetID uint, oldValue, newValue any) {
 	if a.auditRepo == nil {
 		return
@@ -28,7 +28,7 @@ func (a *auditService) log(ctx context.Context, action, targetType string, targe
 
 	actorID, ok := ActorFromContext(ctx)
 	if !ok {
-		// Sin actor no hay trazabilidad — no registramos.
+		// Sin actor no hay trazabilidad â€” no registramos.
 		return
 	}
 
@@ -44,7 +44,7 @@ func (a *auditService) log(ctx context.Context, action, targetType string, targe
 		NewValue:   newJSON,
 	}
 
-	// Enriquecer con metadatos del request si están disponibles.
+	// Enriquecer con metadatos del request si estÃ¡n disponibles.
 	if ip, ok := IPFromContext(ctx); ok {
 		log.IPAddress = ip
 	}
@@ -52,12 +52,12 @@ func (a *auditService) log(ctx context.Context, action, targetType string, targe
 		log.UserAgent = ua
 	}
 
-	// Ignorar error de auditoría para no interrumpir la operación principal.
+	// Ignorar error de auditorÃ­a para no interrumpir la operaciÃ³n principal.
 	_ = a.auditRepo.Log(ctx, log)
 }
 
-// marshalAuditValue serializa un valor a JSON para auditoría.
-// Retorna string vacío y error si la serialización falla.
+// marshalAuditValue serializa un valor a JSON para auditorÃ­a.
+// Retorna string vacÃ­o y error si la serializaciÃ³n falla.
 func marshalAuditValue(v any) (string, error) {
 	if v == nil {
 		return "", nil
@@ -73,8 +73,8 @@ func marshalAuditValue(v any) (string, error) {
 
 // canAccessScope verifica si el actor tiene acceso a un recurso del scope dado.
 // Reglas:
-//   - Actor con scope vacío ("") = super-admin, accede a todo.
-//   - Actor con scope no vacío = solo accede a recursos de su scope o scope vacío.
+//   - Actor con scope vacÃ­o ("") = super-admin, accede a todo.
+//   - Actor con scope no vacÃ­o = solo accede a recursos de su scope o scope vacÃ­o.
 func canAccessScope(actorScope, resourceScope string) bool {
 	if actorScope == "" {
 		return true // super-admin

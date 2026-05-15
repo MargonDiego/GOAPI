@@ -1,6 +1,6 @@
 package domain
 
-// PaginatedResult encapsula datos paginados con metadatos de paginación.
+// PaginatedResult encapsula datos paginados con metadatos de paginaciÃ³n.
 type PaginatedResult[T any] struct {
 	Data       []T `json:"data"`
 	Page       int `json:"page"`

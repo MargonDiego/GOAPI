@@ -2,17 +2,17 @@ package middleware
 
 import "net/http"
 
-// SecurityHeaders agrega cabeceras de seguridad estándar a cada respuesta.
+// SecurityHeaders agrega cabeceras de seguridad estÃ¡ndar a cada respuesta.
 //
 // Headers aplicados:
 //   - X-Content-Type-Options: nosniff (previene MIME sniffing)
 //   - X-Frame-Options: DENY (previene clickjacking)
-//   - Strict-Transport-Security (HSTS) — solo en producción, configura caché de 1 año
+//   - Strict-Transport-Security (HSTS) â€” solo en producciÃ³n, configura cachÃ© de 1 aÃ±o
 //   - X-XSS-Protection: 1; mode=block (filtro XSS, legacy pero soportado)
 //   - Referrer-Policy: strict-origin-when-cross-origin
 //   - Content-Security-Policy: default-src 'self' (base restrictiva)
 //
-// En producción, agregar HSTS y CSP más específicas según el deployment.
+// En producciÃ³n, agregar HSTS y CSP mÃ¡s especÃ­ficas segÃºn el deployment.
 func SecurityHeaders(env string) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

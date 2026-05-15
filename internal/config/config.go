@@ -18,10 +18,10 @@ type Config struct {
 	MigrationDsn       string
 	JWTSecret          []byte
 	EmailEncryptionKey []byte
-	CORSOrigins        []string // Orígenes permitidos para CORS, separados por coma en env
+	CORSOrigins        []string // OrÃ­genes permitidos para CORS, separados por coma en env
 }
 
-// Load lee, valida y retorna la configuración de la aplicación.
+// Load lee, valida y retorna la configuraciÃ³n de la aplicaciÃ³n.
 // Si falta una variable requerida, devuelve un error para hacer "Fail Fast".
 func Load() (*Config, error) {
 	// Intentamos cargar .env para desarrollo local
@@ -34,7 +34,7 @@ func Load() (*Config, error) {
 		Port:   getEnv("PORT", "8080"),
 	}
 
-	// CORS: orígenes separados por coma. Default: localhost:3000 para desarrollo.
+	// CORS: orÃ­genes separados por coma. Default: localhost:3000 para desarrollo.
 	corsRaw := getEnv("CORS_ORIGINS", "http://localhost:3000")
 	if corsRaw != "" {
 		for _, o := range strings.Split(corsRaw, ",") {

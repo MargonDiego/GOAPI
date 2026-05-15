@@ -26,7 +26,7 @@ func TestAuthHandler_Register(t *testing.T) {
 		expectedBody   string // Parcial de lo que se espera encontrar en el cuerpo
 	}{
 		{
-			name:           "Payload JSON inválido",
+			name:           "Payload JSON invÃ¡lido",
 			payload:        "esto no es json",
 			setupMock:      func(m *mocks.MockAuthService) {},
 			expectedStatus: http.StatusBadRequest,
@@ -57,7 +57,7 @@ func TestAuthHandler_Register(t *testing.T) {
 			expectedBody:   domain.ErrEmailAlreadyExists.Error(),
 		},
 		{
-			name: "Éxito al registrar usuario",
+			name: "Ã‰xito al registrar usuario",
 			payload: handlers.AuthRequest{
 				Username: "newuser",
 				Password: "password123",
@@ -111,7 +111,7 @@ func TestAuthHandler_Login(t *testing.T) {
 		expectedBody   string
 	}{
 		{
-			name:           "Payload JSON inválido",
+			name:           "Payload JSON invÃ¡lido",
 			payload:        "invalid json",
 			setupMock:      func(m *mocks.MockAuthService) {},
 			expectedStatus: http.StatusBadRequest,

@@ -14,7 +14,7 @@ import (
 
 var testSecret = []byte("my_super_secret_key")
 
-// generateTestToken crea un JWT válido para las pruebas.
+// generateTestToken crea un JWT vÃ¡lido para las pruebas.
 // Incluye los claims requeridos por el middleware: sub, uid, ver, permissions.
 func generateTestToken(username string, permissions []string, expired bool) string {
 	claims := jwt.MapClaims{
@@ -39,7 +39,7 @@ func TestRequireAuth(t *testing.T) {
 	t.Parallel()
 
 	mw := NewAuthMiddleware(testSecret, nil, cache.NewTokenVersionCache(30*time.Second))
-	// Precargar el cache con la versión esperada para evitar el fallback a DB (repo es nil en tests).
+	// Precargar el cache con la versiÃ³n esperada para evitar el fallback a DB (repo es nil en tests).
 	mw.versionCache.Set(1, 1)
 
 	// Handler ficticio que simplemente retorna 200 OK si el middleware lo deja pasar
@@ -61,7 +61,7 @@ func TestRequireAuth(t *testing.T) {
 		expectedUser   string
 	}{
 		{
-			name: "Error: Sin Header de Autorización",
+			name: "Error: Sin Header de AutorizaciÃ³n",
 			setupHeader: func(req *http.Request) {
 				// No seteamos nada
 			},
@@ -69,7 +69,7 @@ func TestRequireAuth(t *testing.T) {
 			expectedUser:   "",
 		},
 		{
-			name: "Error: Formato de Header Inválido",
+			name: "Error: Formato de Header InvÃ¡lido",
 			setupHeader: func(req *http.Request) {
 				req.Header.Set("Authorization", "Token raro")
 			},
@@ -86,7 +86,7 @@ func TestRequireAuth(t *testing.T) {
 			expectedUser:   "",
 		},
 		{
-			name: "Éxito: Token Válido",
+			name: "Ã‰xito: Token VÃ¡lido",
 			setupHeader: func(req *http.Request) {
 				token := generateTestToken("validuser", []string{"read"}, false)
 				req.Header.Set("Authorization", "Bearer "+token)
@@ -124,16 +124,16 @@ func TestRequirePermission(t *testing.T) {
 		w.WriteHeader(http.StatusOK)
 	})
 
-	// El middleware de permisos espera que el de Auth ya haya corrido e inyectado la sesión
+	// El middleware de permisos espera que el de Auth ya haya corrido e inyectado la sesiÃ³n
 	handlerToTest := mw.RequirePermission("write:data")(nextHandler)
 
 	tests := []struct {
 		name           string
-		session        *UserSession // Si es nil, no hay sesión en el contexto
+		session        *UserSession // Si es nil, no hay sesiÃ³n en el contexto
 		expectedStatus int
 	}{
 		{
-			name:           "Error: Contexto sin sesión (AuthMw no corrió)",
+			name:           "Error: Contexto sin sesiÃ³n (AuthMw no corriÃ³)",
 			session:        nil,
 			expectedStatus: http.StatusUnauthorized,
 		},
@@ -146,7 +146,7 @@ func TestRequirePermission(t *testing.T) {
 			expectedStatus: http.StatusForbidden,
 		},
 		{
-			name: "Éxito: Usuario con el permiso exacto",
+			name: "Ã‰xito: Usuario con el permiso exacto",
 			session: &UserSession{
 				Username:    "writer",
 				Permissions: map[string]bool{"write:data": true, "read:data": true},

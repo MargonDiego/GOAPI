@@ -2,7 +2,7 @@ package domain
 
 import "context"
 
-// AuditLog representa un registro de auditoría de cambios en el sistema.
+// AuditLog representa un registro de auditorÃ­a de cambios en el sistema.
 type AuditLog struct {
 	ID         uint
 	Action     string
@@ -16,8 +16,8 @@ type AuditLog struct {
 	CreatedAt  string
 }
 
-// AuditRepository define el contrato para persistir registros de auditoría.
+// AuditRepository define el contrato para persistir registros de auditorÃ­a.
 type AuditRepository interface {
-	// Log persiste un registro de auditoría.
+	// Log persiste un registro de auditorÃ­a.
 	Log(ctx context.Context, log *AuditLog) error
 }

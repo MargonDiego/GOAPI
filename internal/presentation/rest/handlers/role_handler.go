@@ -93,14 +93,14 @@ type PaginatedRoleResponse struct {
 	TotalPages int            `json:"total_pages"`
 }
 
-// GetRoles lista todos los roles, con soporte opcional de paginación y búsqueda.
+// GetRoles lista todos los roles, con soporte opcional de paginaciÃ³n y bÃºsqueda.
 //
 // @Summary      Listar roles
-// @Description  Obtiene roles con sus permisos. Soporta paginación (?page=&size=) y búsqueda (?search=).
+// @Description  Obtiene roles con sus permisos. Soporta paginaciÃ³n (?page=&size=) y bÃºsqueda (?search=).
 // @Tags         roles
 // @Produce      json
-// @Param        page query int false "Número de página" default(1)
-// @Param        size query int false "Tamaño de página" default(10)
+// @Param        page query int false "NÃºmero de pÃ¡gina" default(1)
+// @Param        size query int false "TamaÃ±o de pÃ¡gina" default(10)
 // @Param        search query string false "Buscar por nombre"
 // @Security     BearerAuth
 // @Success      200 {object} PaginatedRoleResponse
@@ -143,7 +143,7 @@ func (h *RoleHandler) GetRoles(w http.ResponseWriter, r *http.Request) {
 
 	res := make([]RoleResponse, 0, len(result.Data))
 	for _, role := range result.Data {
-		// Inicializar como slice vacío para serializar [] en vez de null cuando no hay permisos.
+		// Inicializar como slice vacÃ­o para serializar [] en vez de null cuando no hay permisos.
 		perms := make([]PermissionResponse, 0, len(role.Permissions))
 		for _, p := range role.Permissions {
 			perms = append(perms, PermissionResponse{ID: p.ID, Name: p.Name, Description: p.Description})
@@ -165,14 +165,14 @@ func (h *RoleHandler) GetRoles(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// GetPermissions lista permisos, con soporte opcional de paginación.
+// GetPermissions lista permisos, con soporte opcional de paginaciÃ³n.
 //
 // @Summary      Listar permisos
-// @Description  Obtiene todos los permisos disponibles. Soporta paginación (?page=&size=).
+// @Description  Obtiene todos los permisos disponibles. Soporta paginaciÃ³n (?page=&size=).
 // @Tags         roles
 // @Produce      json
-// @Param        page query int false "Número de página" default(1)
-// @Param        size query int false "Tamaño de página" default(10)
+// @Param        page query int false "NÃºmero de pÃ¡gina" default(1)
+// @Param        size query int false "TamaÃ±o de pÃ¡gina" default(10)
 // @Security     BearerAuth
 // @Success      200 {object} PaginatedPermissionResponse
 // @Failure      401 {object} ErrorResponse
@@ -226,7 +226,7 @@ type PaginatedPermissionResponse struct {
 // AssignPermissions asigna permisos a un rol.
 //
 // @Summary      Asignar permisos a rol
-// @Description  Reemplaza completamente los permisos de un rol. Un array vacío elimina todos los permisos.
+// @Description  Reemplaza completamente los permisos de un rol. Un array vacÃ­o elimina todos los permisos.
 // @Tags         roles
 // @Accept       json
 // @Produce      json
@@ -273,7 +273,7 @@ func (h *RoleHandler) AssignPermissions(w http.ResponseWriter, r *http.Request) 
 // GetRoleByID Obtiene un rol por su ID.
 //
 // @Summary      Obtener rol por ID
-// @Description  Retorna los datos de un rol específico
+// @Description  Retorna los datos de un rol especÃ­fico
 // @Tags         roles
 // @Produce      json
 // @Param        id path int true "Role ID"
@@ -303,7 +303,7 @@ func (h *RoleHandler) GetRoleByID(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Inicializar como slice vacío para serializar [] en vez de null cuando no hay permisos.
+	// Inicializar como slice vacÃ­o para serializar [] en vez de null cuando no hay permisos.
 	perms := make([]PermissionResponse, 0, len(role.Permissions))
 	for _, p := range role.Permissions {
 		perms = append(perms, PermissionResponse{ID: p.ID, Name: p.Name})

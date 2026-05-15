@@ -104,9 +104,9 @@ func (h *AuthHandler) Login(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// Refresh renueva el Access Token usando un Refresh Token válido.
+// Refresh renueva el Access Token usando un Refresh Token vÃ¡lido.
 //
-// @Summary      Renovar sesión
+// @Summary      Renovar sesiÃ³n
 // @Description  Emite un nuevo Access Token y rota el Refresh Token
 // @Tags         auth
 // @Accept       json
@@ -126,7 +126,7 @@ func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 
 	newAccess, newRefresh, err := h.authService.RefreshTokens(r.Context(), req.RefreshToken)
 	if err != nil {
-		// Retornar 401 si el refresh token es inválido/expirado, obliga al front a hacer relogin
+		// Retornar 401 si el refresh token es invÃ¡lido/expirado, obliga al front a hacer relogin
 		RespondError(w, http.StatusUnauthorized, "invalid or expired refresh token")
 		return
 	}
@@ -137,9 +137,9 @@ func (h *AuthHandler) Refresh(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// Logout cierra la sesión del usuario.
+// Logout cierra la sesiÃ³n del usuario.
 //
-// @Summary      Cerrar sesión
+// @Summary      Cerrar sesiÃ³n
 // @Description  Invalida todos los refresh tokens del usuario
 // @Tags         auth
 // @Accept       json
@@ -166,7 +166,7 @@ func (h *AuthHandler) Logout(w http.ResponseWriter, r *http.Request) {
 	})
 }
 
-// handleAuthError mapea errores del dominio/aplicación a códigos HTTP RESTful.
+// handleAuthError mapea errores del dominio/aplicaciÃ³n a cÃ³digos HTTP RESTful.
 // Mejora la legibilidad quitando estos "if err" de los bloques funcionales.
 func (h *AuthHandler) handleAuthError(w http.ResponseWriter, err error) {
 	switch {

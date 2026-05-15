@@ -19,13 +19,13 @@ func NewHealthHandler(db DatabasePinger) *HealthHandler {
 	return &HealthHandler{db: db}
 }
 
-// Liveness verifica que la aplicación esté corriendo (que el binario responda peticiones).
+// Liveness verifica que la aplicaciÃ³n estÃ© corriendo (que el binario responda peticiones).
 func (h *HealthHandler) Liveness(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusOK)
 	w.Write([]byte("OK"))
 }
 
-// Readiness verifica que la aplicación esté lista para recibir tráfico (ej. la BD funciona).
+// Readiness verifica que la aplicaciÃ³n estÃ© lista para recibir trÃ¡fico (ej. la BD funciona).
 func (h *HealthHandler) Readiness(w http.ResponseWriter, r *http.Request) {
 	if h.db != nil {
 		if err := h.db.PingContext(r.Context()); err != nil {

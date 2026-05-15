@@ -1,13 +1,13 @@
 //go:build integration
 // +build integration
 
-// Package persistence_test contiene tests de integración que requieren Docker.
+// Package persistence_test contiene tests de integraciÃ³n que requieren Docker.
 //
 // Ejecutar con:
 //
 //	go test -tags=integration ./internal/infrastructure/persistence/ -v -count=1
 //
-// Requisitos: Docker corriendo en la máquina.
+// Requisitos: Docker corriendo en la mÃ¡quina.
 package persistence_test
 
 import (
@@ -27,17 +27,17 @@ import (
 
 func TestUserRepository_Integration(t *testing.T) {
 	if testing.Short() {
-		t.Skip("saltando test de integración en modo short")
+		t.Skip("saltando test de integraciÃ³n en modo short")
 	}
 
 	ctx := context.Background()
 
-	// Verificar que Docker esté disponible antes de intentar levantar el contenedor.
-	// Si no hay Docker, el test hace skip (no falla) — esto permite correr
+	// Verificar que Docker estÃ© disponible antes de intentar levantar el contenedor.
+	// Si no hay Docker, el test hace skip (no falla) â€” esto permite correr
 	// la suite completa sin Docker sin que explote.
 	dockerClient, err := testcontainers.NewDockerClientWithOpts(ctx)
 	if err != nil {
-		t.Skipf("Docker no disponible, saltando test de integración: %v", err)
+		t.Skipf("Docker no disponible, saltando test de integraciÃ³n: %v", err)
 	}
 	defer dockerClient.Close()
 
@@ -53,14 +53,14 @@ func TestUserRepository_Integration(t *testing.T) {
 				WithStartupTimeout(30*time.Second),
 		),
 	)
-	require.NoError(t, err, "no se pudo levantar el contenedor PostgreSQL. ¿Docker está corriendo?")
+	require.NoError(t, err, "no se pudo levantar el contenedor PostgreSQL. Â¿Docker estÃ¡ corriendo?")
 	defer func() {
 		if err := pgContainer.Terminate(ctx); err != nil {
 			t.Logf("error al terminar contenedor: %v", err)
 		}
 	}()
 
-	// 2. Obtener el DSN dinámico del contenedor
+	// 2. Obtener el DSN dinÃ¡mico del contenedor
 	connStr, err := pgContainer.ConnectionString(ctx, "sslmode=disable")
 	require.NoError(t, err)
 
@@ -68,7 +68,7 @@ func TestUserRepository_Integration(t *testing.T) {
 	db, err := persistence.ConnectPostgres(connStr)
 	require.NoError(t, err)
 
-	// Crear schema mínimo para los tests (tablas necesarias para el repositorio)
+	// Crear schema mÃ­nimo para los tests (tablas necesarias para el repositorio)
 	err = db.Exec(`
 		CREATE TABLE IF NOT EXISTS users (
 			id bigserial PRIMARY KEY, created_at timestamptz, updated_at timestamptz, deleted_at timestamptz,
@@ -124,14 +124,14 @@ func TestUserRepository_Integration(t *testing.T) {
 
 func TestRoleRepository_Integration_SoftDeleteUniqueIndex(t *testing.T) {
 	if testing.Short() {
-		t.Skip("saltando test de integración en modo short")
+		t.Skip("saltando test de integraciÃ³n en modo short")
 	}
 
 	ctx := context.Background()
 
 	dockerClient, err := testcontainers.NewDockerClientWithOpts(ctx)
 	if err != nil {
-		t.Skipf("Docker no disponible, saltando test de integración: %v", err)
+		t.Skipf("Docker no disponible, saltando test de integraciÃ³n: %v", err)
 	}
 	defer dockerClient.Close()
 
@@ -169,7 +169,7 @@ func TestRoleRepository_Integration_SoftDeleteUniqueIndex(t *testing.T) {
 	)
 	require.NoError(t, err)
 
-	// Crear índices parciales (el fix del bug)
+	// Crear Ã­ndices parciales (el fix del bug)
 	sqlDB, err := db.DB()
 	require.NoError(t, err)
 	defer sqlDB.Close()
@@ -198,10 +198,10 @@ func TestRoleRepository_Integration_SoftDeleteUniqueIndex(t *testing.T) {
 		err = repo.Delete(ctx, role.ID)
 		require.NoError(t, err, "soft delete debe funcionar")
 
-		// 3. Recrear con mismo nombre — esto fallaba antes del fix de índice parcial
+		// 3. Recrear con mismo nombre â€” esto fallaba antes del fix de Ã­ndice parcial
 		role2 := &domain.Role{Name: roleName}
 		err = repo.Create(ctx, role2)
-		require.NoError(t, err, "recrear rol después de soft delete debe funcionar")
+		require.NoError(t, err, "recrear rol despuÃ©s de soft delete debe funcionar")
 		assert.NotZero(t, role2.ID)
 		assert.NotEqual(t, role.ID, role2.ID, "debe ser un rol nuevo con ID diferente")
 	})
@@ -209,14 +209,14 @@ func TestRoleRepository_Integration_SoftDeleteUniqueIndex(t *testing.T) {
 
 func TestRoleRepository_Integration_ScopingAndRestore(t *testing.T) {
 	if testing.Short() {
-		t.Skip("saltando test de integración en modo short")
+		t.Skip("saltando test de integraciÃ³n en modo short")
 	}
 
 	ctx := context.Background()
 
 	dockerClient, err := testcontainers.NewDockerClientWithOpts(ctx)
 	if err != nil {
-		t.Skipf("Docker no disponible, saltando test de integración: %v", err)
+		t.Skipf("Docker no disponible, saltando test de integraciÃ³n: %v", err)
 	}
 	defer dockerClient.Close()
 
@@ -260,7 +260,7 @@ func TestRoleRepository_Integration_ScopingAndRestore(t *testing.T) {
 		err = roleRepo.Create(ctx, scopedRole)
 		require.NoError(t, err)
 
-		// Listar roles sin scope debe retornar ambos (global + scope vacío)
+		// Listar roles sin scope debe retornar ambos (global + scope vacÃ­o)
 		all, err := roleRepo.FindAll(ctx)
 		require.NoError(t, err)
 		assert.Len(t, all, 2, "FindAll debe retornar todos los roles")
@@ -306,14 +306,14 @@ func TestRoleRepository_Integration_ScopingAndRestore(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, "restorable-role", restored.Name)
 
-		// Verificar que ya no está en eliminados
+		// Verificar que ya no estÃ¡ en eliminados
 		deletedAfter, err := roleRepo.FindAllDeleted(ctx)
 		require.NoError(t, err)
-		assert.Len(t, deletedAfter, 0, "no debe quedar ningún rol eliminado")
+		assert.Len(t, deletedAfter, 0, "no debe quedar ningÃºn rol eliminado")
 	})
 
 	t.Run("User scoping isolates users by scope", func(t *testing.T) {
-		// Crear usuarios con diferentes scopes y emails únicos
+		// Crear usuarios con diferentes scopes y emails Ãºnicos
 		globalUser := &domain.User{Username: "global-user", PasswordHash: "hash", EmailHash: "global@example.com", Scope: ""}
 		err := userRepo.Create(ctx, globalUser)
 		require.NoError(t, err)
@@ -363,9 +363,9 @@ func TestRoleRepository_Integration_ScopingAndRestore(t *testing.T) {
 		require.NoError(t, err)
 		assert.Equal(t, "restorable-user", restored.Username)
 
-		// Verificar que ya no está en eliminados
+		// Verificar que ya no estÃ¡ en eliminados
 		deletedAfter, err := userRepo.FindAllDeleted(ctx)
 		require.NoError(t, err)
-		assert.Len(t, deletedAfter, 0, "no debe quedar ningún usuario eliminado")
+		assert.Len(t, deletedAfter, 0, "no debe quedar ningÃºn usuario eliminado")
 	})
 }

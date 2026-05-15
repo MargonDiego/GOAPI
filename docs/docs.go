@@ -90,7 +90,7 @@ const docTemplate = `{
                 "tags": [
                     "auth"
                 ],
-                "summary": "Cerrar sesión",
+                "summary": "Cerrar sesiÃ³n",
                 "responses": {
                     "200": {
                         "description": "OK",
@@ -120,7 +120,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Retorna los datos del usuario extraído del token JWT",
+                "description": "Retorna los datos del usuario extraÃ­do del token JWT",
                 "produces": [
                     "application/json"
                 ],
@@ -275,7 +275,7 @@ const docTemplate = `{
                 "tags": [
                     "auth"
                 ],
-                "summary": "Renovar sesión",
+                "summary": "Renovar sesiÃ³n",
                 "parameters": [
                     {
                         "description": "Refresh Token actual",
@@ -374,7 +374,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Obtiene roles con sus permisos. Soporta paginación (?page=\u0026size=) y búsqueda (?search=).",
+                "description": "Obtiene roles con sus permisos. Soporta paginaciÃ³n (?page=\u0026size=) y bÃºsqueda (?search=).",
                 "produces": [
                     "application/json"
                 ],
@@ -386,14 +386,14 @@ const docTemplate = `{
                     {
                         "type": "integer",
                         "default": 1,
-                        "description": "Número de página",
+                        "description": "NÃºmero de pÃ¡gina",
                         "name": "page",
                         "in": "query"
                     },
                     {
                         "type": "integer",
                         "default": 10,
-                        "description": "Tamaño de página",
+                        "description": "TamaÃ±o de pÃ¡gina",
                         "name": "size",
                         "in": "query"
                     },
@@ -555,7 +555,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Retorna los datos de un rol específico",
+                "description": "Retorna los datos de un rol especÃ­fico",
                 "produces": [
                     "application/json"
                 ],
@@ -743,7 +743,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Reemplaza completamente los permisos de un rol. Un array vacío elimina todos los permisos.",
+                "description": "Reemplaza completamente los permisos de un rol. Un array vacÃ­o elimina todos los permisos.",
                 "consumes": [
                     "application/json"
                 ],
@@ -883,7 +883,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Retorna la lista paginada de usuarios. Soporta búsqueda (?search=) y filtro por rol (?role=).",
+                "description": "Retorna la lista paginada de usuarios. Soporta bÃºsqueda (?search=) y filtro por rol (?role=).",
                 "produces": [
                     "application/json"
                 ],
@@ -895,14 +895,14 @@ const docTemplate = `{
                     {
                         "type": "integer",
                         "default": 1,
-                        "description": "Número de página",
+                        "description": "NÃºmero de pÃ¡gina",
                         "name": "page",
                         "in": "query"
                     },
                     {
                         "type": "integer",
                         "default": 10,
-                        "description": "Tamaño de página",
+                        "description": "TamaÃ±o de pÃ¡gina",
                         "name": "size",
                         "in": "query"
                     },
@@ -1018,7 +1018,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Asigna los mismos roles a múltiples usuarios simultáneamente. Valida existencia y scoping.",
+                "description": "Asigna los mismos roles a mÃºltiples usuarios simultÃ¡neamente. Valida existencia y scoping.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1127,7 +1127,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Retorna los datos de un usuario específico",
+                "description": "Retorna los datos de un usuario especÃ­fico",
                 "produces": [
                     "application/json"
                 ],
@@ -1379,7 +1379,7 @@ const docTemplate = `{
                         "BearerAuth": []
                     }
                 ],
-                "description": "Actualiza los roles asociados a un usuario específico. Un array vacío elimina todos los roles.",
+                "description": "Actualiza los roles asociados a un usuario especÃ­fico. Un array vacÃ­o elimina todos los roles.",
                 "consumes": [
                     "application/json"
                 ],
@@ -1737,7 +1737,7 @@ const docTemplate = `{
     },
     "securityDefinitions": {
         "BearerAuth": {
-            "description": "Ingresá el token con el prefijo Bearer. Ejemplo: \"Bearer {token}\"",
+            "description": "IngresÃ¡ el token con el prefijo Bearer. Ejemplo: \"Bearer {token}\"",
             "type": "apiKey",
             "name": "Authorization",
             "in": "header"
@@ -1752,7 +1752,7 @@ var SwaggerInfo = &swag.Spec{
 	BasePath:         "/api/v1",
 	Schemes:          []string{},
 	Title:            "Clean Architecture Go API",
-	Description:      "API REST con autenticación JWT y control de permisos basado en roles.",
+	Description:      "API REST con autenticaciÃ³n JWT y control de permisos basado en roles.",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

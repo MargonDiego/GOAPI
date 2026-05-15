@@ -282,8 +282,8 @@ func TestAuthService_Login(t *testing.T) {
 	jwtSecret := []byte("super_secret_key_for_testing_32bytes!")
 	enc := setupTestEncryptor(t)
 
-	// Hash de contraseña válida para tests (bcrypt.GenerateFromPassword es determinista por salt aleatorio,
-	// así que generamos una por cada test case que lo necesite).
+	// Hash de contraseÃ±a vÃ¡lida para tests (bcrypt.GenerateFromPassword es determinista por salt aleatorio,
+	// asÃ­ que generamos una por cada test case que lo necesite).
 	validHash, _ := bcrypt.GenerateFromPassword([]byte("validpassword123"), bcrypt.DefaultCost)
 
 	tests := []struct {
@@ -293,7 +293,7 @@ func TestAuthService_Login(t *testing.T) {
 		setupUserMock func(m *mocks.MockUserRepository)
 		setupRoleMock func(m *mocks.MockRoleRepository)
 		wantErr       error
-		wantTokens    bool // true si esperamos tokens válidos
+		wantTokens    bool // true si esperamos tokens vÃ¡lidos
 	}{
 		{
 			name:     "Login exitoso con Fat JWT y refresh token",
@@ -306,7 +306,7 @@ func TestAuthService_Login(t *testing.T) {
 					PasswordHash: string(validHash),
 					TokenVersion: 1,
 				}, nil)
-				// ResetFailedAttempts → Update
+				// ResetFailedAttempts â†’ Update
 				m.On("Update", mock.Anything, mock.MatchedBy(func(u *domain.User) bool {
 					return u.ID == 1 && u.FailedAttempts == 0 && u.LockedUntil == nil
 				})).Return(nil)
@@ -327,7 +327,7 @@ func TestAuthService_Login(t *testing.T) {
 					Username:     "testuser",
 					PasswordHash: string(validHash),
 				}, nil)
-				// RecordFailedAttempt → Update
+				// RecordFailedAttempt â†’ Update
 				m.On("Update", mock.Anything, mock.AnythingOfType("*domain.User")).Return(nil)
 			},
 			setupRoleMock: func(m *mocks.MockRoleRepository) {},
@@ -371,7 +371,7 @@ func TestAuthService_Login(t *testing.T) {
 					ID:             3,
 					Username:       "bruteforce",
 					PasswordHash:   string(validHash),
-					FailedAttempts: 4, // Ya tiene 4, este es el 5to → bloqueo
+					FailedAttempts: 4, // Ya tiene 4, este es el 5to â†’ bloqueo
 				}, nil)
 				m.On("Update", mock.Anything, mock.AnythingOfType("*domain.User")).Return(nil)
 			},
@@ -384,7 +384,7 @@ func TestAuthService_Login(t *testing.T) {
 			username: "testuser",
 			password: "this_is_a_very_long_password_that_exceeds_72_characters_to_test_dos_prevention_xxxxxxxxx",
 			setupUserMock: func(m *mocks.MockUserRepository) {
-				// No debe llamar a BD — se rechaza antes
+				// No debe llamar a BD â€” se rechaza antes
 			},
 			setupRoleMock: func(m *mocks.MockRoleRepository) {},
 			wantErr:       domain.ErrInvalidCreds,

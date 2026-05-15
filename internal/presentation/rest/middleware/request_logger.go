@@ -23,8 +23,8 @@ func (rw *responseWriter) WriteHeader(code int) {
 }
 
 // RequestLogger es un middleware que emite un log estructurado por cada request HTTP.
-// Captura: request_id, método, path, status, duración y IP del cliente.
-// Usa el request_id del contexto si RequestID middleware está activo.
+// Captura: request_id, mÃ©todo, path, status, duraciÃ³n y IP del cliente.
+// Usa el request_id del contexto si RequestID middleware estÃ¡ activo.
 func RequestLogger() func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {

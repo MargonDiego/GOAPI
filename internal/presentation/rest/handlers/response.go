@@ -21,17 +21,17 @@ var validate = validator.New()
 
 // --- Envelope de respuesta unificado ---
 
-// APIResponse es el wrapper estándar para TODAS las respuestas HTTP de la API.
+// APIResponse es el wrapper estÃ¡ndar para TODAS las respuestas HTTP de la API.
 // Garantiza consistencia en el contrato JSON para cualquier cliente.
 type APIResponse struct {
 	Success bool        `json:"success"`
 	Data    interface{} `json:"data,omitempty"`
 	Error   string      `json:"error,omitempty"`
-	Code    string      `json:"code,omitempty"` // Código de error de dominio (ej: "USER_NOT_FOUND")
+	Code    string      `json:"code,omitempty"` // CÃ³digo de error de dominio (ej: "USER_NOT_FOUND")
 	Meta    *APIMeta    `json:"meta,omitempty"`
 }
 
-// APIMeta contiene metadatos de paginación. nil = respuesta sin paginar.
+// APIMeta contiene metadatos de paginaciÃ³n. nil = respuesta sin paginar.
 type APIMeta struct {
 	Page       int `json:"page,omitempty"`
 	Size       int `json:"size,omitempty"`
@@ -41,7 +41,7 @@ type APIMeta struct {
 
 // --- Mapeo de errores de dominio a HTTP ---
 
-// MapDomainError extrae el código HTTP de un AppError del dominio.
+// MapDomainError extrae el cÃ³digo HTTP de un AppError del dominio.
 // Si el error no es un AppError (ej: error de BD, red), retorna 500.
 // Usa errors.As para atravesar la cadena de wrapping (fmt.Errorf con %w).
 func MapDomainError(err error) int {
@@ -52,8 +52,8 @@ func MapDomainError(err error) int {
 	return http.StatusInternalServerError
 }
 
-// DecodeAndValidate decodifica el body JSON en el DTO y ejecuta validación.
-// Retorna un slice de mensajes de error si la validación falla.
+// DecodeAndValidate decodifica el body JSON en el DTO y ejecuta validaciÃ³n.
+// Retorna un slice de mensajes de error si la validaciÃ³n falla.
 func DecodeAndValidate(r *http.Request, dto interface{}) []string {
 	if err := json.NewDecoder(r.Body).Decode(dto); err != nil {
 		return []string{"invalid json payload"}
@@ -93,7 +93,7 @@ func RespondJSON(w http.ResponseWriter, status int, data interface{}) {
 }
 
 // RespondError emite errores de cliente/servidor con el envelope unificado.
-// Para errores de dominio con código, usar RenderError que incluye el campo "code".
+// Para errores de dominio con cÃ³digo, usar RenderError que incluye el campo "code".
 func RespondError(w http.ResponseWriter, status int, message string) {
 	writeJSON(w, status, APIResponse{Success: false, Error: message})
 }
@@ -115,8 +115,8 @@ func RespondPaginated(w http.ResponseWriter, data interface{}, page, size, total
 }
 
 // RenderError extrae el AppError del dominio (si existe), lo loguea si es 5xx,
-// y emite la respuesta con código de error y mensaje estructurado.
-// Reemplaza el patrón repetitivo "if errors.Is(...) { RespondError(...) }" en cada handler.
+// y emite la respuesta con cÃ³digo de error y mensaje estructurado.
+// Reemplaza el patrÃ³n repetitivo "if errors.Is(...) { RespondError(...) }" en cada handler.
 func RenderError(w http.ResponseWriter, r *http.Request, err error) {
 	var appErr *domain.AppError
 	if errors.As(err, &appErr) {
@@ -139,7 +139,7 @@ func RenderError(w http.ResponseWriter, r *http.Request, err error) {
 	RespondError(w, http.StatusInternalServerError, "internal server error")
 }
 
-// RenderValidationError emite errores de validación con código 400.
+// RenderValidationError emite errores de validaciÃ³n con cÃ³digo 400.
 func RenderValidationError(w http.ResponseWriter, errs []string) {
 	writeJSON(w, http.StatusBadRequest, APIResponse{
 		Success: false,
@@ -148,8 +148,8 @@ func RenderValidationError(w http.ResponseWriter, errs []string) {
 	})
 }
 
-// writeJSON es el helper de más bajo nivel que escribe el JSON al wire.
-// NUNCA debe llamarse fuera de este archivo — usar los helpers públicos.
+// writeJSON es el helper de mÃ¡s bajo nivel que escribe el JSON al wire.
+// NUNCA debe llamarse fuera de este archivo â€” usar los helpers pÃºblicos.
 func writeJSON(w http.ResponseWriter, status int, payload interface{}) {
 	w.Header().Set("Content-Type", "application/json")
 	w.WriteHeader(status)
@@ -158,8 +158,8 @@ func writeJSON(w http.ResponseWriter, status int, payload interface{}) {
 	}
 }
 
-// getIDFromURL extrae un ID entero positivo de los parámetros de ruta de mux.Router.
-// Rechaza IDs <= 0 y valores no numéricos.
+// getIDFromURL extrae un ID entero positivo de los parÃ¡metros de ruta de mux.Router.
+// Rechaza IDs <= 0 y valores no numÃ©ricos.
 func getIDFromURL(r *http.Request, param string) (int, error) {
 	vars := mux.Vars(r)
 	idStr, ok := vars[param]
@@ -176,9 +176,9 @@ func getIDFromURL(r *http.Request, param string) (int, error) {
 	return id, nil
 }
 
-// withActor extrae el userID, scope, IP y User-Agent de la sesión/request y los inyecta en el contexto
-// para que los servicios puedan registrar auditoría completa y aplicar scoping.
-// Si no hay sesión, retorna el contexto original.
+// withActor extrae el userID, scope, IP y User-Agent de la sesiÃ³n/request y los inyecta en el contexto
+// para que los servicios puedan registrar auditorÃ­a completa y aplicar scoping.
+// Si no hay sesiÃ³n, retorna el contexto original.
 func withActor(r *http.Request) context.Context {
 	ctx := r.Context()
 	if session, ok := middleware.GetSessionFromContext(ctx); ok {

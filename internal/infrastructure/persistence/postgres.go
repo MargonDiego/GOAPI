@@ -39,7 +39,7 @@ func (w *zerologWriter) Printf(format string, args ...interface{}) {
 	w.logger.Warn().Msgf(format, args...)
 }
 
-// connectDB es la función interna que abre la conexión con configuración común.
+// connectDB es la funciÃ³n interna que abre la conexiÃ³n con configuraciÃ³n comÃºn.
 func connectDB(dsn string, maxOpen, maxIdle int) (*gorm.DB, error) {
 	db, err := gorm.Open(postgres.Open(dsn), &gorm.Config{
 		Logger: newGormLogger(),

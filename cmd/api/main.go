@@ -1,12 +1,12 @@
 // @title           Clean Architecture Go API
 // @version         1.0
-// @description     API REST con autenticación JWT y control de permisos basado en roles.
+// @description     API REST con autenticaciÃ³n JWT y control de permisos basado en roles.
 // @host            localhost:8080
 // @BasePath        /api/v1
 // @securityDefinitions.apikey BearerAuth
 // @in              header
 // @name            Authorization
-// @description     Ingresá el token con el prefijo Bearer. Ejemplo: "Bearer {token}"
+// @description     IngresÃ¡ el token con el prefijo Bearer. Ejemplo: "Bearer {token}"
 package main
 
 import (
@@ -55,7 +55,7 @@ type appServices struct {
 // --- Entrypoint ---
 
 func main() {
-	// 1. Configuración y logger
+	// 1. ConfiguraciÃ³n y logger
 	cfg := mustLoadConfig()
 	initLogger(cfg)
 
@@ -63,7 +63,7 @@ func main() {
 	infra := mustInitInfra(cfg)
 	defer infra.sqlDB.Close()
 
-	// 3. Servicios de aplicación
+	// 3. Servicios de aplicaciÃ³n
 	services := initServices(cfg, infra)
 
 	// 4. Servidor HTTP + graceful shutdown
@@ -71,7 +71,7 @@ func main() {
 	runGraceful(srv, infra.sqlDB)
 }
 
-// --- Paso 1: Configuración y Logger ---
+// --- Paso 1: ConfiguraciÃ³n y Logger ---
 
 func mustLoadConfig() *config.Config {
 	cfg, err := config.Load()
@@ -124,7 +124,7 @@ func mustInitInfra(cfg *config.Config) *infraDeps {
 	}
 }
 
-// --- Paso 3: Servicios de Aplicación ---
+// --- Paso 3: Servicios de AplicaciÃ³n ---
 
 func initServices(cfg *config.Config, infra *infraDeps) *appServices {
 	return &appServices{
@@ -167,7 +167,7 @@ func runGraceful(srv *http.Server, sqlDB *sql.DB) {
 		}
 	}()
 
-	// Escuchar señales del sistema operativo
+	// Escuchar seÃ±ales del sistema operativo
 	quit := make(chan os.Signal, 1)
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
@@ -182,7 +182,7 @@ func runGraceful(srv *http.Server, sqlDB *sql.DB) {
 		log.Error().Err(err).Msg("Server forced to shutdown")
 	}
 
-	// Cerrar conexión a base de datos
+	// Cerrar conexiÃ³n a base de datos
 	log.Info().Msg("Closing database connection...")
 	if err := sqlDB.Close(); err != nil {
 		log.Error().Err(err).Msg("Error closing database")

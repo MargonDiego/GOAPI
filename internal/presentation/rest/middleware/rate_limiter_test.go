@@ -12,7 +12,7 @@ import (
 func TestIPRateLimiter_Middleware(t *testing.T) {
 	t.Parallel()
 
-	t.Run("Permite requests dentro del límite", func(t *testing.T) {
+	t.Run("Permite requests dentro del lÃ­mite", func(t *testing.T) {
 		limiter := middleware.NewIPRateLimiter(10, 10)
 		handler := limiter.Middleware(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			w.WriteHeader(http.StatusOK)
@@ -30,13 +30,13 @@ func TestIPRateLimiter_Middleware(t *testing.T) {
 			w.WriteHeader(http.StatusOK)
 		}))
 
-		// Primera petición: OK (consume el burst de 1)
+		// Primera peticiÃ³n: OK (consume el burst de 1)
 		req1 := httptest.NewRequest(http.MethodGet, "/", nil)
 		rr1 := httptest.NewRecorder()
 		handler.ServeHTTP(rr1, req1)
 		assert.Equal(t, http.StatusOK, rr1.Code)
 
-		// Segunda petición inmediata: 429 (burst agotado)
+		// Segunda peticiÃ³n inmediata: 429 (burst agotado)
 		req2 := httptest.NewRequest(http.MethodGet, "/", nil)
 		rr2 := httptest.NewRecorder()
 		handler.ServeHTTP(rr2, req2)

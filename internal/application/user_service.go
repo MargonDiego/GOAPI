@@ -11,15 +11,15 @@ import (
 	"golang.org/x/crypto/bcrypt"
 )
 
-// UserService define el contrato de la capa de aplicación para operaciones sobre usuarios.
-// Toda la lógica de negocio (validaciones, orquestación de repositorios, hash de passwords)
-// vive aquí, manteniendo los handlers libres de reglas de dominio.
+// UserService define el contrato de la capa de aplicaciÃ³n para operaciones sobre usuarios.
+// Toda la lÃ³gica de negocio (validaciones, orquestaciÃ³n de repositorios, hash de passwords)
+// vive aquÃ­, manteniendo los handlers libres de reglas de dominio.
 type UserService interface {
-	// GetUserByUsername busca un usuario por su nombre de usuario único.
+	// GetUserByUsername busca un usuario por su nombre de usuario Ãºnico.
 	// Retorna domain.ErrUserNotFound si no existe.
 	GetUserByUsername(ctx context.Context, username string) (*domain.User, error)
 
-	// GetAllUsers retorna una página de usuarios ordenados por ID ascendente con metadatos de paginación.
+	// GetAllUsers retorna una pÃ¡gina de usuarios ordenados por ID ascendente con metadatos de paginaciÃ³n.
 	// page empieza en 1; size se normaliza al rango [1, 100].
 	GetAllUsers(ctx context.Context, page, size int) (domain.PaginatedResult[domain.User], error)
 
@@ -28,12 +28,12 @@ type UserService interface {
 	GetUserByID(ctx context.Context, id uint) (*domain.User, error)
 
 	// CreateUser crea un nuevo usuario aplicando todas las invariantes del dominio:
-	// unicidad de username y email, hash de password y asignación del rol por defecto "User".
-	// Retorna domain.ErrUserAlreadyExists o domain.ErrEmailAlreadyExists si ya están en uso.
+	// unicidad de username y email, hash de password y asignaciÃ³n del rol por defecto "User".
+	// Retorna domain.ErrUserAlreadyExists o domain.ErrEmailAlreadyExists si ya estÃ¡n en uso.
 	CreateUser(ctx context.Context, username, password, email string) error
 
-	// UpdateUser actualiza el username y/o email de un usuario existente (patch semántico).
-	// Los campos vacíos se ignoran. Si se provee email, se verifica unicidad y se re-cifra.
+	// UpdateUser actualiza el username y/o email de un usuario existente (patch semÃ¡ntico).
+	// Los campos vacÃ­os se ignoran. Si se provee email, se verifica unicidad y se re-cifra.
 	// Retorna domain.ErrUserNotFound si el usuario no existe,
 	// domain.ErrEmailAlreadyExists si el email ya pertenece a otro usuario.
 	UpdateUser(ctx context.Context, userID uint, username, email string) error
@@ -42,9 +42,9 @@ type UserService interface {
 	// Retorna domain.ErrUserNotFound si el usuario no existe.
 	DeleteUser(ctx context.Context, userID uint) error
 
-	// SearchUsers busca usuarios por username/email y filtra por rol con metadatos de paginación.
-	// query: búsqueda por username o email (case-insensitive). Vacío = todos.
-	// roleName: filtra por nombre de rol. Vacío = sin filtro.
+	// SearchUsers busca usuarios por username/email y filtra por rol con metadatos de paginaciÃ³n.
+	// query: bÃºsqueda por username o email (case-insensitive). VacÃ­o = todos.
+	// roleName: filtra por nombre de rol. VacÃ­o = sin filtro.
 	SearchUsers(ctx context.Context, query, roleName string, page, size int) (domain.PaginatedResult[domain.User], error)
 
 	// GetDeletedUsers retorna todos los usuarios soft-deleted.
@@ -54,12 +54,12 @@ type UserService interface {
 	RestoreUser(ctx context.Context, userID uint) error
 
 	// AssignRolesToUser reemplaza completamente los roles de un usuario.
-	// Pasar un slice vacío elimina todos sus roles.
-	// Retorna domain.ErrInvalidInput si algún roleID no existe en la base de datos.
+	// Pasar un slice vacÃ­o elimina todos sus roles.
+	// Retorna domain.ErrInvalidInput si algÃºn roleID no existe en la base de datos.
 	AssignRolesToUser(ctx context.Context, userID uint, roleIDs []uint) error
 
-	// BulkAssignRolesToUsers asigna roles a múltiples usuarios en una operación atómica.
-	// Retorna domain.ErrInvalidInput si algún userID o roleID no existe.
+	// BulkAssignRolesToUsers asigna roles a mÃºltiples usuarios en una operaciÃ³n atÃ³mica.
+	// Retorna domain.ErrInvalidInput si algÃºn userID o roleID no existe.
 	// Respeta scoping: solo afecta usuarios del scope del actor.
 	BulkAssignRolesToUsers(ctx context.Context, userIDs, roleIDs []uint) error
 }
@@ -68,13 +68,13 @@ type userService struct {
 	repo         domain.UserRepository
 	roleRepo     domain.RoleRepository
 	enc          *appcrypto.Encryptor
-	versionCache *cache.TokenVersionCache // nil-safe: si no se inyecta, la invalidación espera al TTL
+	versionCache *cache.TokenVersionCache // nil-safe: si no se inyecta, la invalidaciÃ³n espera al TTL
 	audit        auditService
 }
 
 // NewUserService construye un UserService con todas sus dependencias inyectadas.
 // versionCache puede ser nil (el sistema funciona correctamente, con TTL de 30s como ventana).
-// auditRepo puede ser nil (auditoría se ignora silenciosamente).
+// auditRepo puede ser nil (auditorÃ­a se ignora silenciosamente).
 func NewUserService(repo domain.UserRepository, roleRepo domain.RoleRepository, enc *appcrypto.Encryptor, versionCache *cache.TokenVersionCache, auditRepo domain.AuditRepository) UserService {
 	return &userService{repo: repo, roleRepo: roleRepo, enc: enc, versionCache: versionCache, audit: newAuditService(auditRepo)}
 }
@@ -88,7 +88,7 @@ func (s *userService) GetUserByUsername(ctx context.Context, username string) (*
 	return user, nil
 }
 
-// GetAllUsers normaliza la paginación y delega al repositorio.
+// GetAllUsers normaliza la paginaciÃ³n y delega al repositorio.
 // page < 1 se corrige a 1; size fuera de (0, 100] se corrige a 10.
 // Respeta el scoping del actor.
 func (s *userService) GetAllUsers(ctx context.Context, page, size int) (domain.PaginatedResult[domain.User], error) {
@@ -124,7 +124,7 @@ func (s *userService) GetAllUsers(ctx context.Context, page, size int) (domain.P
 }
 
 // AssignRolesToUser valida la existencia del usuario y de cada role antes de aplicar el reemplazo.
-// Pasar roleIDs vacío es válido y elimina todos los roles del usuario.
+// Pasar roleIDs vacÃ­o es vÃ¡lido y elimina todos los roles del usuario.
 // Tras actualizar los roles incrementa token_version para invalidar los JWT activos del usuario.
 func (s *userService) AssignRolesToUser(ctx context.Context, userID uint, roleIDs []uint) error {
 	// Verificar existencia del usuario antes de operar.
@@ -164,8 +164,8 @@ func (s *userService) AssignRolesToUser(ctx context.Context, userID uint, roleID
 		map[string]any{"roles": newRoles})
 
 	// Invalidar los JWT activos del usuario incrementando su token_version.
-	// A partir de este momento, cualquier request con el token anterior recibirá 401.
-	// El cache en el middleware se invalida explícitamente para que el efecto sea inmediato
+	// A partir de este momento, cualquier request con el token anterior recibirÃ¡ 401.
+	// El cache en el middleware se invalida explÃ­citamente para que el efecto sea inmediato
 	// (en lugar de esperar el TTL de 30s del cache).
 	if _, err := s.repo.IncrementTokenVersion(ctx, userID); err != nil {
 		return fmt.Errorf("failed to invalidate user tokens: %w", err)
@@ -187,11 +187,11 @@ func (s *userService) GetUserByID(ctx context.Context, id uint) (*domain.User, e
 	return user, nil
 }
 
-// CreateUser verifica unicidad de username y email, hashea la contraseña,
+// CreateUser verifica unicidad de username y email, hashea la contraseÃ±a,
 // asigna el rol por defecto "User" y persiste el nuevo usuario.
-// Retorna domain.ErrInvalidInput si la contraseña no cumple 8-72 caracteres.
+// Retorna domain.ErrInvalidInput si la contraseÃ±a no cumple 8-72 caracteres.
 func (s *userService) CreateUser(ctx context.Context, username, password, email string) error {
-	// Validación de seguridad pre-bcrypt: previene CPU starvation por hashing de strings enormes.
+	// ValidaciÃ³n de seguridad pre-bcrypt: previene CPU starvation por hashing de strings enormes.
 	if len(password) < 8 || len(password) > 72 {
 		return fmt.Errorf("%w: password length must be 8-72 characters", domain.ErrInvalidInput)
 	}
@@ -221,7 +221,7 @@ func (s *userService) CreateUser(ctx context.Context, username, password, email 
 		return fmt.Errorf("failed to get default role: %w", err)
 	}
 
-	// Hashear la contraseña con bcrypt antes de crear la entidad de dominio.
+	// Hashear la contraseÃ±a con bcrypt antes de crear la entidad de dominio.
 	hash, err := bcrypt.GenerateFromPassword([]byte(password), bcrypt.DefaultCost)
 	if err != nil {
 		return fmt.Errorf("crypto hashing failure: %w", err)
@@ -251,7 +251,7 @@ func (s *userService) CreateUser(ctx context.Context, username, password, email 
 }
 
 // UpdateUser aplica un patch sobre username y/o email de un usuario existente.
-// Los campos vacíos se ignoran. Si se provee email, se verifica unicidad y se re-cifra.
+// Los campos vacÃ­os se ignoran. Si se provee email, se verifica unicidad y se re-cifra.
 // Retorna domain.ErrUserNotFound si el usuario no existe,
 // domain.ErrEmailAlreadyExists si el email ya pertenece a otro usuario.
 func (s *userService) UpdateUser(ctx context.Context, userID uint, username, email string) error {
@@ -266,7 +266,7 @@ func (s *userService) UpdateUser(ctx context.Context, userID uint, username, ema
 
 	if email != "" {
 		emailHash := s.enc.HashEmail(email)
-		// Solo re-validar unicidad si el email realmente cambió.
+		// Solo re-validar unicidad si el email realmente cambiÃ³.
 		if emailHash != user.EmailHash {
 			_, err := s.repo.FindByEmailHash(ctx, emailHash)
 			if err == nil {
@@ -371,7 +371,7 @@ func (s *userService) RestoreUser(ctx context.Context, userID uint) error {
 	return nil
 }
 
-// BulkAssignRolesToUsers asigna roles a múltiples usuarios validando existencia y scoping.
+// BulkAssignRolesToUsers asigna roles a mÃºltiples usuarios validando existencia y scoping.
 func (s *userService) BulkAssignRolesToUsers(ctx context.Context, userIDs, roleIDs []uint) error {
 	if len(userIDs) == 0 || len(roleIDs) == 0 {
 		return fmt.Errorf("%w: userIDs and roleIDs are required", domain.ErrInvalidInput)
@@ -393,7 +393,7 @@ func (s *userService) BulkAssignRolesToUsers(ctx context.Context, userIDs, roleI
 		}
 	}
 
-	// Validar que todos los usuarios existan y estén en scope.
+	// Validar que todos los usuarios existan y estÃ©n en scope.
 	for _, uid := range userIDs {
 		user, err := s.repo.FindByID(ctx, uid)
 		if err != nil {
