@@ -1,6 +1,8 @@
 # golangci-lint configuration for Go API
 # Docs: https://golangci-lint.run/usage/configuration/
 
+version: "2"
+
 run:
   timeout: 3m
   tests: true
