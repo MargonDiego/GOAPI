@@ -1,6 +1,6 @@
 # Go API Server — Clean Architecture RBAC Enterprise
 
-[![CI](https://github.com/diego/go-api/actions/workflows/ci.yml/badge.svg)](https://github.com/diego/go-api/actions/workflows/ci.yml)
+[![CI](https://github.com/MargonDiego/GOAPI/actions/workflows/ci.yml/badge.svg)](https://github.com/MargonDiego/GOAPI/actions/workflows/ci.yml)
 ![Go Version](https://img.shields.io/badge/Go-1.25-00ADD8?logo=go)
 [![License](https://img.shields.io/badge/license-MIT-blue.svg)](LICENSE)
 
@@ -10,7 +10,7 @@ API REST de alta disponibilidad construida en Go con **Clean Architecture**, **R
 
 ```bash
 # 1. Clonar y configurar
-git clone https://github.com/diego/go-api.git && cd go-api
+git clone https://github.com/MargonDiego/GOAPI.git && cd GOAPI
 cp .env.example .env          # Editar .env con tus valores
 
 # 2. Levantar con Docker (recomendado)
@@ -46,6 +46,7 @@ go run cmd/api/main.go
 
 ### Seguridad Enterprise
 - **RBAC Dinámico**: Roles y permisos gestionables vía API sin redeploy
+- **Errores Tipados**: `AppError` con código HTTP + error code (`USER_NOT_FOUND`). Mapeo automático dominio→HTTP.
 - **Protección de Roles Críticos**: `Admin` y `User` marcados como `IsSystem` — no se pueden eliminar ni renombrar
 - **Scoping Administrativo**: Multi-tenant por dominio. Un admin de "equipo-a" solo ve/modifica recursos de su scope
 - **Auditoría Forense**: Tabla `audit_logs` registra quién, qué, cuándo, old/new values en JSON
@@ -102,14 +103,18 @@ internal/
       user_handler.go
       role_handler.go
       health_handler.go
-      response.go                        # RespondJSON, RespondError, DecodeAndValidate, withActor
+      response.go                        # APIResponse, MapDomainError, RenderError, DecodeAndValidate
+      dto.go                             # ErrorResponse, MessageResponse
     middleware/
       auth.go                            # RequireAuth (JWT + token_version), RequirePermission
-      rate_limiter.go
-      cors.go
-      request_logger.go
+      panic_recovery.go                  # Captura panics → 500 + stack trace
+      request_id.go                      # UUID por request (X-Request-ID)
+      security_headers.go                # HSTS, CSP, X-Frame-Options, X-Content-Type
+      cors.go                            # CORS configurable por origen
+      rate_limiter.go                    # Token bucket por IP
+      request_logger.go                  # Log estructurado con request_id
 
-migrations/                              # 7 migraciones versionadas (golang-migrate)
+migrations/                              # 8 migraciones versionadas (golang-migrate)
   000001_create_schema                   # Tablas base: users, roles, permissions, pivotes
   000002_create_refresh_tokens           # refresh_tokens con índice único
   000003_add_security_fields             # email_encrypted, email_hash, failed_attempts, locked_until
@@ -159,10 +164,17 @@ Todas las respuestas usan un envelope unificado:
   "meta": { "page": 1, "size": 10, "total": 42, "total_pages": 5 }
 }
 
-// Error (4xx / 5xx)
+// Error de dominio (4xx) — incluye código legible por máquina
 {
   "success": false,
-  "error": "descripción del error"
+  "error": "user not found",
+  "code": "USER_NOT_FOUND"
+}
+
+// Error interno (5xx) — sin código para no exponer detalles
+{
+  "success": false,
+  "error": "internal server error"
 }
 
 // Error de validación
@@ -172,8 +184,6 @@ Todas las respuestas usan un envelope unificado:
   "data": ["username is required", "password must be at least 8 characters"]
 }
 ```
-
----
 
 ---
 
@@ -237,6 +247,7 @@ docker compose up -d --build
 
 | Método | Ruta | Descripción |
 |---|---|---|
+| GET | `/` | Info de la API (nombre, versión, docs, health) |
 | GET | `/health/liveness` | Kubernetes liveness probe |
 | GET | `/health/readiness` | Verifica conexión a PostgreSQL |
 
