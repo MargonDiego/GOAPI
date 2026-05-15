@@ -140,16 +140,16 @@ func (m *AuthMiddleware) RequireAuth() func(http.Handler) http.Handler {
 				}
 			}
 
-		scopeClaim, _ := claims["scope"].(string)
+			scopeClaim, _ := claims["scope"].(string)
 
-		session := UserSession{
-			Username:    sub,
-			UserID:      userID,
-			Scope:       scopeClaim,
-			Permissions: permsMap,
-		}
+			session := UserSession{
+				Username:    sub,
+				UserID:      userID,
+				Scope:       scopeClaim,
+				Permissions: permsMap,
+			}
 
-		ctx := context.WithValue(r.Context(), userSessionKey, session)
+			ctx := context.WithValue(r.Context(), userSessionKey, session)
 			ctx = context.WithValue(ctx, userIDKey, userID)
 			next.ServeHTTP(w, r.WithContext(ctx))
 		})

@@ -36,7 +36,7 @@ func TestUserHandler_GetMe(t *testing.T) {
 			expectedBody:   "user context missing",
 		},
 		{
-			name: "Usuario no encontrado",
+			name:    "Usuario no encontrado",
 			session: &middleware.UserSession{Username: "unknown"},
 			setupMock: func(m *mocks.MockUserService) {
 				m.On("GetUserByUsername", mock.Anything, "unknown").Return(nil, domain.ErrUserNotFound)
@@ -45,7 +45,7 @@ func TestUserHandler_GetMe(t *testing.T) {
 			expectedBody:   domain.ErrUserNotFound.Error(),
 		},
 		{
-			name: "Error interno del servicio",
+			name:    "Error interno del servicio",
 			session: &middleware.UserSession{Username: "error_user"},
 			setupMock: func(m *mocks.MockUserService) {
 				m.On("GetUserByUsername", mock.Anything, "error_user").Return(nil, errors.New("db error"))
@@ -54,7 +54,7 @@ func TestUserHandler_GetMe(t *testing.T) {
 			expectedBody:   "internal server error",
 		},
 		{
-			name: "Éxito al obtener perfil",
+			name:    "Éxito al obtener perfil",
 			session: &middleware.UserSession{Username: "johndoe"},
 			setupMock: func(m *mocks.MockUserService) {
 				user := &domain.User{ID: 1, Username: "johndoe"}
@@ -180,8 +180,8 @@ func TestUserHandler_AssignRoles(t *testing.T) {
 			expectedBody:   "invalid json payload",
 		},
 		{
-			name:  "Error del servicio",
-			urlID: "1",
+			name:    "Error del servicio",
+			urlID:   "1",
 			payload: handlers.AssignRolesRequest{RoleIDs: []uint{1}},
 			setupMock: func(m *mocks.MockUserService) {
 				m.On("AssignRolesToUser", mock.Anything, uint(1), []uint{1}).Return(domain.ErrInvalidInput)
@@ -190,8 +190,8 @@ func TestUserHandler_AssignRoles(t *testing.T) {
 			expectedBody:   domain.ErrInvalidInput.Error(),
 		},
 		{
-			name:  "Éxito",
-			urlID: "1",
+			name:    "Éxito",
+			urlID:   "1",
 			payload: handlers.AssignRolesRequest{RoleIDs: []uint{1, 2}},
 			setupMock: func(m *mocks.MockUserService) {
 				m.On("AssignRolesToUser", mock.Anything, uint(1), []uint{1, 2}).Return(nil)
@@ -219,7 +219,7 @@ func TestUserHandler_AssignRoles(t *testing.T) {
 			}
 
 			req := httptest.NewRequest(http.MethodPut, "/api/users/"+tt.urlID+"/roles", bytes.NewReader(bodyBytes))
-			
+
 			// Configuramos el mux.Router para inyectar los path params
 			r := mux.NewRouter()
 			r.HandleFunc("/api/users/{id}/roles", handler.AssignRoles)

@@ -33,21 +33,21 @@ func TestUserService_GetUserByUsername(t *testing.T) {
 		expectedError error
 	}{
 		{
-			name:    "Usuario encontrado por username",
+			name:     "Usuario encontrado por username",
 			username: "john",
 			setupMock: func(m *mocks.MockUserRepository) {
 				m.On("FindByUsername", mock.Anything, "john").Return(&domain.User{ID: 1, Username: "john"}, nil)
 			},
-			expectedUser: &domain.User{ID: 1, Username: "john"},
+			expectedUser:  &domain.User{ID: 1, Username: "john"},
 			expectedError: nil,
 		},
 		{
-			name:    "Usuario no encontrado por username",
+			name:     "Usuario no encontrado por username",
 			username: "nonexistent",
 			setupMock: func(m *mocks.MockUserRepository) {
 				m.On("FindByUsername", mock.Anything, "nonexistent").Return(nil, domain.ErrUserNotFound)
 			},
-			expectedUser: nil,
+			expectedUser:  nil,
 			expectedError: domain.ErrUserNotFound,
 		},
 	}
@@ -85,12 +85,12 @@ func TestUserService_GetAllUsers(t *testing.T) {
 	t.Parallel()
 
 	tests := []struct {
-		name            string
-		page            int
-		size            int
-		setupMock       func(m *mocks.MockUserRepository)
-		expectedResult  domain.PaginatedResult[domain.User]
-		expectedError   error
+		name           string
+		page           int
+		size           int
+		setupMock      func(m *mocks.MockUserRepository)
+		expectedResult domain.PaginatedResult[domain.User]
+		expectedError  error
 	}{
 		{
 			name: "Éxito con paginación válida",
@@ -263,27 +263,27 @@ func TestUserService_GetUserByID(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		userID       uint
-		setupMock    func(m *mocks.MockUserRepository)
-		expectedUser *domain.User
+		userID        uint
+		setupMock     func(m *mocks.MockUserRepository)
+		expectedUser  *domain.User
 		expectedError error
 	}{
 		{
-			name:    "Usuario encontrado",
-			userID:  1,
+			name:   "Usuario encontrado",
+			userID: 1,
 			setupMock: func(m *mocks.MockUserRepository) {
 				m.On("FindByID", mock.Anything, uint(1)).Return(&domain.User{ID: 1, Username: "john"}, nil)
 			},
-			expectedUser: &domain.User{ID: 1, Username: "john"},
+			expectedUser:  &domain.User{ID: 1, Username: "john"},
 			expectedError: nil,
 		},
 		{
-			name:    "Usuario no encontrado",
-			userID:  999,
+			name:   "Usuario no encontrado",
+			userID: 999,
 			setupMock: func(m *mocks.MockUserRepository) {
 				m.On("FindByID", mock.Anything, uint(999)).Return(nil, domain.ErrUserNotFound)
 			},
-			expectedUser: nil,
+			expectedUser:  nil,
 			expectedError: domain.ErrUserNotFound,
 		},
 	}
@@ -322,30 +322,30 @@ func TestUserService_CreateUser(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		username     string
-		password     string
-		email        string
-		setupMock    func(m *mocks.MockUserRepository, mr *mocks.MockRoleRepository)
+		username      string
+		password      string
+		email         string
+		setupMock     func(m *mocks.MockUserRepository, mr *mocks.MockRoleRepository)
 		expectedError error
 	}{
 		{
-			name:      "Usuario creado exitosamente",
-			username:  "john",
-			password:  "password123",
-			email:     "john@test.com",
+			name:     "Usuario creado exitosamente",
+			username: "john",
+			password: "password123",
+			email:    "john@test.com",
 			setupMock: func(m *mocks.MockUserRepository, mr *mocks.MockRoleRepository) {
 				m.On("FindByUsername", mock.Anything, "john").Return(nil, domain.ErrUserNotFound)
 				m.On("FindByEmailHash", mock.Anything, mock.AnythingOfType("string")).Return(nil, domain.ErrUserNotFound)
 				mr.On("FindByName", mock.Anything, "User").Return(&domain.Role{ID: 1, Name: "User"}, nil)
-			m.On("Create", mock.Anything, mock.AnythingOfType("*domain.User")).Return(nil)
+				m.On("Create", mock.Anything, mock.AnythingOfType("*domain.User")).Return(nil)
+			},
+			expectedError: nil,
 		},
-		expectedError: nil,
-	},
-	{
-		name:      "Usuario ya existe",
-			username:  "john",
-			password:  "password123",
-			email:     "",
+		{
+			name:     "Usuario ya existe",
+			username: "john",
+			password: "password123",
+			email:    "",
 			setupMock: func(m *mocks.MockUserRepository, mr *mocks.MockRoleRepository) {
 				m.On("FindByUsername", mock.Anything, "john").Return(&domain.User{ID: 1, Username: "john"}, nil)
 			},
@@ -384,15 +384,15 @@ func TestUserService_UpdateUser(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		userID       uint
-		newUsername  string
-		setupMock    func(m *mocks.MockUserRepository)
+		userID        uint
+		newUsername   string
+		setupMock     func(m *mocks.MockUserRepository)
 		expectedError error
 	}{
 		{
-			name:         "Usuario actualizado",
-			userID:       1,
-			newUsername:  "johnnew",
+			name:        "Usuario actualizado",
+			userID:      1,
+			newUsername: "johnnew",
 			setupMock: func(m *mocks.MockUserRepository) {
 				m.On("FindByID", mock.Anything, uint(1)).Return(&domain.User{ID: 1, Username: "john"}, nil)
 				m.On("UpdateProfile", mock.Anything, mock.AnythingOfType("*domain.User")).Return(nil)
@@ -400,7 +400,7 @@ func TestUserService_UpdateUser(t *testing.T) {
 			expectedError: nil,
 		},
 		{
-			name:         "Usuario no encontrado",
+			name:        "Usuario no encontrado",
 			userID:      999,
 			newUsername: "johnnew",
 			setupMock: func(m *mocks.MockUserRepository) {
@@ -441,13 +441,13 @@ func TestUserService_DeleteUser(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		userID       uint
-		setupMock    func(m *mocks.MockUserRepository)
+		userID        uint
+		setupMock     func(m *mocks.MockUserRepository)
 		expectedError error
 	}{
 		{
-			name:    "Usuario eliminado",
-			userID:  1,
+			name:   "Usuario eliminado",
+			userID: 1,
 			setupMock: func(m *mocks.MockUserRepository) {
 				m.On("FindByID", mock.Anything, uint(1)).Return(&domain.User{ID: 1, Username: "john"}, nil)
 				m.On("Delete", mock.Anything, uint(1)).Return(nil)
@@ -455,8 +455,8 @@ func TestUserService_DeleteUser(t *testing.T) {
 			expectedError: nil,
 		},
 		{
-			name:    "Error al eliminar",
-			userID:  1,
+			name:   "Error al eliminar",
+			userID: 1,
 			setupMock: func(m *mocks.MockUserRepository) {
 				m.On("FindByID", mock.Anything, uint(1)).Return(&domain.User{ID: 1, Username: "john"}, nil)
 				m.On("Delete", mock.Anything, uint(1)).Return(errors.New("db error"))

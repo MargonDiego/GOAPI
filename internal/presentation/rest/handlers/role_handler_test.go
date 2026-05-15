@@ -35,7 +35,7 @@ func TestRoleHandler_CreateRole(t *testing.T) {
 			expectedBody:   "invalid json payload",
 		},
 		{
-			name: "Error de validacion: nombre vacio",
+			name:    "Error de validacion: nombre vacio",
 			payload: handlers.RoleCreateRequest{Name: ""},
 			setupMock: func(m *mocks.MockRoleService) {
 				// El validador rechaza antes de llegar al servicio
@@ -218,8 +218,8 @@ func TestRoleHandler_AssignPermissions(t *testing.T) {
 			expectedBody:   "invalid json payload",
 		},
 		{
-			name:  "Error del servicio (ej: permiso inexistente)",
-			urlID: "1",
+			name:    "Error del servicio (ej: permiso inexistente)",
+			urlID:   "1",
 			payload: handlers.AssignPermissionsRequest{PermissionIDs: []uint{99}},
 			setupMock: func(m *mocks.MockRoleService) {
 				m.On("AssignPermissionsToRole", mock.Anything, uint(1), []uint{99}).Return(domain.ErrInvalidInput)
@@ -228,8 +228,8 @@ func TestRoleHandler_AssignPermissions(t *testing.T) {
 			expectedBody:   domain.ErrInvalidInput.Error(),
 		},
 		{
-			name:  "Éxito",
-			urlID: "1",
+			name:    "Éxito",
+			urlID:   "1",
 			payload: handlers.AssignPermissionsRequest{PermissionIDs: []uint{1, 2}},
 			setupMock: func(m *mocks.MockRoleService) {
 				m.On("AssignPermissionsToRole", mock.Anything, uint(1), []uint{1, 2}).Return(nil)
@@ -257,7 +257,7 @@ func TestRoleHandler_AssignPermissions(t *testing.T) {
 			}
 
 			req := httptest.NewRequest(http.MethodPut, "/api/roles/"+tt.urlID+"/permissions", bytes.NewReader(bodyBytes))
-			
+
 			r := mux.NewRouter()
 			r.HandleFunc("/api/roles/{id}/permissions", handler.AssignPermissions)
 

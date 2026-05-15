@@ -1,15 +1,17 @@
 // Package cache provee un cache en memoria liviano para la validación de token_version.
 //
 // Problema que resuelve:
-//   El JWT embebe token_version como claim "ver". El middleware necesita compararlo
-//   contra la BD en cada request para detectar tokens stale (permisos revocados).
-//   Sin cache, esto sería un SELECT extra por request — inaceptable en producción.
+//
+//	El JWT embebe token_version como claim "ver". El middleware necesita compararlo
+//	contra la BD en cada request para detectar tokens stale (permisos revocados).
+//	Sin cache, esto sería un SELECT extra por request — inaceptable en producción.
 //
 // Solución:
-//   Cache en memoria con TTL de 30 segundos. La ventana máxima de invalidación
-//   pasa de 15 minutos (duración del JWT) a 30 segundos (TTL del cache).
-//   Al cambiar roles/permisos, se llama a Invalidate(userID) para evitar esperar
-//   incluso esos 30 segundos.
+//
+//	Cache en memoria con TTL de 30 segundos. La ventana máxima de invalidación
+//	pasa de 15 minutos (duración del JWT) a 30 segundos (TTL del cache).
+//	Al cambiar roles/permisos, se llama a Invalidate(userID) para evitar esperar
+//	incluso esos 30 segundos.
 package cache
 
 import (

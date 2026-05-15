@@ -78,7 +78,7 @@ func (i *IPRateLimiter) Middleware(next http.Handler) http.Handler {
 		}
 
 		limiter := i.getVisitor(ip)
-		
+
 		// Si se excedió el límite, rechazamos con 429 Too Many Requests
 		if !limiter.Allow() {
 			respondError(w, http.StatusTooManyRequests, "too many requests, please slow down")

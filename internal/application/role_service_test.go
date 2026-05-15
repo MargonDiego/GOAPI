@@ -361,27 +361,27 @@ func TestRoleService_GetRoleByID(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		roleID      uint
-		setupMock    func(m *mockRoleRepository)
-		expectedRole *domain.Role
+		roleID        uint
+		setupMock     func(m *mockRoleRepository)
+		expectedRole  *domain.Role
 		expectedError error
 	}{
 		{
-			name:    "Rol encontrado",
+			name:   "Rol encontrado",
 			roleID: 1,
 			setupMock: func(m *mockRoleRepository) {
 				m.On("FindByID", mock.Anything, uint(1)).Return(&domain.Role{ID: 1, Name: "Admin"}, nil)
 			},
-			expectedRole: &domain.Role{ID: 1, Name: "Admin"},
+			expectedRole:  &domain.Role{ID: 1, Name: "Admin"},
 			expectedError: nil,
 		},
 		{
-			name:    "Rol no encontrado",
+			name:   "Rol no encontrado",
 			roleID: 999,
 			setupMock: func(m *mockRoleRepository) {
 				m.On("FindByID", mock.Anything, uint(999)).Return(nil, domain.ErrRoleNotFound)
 			},
-			expectedRole: nil,
+			expectedRole:  nil,
 			expectedError: domain.ErrRoleNotFound,
 		},
 	}
@@ -418,14 +418,14 @@ func TestRoleService_UpdateRole(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		roleID       uint
-		newName      string
-		setupMock    func(m *mockRoleRepository)
+		roleID        uint
+		newName       string
+		setupMock     func(m *mockRoleRepository)
 		expectedError error
 	}{
 		{
 			name:    "Rol actualizado",
-			roleID: 1,
+			roleID:  1,
 			newName: "SuperAdmin",
 			setupMock: func(m *mockRoleRepository) {
 				m.On("FindByID", mock.Anything, uint(1)).Return(&domain.Role{ID: 1, Name: "Admin"}, nil)
@@ -435,7 +435,7 @@ func TestRoleService_UpdateRole(t *testing.T) {
 		},
 		{
 			name:    "Nombre vacío",
-			roleID: 1,
+			roleID:  1,
 			newName: "",
 			setupMock: func(m *mockRoleRepository) {
 				// No debe llamar al mock
@@ -444,7 +444,7 @@ func TestRoleService_UpdateRole(t *testing.T) {
 		},
 		{
 			name:    "Rol no encontrado",
-			roleID: 999,
+			roleID:  999,
 			newName: "NewRole",
 			setupMock: func(m *mockRoleRepository) {
 				m.On("FindByID", mock.Anything, uint(999)).Return(nil, domain.ErrRoleNotFound)
@@ -482,13 +482,13 @@ func TestRoleService_DeleteRole(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		roleID       uint
-		setupMock    func(m *mockRoleRepository)
+		roleID        uint
+		setupMock     func(m *mockRoleRepository)
 		expectedError error
 	}{
 		{
-			name:    "Rol eliminado",
-			roleID:  1,
+			name:   "Rol eliminado",
+			roleID: 1,
 			setupMock: func(m *mockRoleRepository) {
 				m.On("FindByID", mock.Anything, uint(1)).Return(&domain.Role{ID: 1, Name: "Admin"}, nil)
 				m.On("Delete", mock.Anything, uint(1)).Return(nil)
@@ -496,8 +496,8 @@ func TestRoleService_DeleteRole(t *testing.T) {
 			expectedError: nil,
 		},
 		{
-			name:    "Error al eliminar",
-			roleID:  1,
+			name:   "Error al eliminar",
+			roleID: 1,
 			setupMock: func(m *mockRoleRepository) {
 				m.On("FindByID", mock.Anything, uint(1)).Return(&domain.Role{ID: 1, Name: "Admin"}, nil)
 				m.On("Delete", mock.Anything, uint(1)).Return(errors.New("db error"))

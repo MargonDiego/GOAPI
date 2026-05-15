@@ -17,9 +17,9 @@ type User struct {
 	LockedUntil    *time.Time `gorm:"column:locked_until"`
 	// TokenVersion se incrementa cada vez que cambian los roles/permisos del usuario.
 	// El JWT embebe esta versión como claim "ver"; el middleware la valida en cada request.
-	TokenVersion   int        `gorm:"column:token_version;not null;default:1"`
-	Scope          string     `gorm:"index;default:''"`
-	Roles          []Role     `gorm:"many2many:user_roles;"`
+	TokenVersion int    `gorm:"column:token_version;not null;default:1"`
+	Scope        string `gorm:"index;default:''"`
+	Roles        []Role `gorm:"many2many:user_roles;"`
 }
 
 type Role struct {
@@ -47,13 +47,13 @@ type RefreshToken struct {
 
 // AuditLog registra cambios críticos en el sistema para trazabilidad forense.
 type AuditLog struct {
-	ID         uint      `gorm:"primarykey"`
-	Action     string    `gorm:"not null;index"`
-	ActorID    uint      `gorm:"not null;index"`
-	TargetType string    `gorm:"not null"`
-	TargetID   uint      `gorm:"not null"`
-	OldValue   string    `gorm:"type:text"`
-	NewValue   string    `gorm:"type:text"`
+	ID         uint   `gorm:"primarykey"`
+	Action     string `gorm:"not null;index"`
+	ActorID    uint   `gorm:"not null;index"`
+	TargetType string `gorm:"not null"`
+	TargetID   uint   `gorm:"not null"`
+	OldValue   string `gorm:"type:text"`
+	NewValue   string `gorm:"type:text"`
 	IPAddress  string
 	UserAgent  string
 	CreatedAt  time.Time

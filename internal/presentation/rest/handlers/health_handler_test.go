@@ -71,7 +71,7 @@ func TestHealthHandler_Readiness(t *testing.T) {
 			if tt.pinger != nil {
 				pinger = tt.pinger
 			}
-			
+
 			handler := handlers.NewHealthHandler(pinger)
 
 			req := httptest.NewRequest(http.MethodGet, "/health/readiness", nil)

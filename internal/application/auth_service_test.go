@@ -1,4 +1,4 @@
-﻿package application_test
+package application_test
 
 import (
 	"context"
@@ -40,19 +40,19 @@ func TestAuthService_Register(t *testing.T) {
 		expectedError error
 	}{
 		{
-			name:     "Error de validacion: contrasena corta",
-			username: "testuser",
-			password: "123",
-			email:    "test@test.com",
+			name:          "Error de validacion: contrasena corta",
+			username:      "testuser",
+			password:      "123",
+			email:         "test@test.com",
 			setupUserMock: func(m *mocks.MockUserRepository) {},
 			setupRoleMock: func(m *mocks.MockRoleRepository) {},
 			expectedError: domain.ErrInvalidInput,
 		},
 		{
-			name:     "Error de validacion: email vacio",
-			username: "testuser",
-			password: "validpassword123",
-			email:    "",
+			name:          "Error de validacion: email vacio",
+			username:      "testuser",
+			password:      "validpassword123",
+			email:         "",
 			setupUserMock: func(m *mocks.MockUserRepository) {},
 			setupRoleMock: func(m *mocks.MockRoleRepository) {},
 			expectedError: domain.ErrInvalidInput,
@@ -209,9 +209,9 @@ func TestAuthService_RefreshTokens(t *testing.T) {
 		expectedError error
 	}{
 		{
-			name:     "Exito: refresh token valido",
+			name:         "Exito: refresh token valido",
 			refreshToken: "valid-refresh-token",
-			userID:     1,
+			userID:       1,
 			setupMock: func(m *mocks.MockUserRepository) {
 				m.On("GetRefreshToken", mock.Anything, "valid-refresh-token").Return(&domain.RefreshToken{
 					Token:     "valid-refresh-token",
@@ -228,18 +228,18 @@ func TestAuthService_RefreshTokens(t *testing.T) {
 			expectedError: nil,
 		},
 		{
-			name:     "Error: refresh token invalido",
+			name:         "Error: refresh token invalido",
 			refreshToken: "invalid-token",
-			userID:     1,
+			userID:       1,
 			setupMock: func(m *mocks.MockUserRepository) {
 				m.On("GetRefreshToken", mock.Anything, "invalid-token").Return(nil, domain.ErrInvalidToken)
 			},
 			expectedError: domain.ErrInvalidToken,
 		},
 		{
-			name:     "Error: refresh token expirado",
+			name:         "Error: refresh token expirado",
 			refreshToken: "expired-token",
-			userID:     1,
+			userID:       1,
 			setupMock: func(m *mocks.MockUserRepository) {
 				m.On("GetRefreshToken", mock.Anything, "expired-token").Return(&domain.RefreshToken{
 					Token:     "expired-token",

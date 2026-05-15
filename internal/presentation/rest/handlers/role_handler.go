@@ -216,11 +216,11 @@ func (h *RoleHandler) GetPermissions(w http.ResponseWriter, r *http.Request) {
 
 // PaginatedPermissionResponse es la respuesta paginada de permisos.
 type PaginatedPermissionResponse struct {
-	Data        []PermissionResponse `json:"data"`
-	Page        int                  `json:"page"`
-	Size        int                  `json:"size"`
-	Total       int                  `json:"total"`
-	TotalPages  int                  `json:"total_pages"`
+	Data       []PermissionResponse `json:"data"`
+	Page       int                  `json:"page"`
+	Size       int                  `json:"size"`
+	Total      int                  `json:"total"`
+	TotalPages int                  `json:"total_pages"`
 }
 
 // AssignPermissions asigna permisos a un rol.

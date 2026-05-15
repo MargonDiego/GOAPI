@@ -48,8 +48,8 @@ type AuthService interface {
 // authService es la implementación concreta de AuthService.
 // Orquesta los repositorios de usuarios y roles, la firma JWT y el cifrado de emails.
 type authService struct {
-	repo     domain.UserRepository
-	roleRepo domain.RoleRepository
+	repo      domain.UserRepository
+	roleRepo  domain.RoleRepository
 	jwtSecret []byte
 	enc       *appcrypto.Encryptor
 }
@@ -200,7 +200,7 @@ func (s *authService) Login(ctx context.Context, username, password string) (str
 		"sub":         user.Username,
 		"uid":         user.ID,
 		"ver":         user.TokenVersion, // Token version — invalidación por cambio de roles
-		"scope":       user.Scope,          // Scoping administrativo
+		"scope":       user.Scope,        // Scoping administrativo
 		"exp":         time.Now().Add(15 * time.Minute).Unix(),
 		"permissions": permArray,
 	}
