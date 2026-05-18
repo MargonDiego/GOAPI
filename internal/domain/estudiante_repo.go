@@ -2,6 +2,15 @@ package domain
 
 import "context"
 
+// --- Interfaces segregadas (Principio de Segregación de Interfaces) ---
+//
+// EstudianteRepository se descompone en dos contratos especializados.
+// Los consumidores que solo necesitan lectura pueden depender de
+// EstudianteReader en lugar del repositorio completo.
+//
+// La interfaz compuesta EstudianteRepository se mantiene para el wiring
+// en main.go donde se necesita el contrato completo.
+
 // EstudianteReader agrupa las operaciones de consulta sobre estudiantes.
 type EstudianteReader interface {
 	FindByID(ctx context.Context, id uint) (*Estudiante, error)
