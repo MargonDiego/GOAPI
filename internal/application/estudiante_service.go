@@ -49,7 +49,7 @@ func (s *estudianteService) Create(ctx context.Context, rut, nombre, curso strin
 	rutHash := s.enc.Hash(norm)
 	_, err = s.repo.FindByRutHash(ctx, rutHash)
 	if err == nil {
-		return fmt.Errorf("%w: rut already exists", domain.ErrInvalidInput)
+		return fmt.Errorf("%w: rut already exists", domain.ErrEstudianteDuplicado)
 	}
 	if !errors.Is(err, domain.ErrEstudianteNotFound) {
 		return fmt.Errorf("failed to check rut: %w", err)

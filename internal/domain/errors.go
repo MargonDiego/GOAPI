@@ -76,8 +76,9 @@ var (
 	ErrEmailAlreadyExists      = &AppError{Code: "EMAIL_ALREADY_EXISTS", Message: "email already registered", Status: http.StatusConflict}
 	ErrRoleAlreadyExists       = &AppError{Code: "ROLE_ALREADY_EXISTS", Message: "role already exists", Status: http.StatusConflict}
 	ErrPermissionAlreadyExists = &AppError{Code: "PERMISSION_ALREADY_EXISTS", Message: "permission already exists", Status: http.StatusConflict}
+	ErrEstudianteDuplicado     = &AppError{Code: "ESTUDIANTE_DUPLICADO", Message: "estudiante con ese RUT ya existe", Status: http.StatusConflict}
 
-	// 403 â€” AutorizaciÃ³n
+	// 403 - Autorizacion
 	ErrInsufficientPerms = &AppError{Code: "INSUFFICIENT_PERMISSIONS", Message: "insufficient permissions", Status: http.StatusForbidden}
 	ErrRoleImmutable     = &AppError{Code: "ROLE_IMMUTABLE", Message: "system role cannot be modified or deleted", Status: http.StatusForbidden}
 	ErrScopeMismatch     = &AppError{Code: "SCOPE_MISMATCH", Message: "operation not allowed for this scope", Status: http.StatusForbidden}

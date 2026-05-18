@@ -186,6 +186,7 @@ func (h *EstudianteHandler) Delete(w http.ResponseWriter, r *http.Request) {
 // @Security     BearerAuth
 // @Success      200 {object} MessageResponse
 // @Failure      400 {object} ErrorResponse
+// @Failure      403 {object} ErrorResponse
 // @Failure      404 {object} ErrorResponse
 // @Router       /estudiantes/{id}/restore [post]
 func (h *EstudianteHandler) Restore(w http.ResponseWriter, r *http.Request) {

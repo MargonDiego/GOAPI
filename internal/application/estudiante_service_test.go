@@ -56,7 +56,7 @@ func TestEstudianteService_Create(t *testing.T) {
 		ctx := application.WithScope(context.Background(), "colegio-x")
 
 		err := svc.Create(ctx, "12.345.678-5", "Juan", "8°B")
-		assert.ErrorIs(t, err, domain.ErrInvalidInput)
+		assert.ErrorIs(t, err, domain.ErrEstudianteDuplicado)
 	})
 }
 
