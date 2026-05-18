@@ -1,5 +1,364 @@
 basePath: /api/v1
 definitions:
+  application.Expediente:
+    properties:
+      adjuntos:
+        items:
+          $ref: '#/definitions/domain.Adjunto'
+        type: array
+      apelaciones:
+        items:
+          $ref: '#/definitions/domain.Apelacion'
+        type: array
+      comentarios:
+        items:
+          $ref: '#/definitions/domain.Comentario'
+        type: array
+      descargos:
+        items:
+          $ref: '#/definitions/domain.Descargo'
+        type: array
+      eventos:
+        items:
+          $ref: '#/definitions/domain.IncidenciaEvento'
+        type: array
+      incidencia:
+        $ref: '#/definitions/domain.Incidencia'
+      medidas:
+        items:
+          $ref: '#/definitions/domain.Medida'
+        type: array
+      notificaciones:
+        items:
+          $ref: '#/definitions/domain.Notificacion'
+        type: array
+      resoluciones:
+        items:
+          $ref: '#/definitions/domain.Resolucion'
+        type: array
+    type: object
+  domain.Adjunto:
+    properties:
+      createdAt:
+        type: string
+      hashSHA256:
+        type: string
+      id:
+        type: integer
+      incidenciaID:
+        type: integer
+      mimeType:
+        type: string
+      nombreAlmacenado:
+        type: string
+      nombreOriginal:
+        type: string
+      subidoPorID:
+        type: integer
+      tamanoBytes:
+        format: int64
+        type: integer
+    type: object
+  domain.Apelacion:
+    properties:
+      createdAt:
+        type: string
+      estado:
+        $ref: '#/definitions/domain.EstadoApelacion'
+      fechaPresentacion:
+        type: string
+      id:
+        type: integer
+      incidenciaID:
+        type: integer
+      motivo:
+        type: string
+      plazoVencimiento:
+        type: string
+      presentadaPorID:
+        type: integer
+      resolucionID:
+        type: integer
+    type: object
+  domain.CategoriaIncidencia:
+    enum:
+    - maltrato_entre_estudiantes
+    - maltrato_adulto_estudiante
+    - ciberacoso
+    - vulneracion_derechos
+    - connotacion_sexual
+    - porte_arma
+    - consumo
+    - otro
+    type: string
+    x-enum-varnames:
+    - CategoriaMaltratoEstudiantes
+    - CategoriaMaltratoAdulto
+    - CategoriaCiberacoso
+    - CategoriaVulneracion
+    - CategoriaConnotacionSexual
+    - CategoriaPorteArma
+    - CategoriaConsumo
+    - CategoriaOtro
+  domain.ClaseMedida:
+    enum:
+    - FORMATIVA
+    - DISCIPLINARIA
+    type: string
+    x-enum-varnames:
+    - ClaseFormativa
+    - ClaseDisciplinaria
+  domain.Comentario:
+    properties:
+      autorID:
+        type: integer
+      createdAt:
+        type: string
+      cuerpo:
+        type: string
+      id:
+        type: integer
+      incidenciaID:
+        type: integer
+    type: object
+  domain.Descargo:
+    properties:
+      contenido:
+        type: string
+      createdAt:
+        type: string
+      fechaPresentacion:
+        type: string
+      id:
+        type: integer
+      incidenciaID:
+        type: integer
+      presentadoPorID:
+        type: integer
+    type: object
+  domain.EstadoApelacion:
+    enum:
+    - PENDIENTE
+    - ACEPTADA
+    - RECHAZADA
+    type: string
+    x-enum-varnames:
+    - ApelacionPendiente
+    - ApelacionAceptada
+    - ApelacionRechazada
+  domain.EstadoCumplimiento:
+    enum:
+    - PENDIENTE
+    - EN_CURSO
+    - CUMPLIDA
+    - INCUMPLIDA
+    type: string
+    x-enum-varnames:
+    - CumplimientoPendiente
+    - CumplimientoEnCurso
+    - CumplimientoCumplida
+    - CumplimientoIncumplida
+  domain.EstadoIncidencia:
+    enum:
+    - RECIBIDA
+    - EN_INVESTIGACION
+    - RESUELTA
+    - EN_APELACION
+    - RESOLUCION_FINAL
+    - EN_SEGUIMIENTO
+    - CERRADA
+    - DERIVADA
+    type: string
+    x-enum-varnames:
+    - EstadoRecibida
+    - EstadoEnInvestigacion
+    - EstadoResuelta
+    - EstadoEnApelacion
+    - EstadoResolucionFinal
+    - EstadoEnSeguimiento
+    - EstadoCerrada
+    - EstadoDerived
+  domain.GravedadIncidencia:
+    enum:
+    - LEVE
+    - GRAVE
+    - GRAVISIMA
+    type: string
+    x-enum-varnames:
+    - GravedadLeve
+    - GravedadGrave
+    - GravedadGravisima
+  domain.Incidencia:
+    properties:
+      categoria:
+        $ref: '#/definitions/domain.CategoriaIncidencia'
+      codigo:
+        type: string
+      denuncianteID:
+        type: integer
+      descripcion:
+        type: string
+      esConstitutivoDeDelito:
+        type: boolean
+      estado:
+        $ref: '#/definitions/domain.EstadoIncidencia'
+      estudianteID:
+        type: integer
+      fechaCierre:
+        type: string
+      fechaEliminacionProgramada:
+        type: string
+      fechaInicioInvestigacion:
+        type: string
+      fechaRecepcion:
+        type: string
+      fechaSuspensionPreventiva:
+        type: string
+      gravedad:
+        $ref: '#/definitions/domain.GravedadIncidencia'
+      id:
+        type: integer
+      responsableID:
+        type: integer
+      scope:
+        type: string
+      suspensionPreventiva:
+        type: boolean
+      titulo:
+        type: string
+    type: object
+  domain.IncidenciaEvento:
+    properties:
+      actorID:
+        type: integer
+      createdAt:
+        type: string
+      estadoAnterior:
+        $ref: '#/definitions/domain.EstadoIncidencia'
+      estadoNuevo:
+        $ref: '#/definitions/domain.EstadoIncidencia'
+      id:
+        type: integer
+      incidenciaID:
+        type: integer
+      resumen:
+        type: string
+      tipo:
+        $ref: '#/definitions/domain.TipoEvento'
+    type: object
+  domain.Medida:
+    properties:
+      clase:
+        $ref: '#/definitions/domain.ClaseMedida'
+      createdAt:
+        type: string
+      descripcion:
+        type: string
+      estadoCumplimiento:
+        $ref: '#/definitions/domain.EstadoCumplimiento'
+      fechaInicio:
+        type: string
+      fechaTermino:
+        type: string
+      id:
+        type: integer
+      incidenciaID:
+        type: integer
+      proporcionalidad:
+        type: string
+      responsableEjecucionID:
+        type: integer
+      tipo:
+        $ref: '#/definitions/domain.TipoMedida'
+    type: object
+  domain.Notificacion:
+    properties:
+      acuse:
+        type: boolean
+      contenido:
+        type: string
+      createdAt:
+        type: string
+      destinatario:
+        type: string
+      fechaAcuse:
+        type: string
+      fechaNotificacion:
+        type: string
+      id:
+        type: integer
+      incidenciaID:
+        type: integer
+      medio:
+        type: string
+    type: object
+  domain.Resolucion:
+    properties:
+      createdAt:
+        type: string
+      decision:
+        type: string
+      fechaResolucion:
+        type: string
+      fundamentacion:
+        type: string
+      id:
+        type: integer
+      incidenciaID:
+        type: integer
+      resueltoPorID:
+        type: integer
+      tipo:
+        $ref: '#/definitions/domain.TipoResolucion'
+    type: object
+  domain.TipoEvento:
+    enum:
+    - CREACION
+    - CAMBIO_ESTADO
+    - ASIGNACION
+    - COMENTARIO
+    - ADJUNTO
+    - MEDIDA
+    - DESCARGO
+    - RESOLUCION
+    - APELACION
+    - NOTIFICACION
+    type: string
+    x-enum-varnames:
+    - EventoCreacion
+    - EventoCambioEstado
+    - EventoAsignacion
+    - EventoComentario
+    - EventoAdjunto
+    - EventoMedida
+    - EventoDescargo
+    - EventoResolucion
+    - EventoApelacion
+    - EventoNotificacion
+  domain.TipoMedida:
+    enum:
+    - dialogo
+    - servicio
+    - suspension
+    - condicionalidad
+    - cancelacion
+    - expulsion
+    type: string
+    x-enum-varnames:
+    - TipoDialogo
+    - TipoServicioComunitario
+    - TipoSuspension
+    - TipoCondicionalidad
+    - TipoCancelacion
+    - TipoExpulsion
+  domain.TipoResolucion:
+    enum:
+    - ORIGINAL
+    - APELACION
+    type: string
+    x-enum-varnames:
+    - ResolucionOriginal
+    - ResolucionApelacion
   handlers.APIMeta:
     properties:
       page:
@@ -23,6 +382,21 @@ definitions:
         $ref: '#/definitions/handlers.APIMeta'
       success:
         type: boolean
+    type: object
+  handlers.AgregarComentarioRequest:
+    properties:
+      cuerpo:
+        minLength: 1
+        type: string
+    required:
+    - cuerpo
+    type: object
+  handlers.AsignarRequest:
+    properties:
+      responsable_id:
+        type: integer
+    required:
+    - responsable_id
     type: object
   handlers.AssignPermissionsRequest:
     properties:
@@ -118,6 +492,33 @@ definitions:
     - nombre
     - rut
     type: object
+  handlers.CreateIncidenciaRequest:
+    properties:
+      categoria:
+        type: string
+      descripcion:
+        type: string
+      es_constitutivo_de_delito:
+        type: boolean
+      estudiante_id:
+        type: integer
+      gravedad:
+        enum:
+        - LEVE
+        - GRAVE
+        - GRAVISIMA
+        type: string
+      titulo:
+        maxLength: 200
+        minLength: 3
+        type: string
+    required:
+    - categoria
+    - descripcion
+    - estudiante_id
+    - gravedad
+    - titulo
+    type: object
   handlers.CreateUserRequest:
     properties:
       email:
@@ -152,6 +553,35 @@ definitions:
       nombre:
         type: string
       rut:
+        type: string
+    type: object
+  handlers.IncidenciaResponse:
+    properties:
+      categoria:
+        type: string
+      codigo:
+        type: string
+      denunciante_id:
+        type: integer
+      descripcion:
+        type: string
+      es_constitutivo_de_delito:
+        type: boolean
+      estado:
+        type: string
+      estudiante_id:
+        type: integer
+      gravedad:
+        type: string
+      id:
+        type: integer
+      responsable_id:
+        type: integer
+      scope:
+        type: string
+      suspension_preventiva:
+        type: boolean
+      titulo:
         type: string
     type: object
   handlers.MessageResponse:
@@ -228,6 +658,20 @@ definitions:
       name:
         type: string
     type: object
+  handlers.PresentarApelacionRequest:
+    properties:
+      motivo:
+        minLength: 10
+        type: string
+      plazo_vencimiento:
+        type: string
+      resolucion_id:
+        type: integer
+    required:
+    - motivo
+    - plazo_vencimiento
+    - resolucion_id
+    type: object
   handlers.RefreshRequest:
     properties:
       refresh_token:
@@ -236,6 +680,32 @@ definitions:
         type: string
     required:
     - refresh_token
+    type: object
+  handlers.ResolverApelacionRequest:
+    properties:
+      aceptada:
+        type: boolean
+      decision:
+        minLength: 5
+        type: string
+      fundamentacion:
+        minLength: 10
+        type: string
+    required:
+    - decision
+    - fundamentacion
+    type: object
+  handlers.ResolverRequest:
+    properties:
+      decision:
+        minLength: 5
+        type: string
+      fundamentacion:
+        minLength: 10
+        type: string
+    required:
+    - decision
+    - fundamentacion
     type: object
   handlers.RoleCreateRequest:
     properties:
@@ -529,6 +999,10 @@ paths:
           description: Bad Request
           schema:
             $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
         "404":
           description: Not Found
           schema:
@@ -538,6 +1012,379 @@ paths:
       summary: Restaurar estudiante
       tags:
       - estudiantes
+  /incidencias:
+    get:
+      parameters:
+      - default: 1
+        description: Página
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Tamaño
+        in: query
+        name: size
+        type: integer
+      - description: Estado
+        in: query
+        name: estado
+        type: string
+      - description: Gravedad
+        in: query
+        name: gravedad
+        type: string
+      - description: Categoría
+        in: query
+        name: categoria
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Listar incidencias
+      tags:
+      - incidencias
+    post:
+      consumes:
+      - application/json
+      description: Registra una incidencia de convivencia escolar según Ley 20.536.
+      parameters:
+      - description: Datos de la incidencia
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.CreateIncidenciaRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.IncidenciaResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Crear incidencia
+      tags:
+      - incidencias
+  /incidencias/{id}:
+    get:
+      parameters:
+      - description: Incidencia ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.IncidenciaResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Obtener incidencia
+      tags:
+      - incidencias
+  /incidencias/{id}/apelaciones/{apelacion}/resolver:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Incidencia ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Apelación ID
+        in: path
+        name: apelacion
+        required: true
+        type: integer
+      - description: Resolución de apelación
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.ResolverApelacionRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Resolver apelación
+      tags:
+      - incidencias
+  /incidencias/{id}/apelar:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Incidencia ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Apelación
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.PresentarApelacionRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Presentar apelación
+      tags:
+      - incidencias
+  /incidencias/{id}/asignar:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Incidencia ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Responsable
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.AsignarRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Asignar responsable
+      tags:
+      - incidencias
+  /incidencias/{id}/cerrar:
+    post:
+      parameters:
+      - description: Incidencia ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.MessageResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Cerrar incidencia
+      tags:
+      - incidencias
+  /incidencias/{id}/comentarios:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Incidencia ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Comentario
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.AgregarComentarioRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Agregar comentario
+      tags:
+      - incidencias
+  /incidencias/{id}/expediente:
+    get:
+      parameters:
+      - description: Incidencia ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/application.Expediente'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Obtener expediente
+      tags:
+      - incidencias
+  /incidencias/{id}/investigar:
+    post:
+      parameters:
+      - description: Incidencia ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.MessageResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Iniciar investigación
+      tags:
+      - incidencias
+  /incidencias/{id}/resolver:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Incidencia ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Resolución
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.ResolverRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Resolver incidencia
+      tags:
+      - incidencias
   /login:
     post:
       consumes:

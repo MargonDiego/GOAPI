@@ -352,8 +352,605 @@ const docTemplate = `{
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }
                     },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
                     "404": {
                         "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/incidencias": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "incidencias"
+                ],
+                "summary": "Listar incidencias",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Página",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Tamaño",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Estado",
+                        "name": "estado",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Gravedad",
+                        "name": "gravedad",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Categoría",
+                        "name": "categoria",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Registra una incidencia de convivencia escolar según Ley 20.536.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "incidencias"
+                ],
+                "summary": "Crear incidencia",
+                "parameters": [
+                    {
+                        "description": "Datos de la incidencia",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.CreateIncidenciaRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.IncidenciaResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/incidencias/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "incidencias"
+                ],
+                "summary": "Obtener incidencia",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Incidencia ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.IncidenciaResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/incidencias/{id}/apelaciones/{apelacion}/resolver": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "incidencias"
+                ],
+                "summary": "Resolver apelación",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Incidencia ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Apelación ID",
+                        "name": "apelacion",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Resolución de apelación",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ResolverApelacionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.MessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/incidencias/{id}/apelar": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "incidencias"
+                ],
+                "summary": "Presentar apelación",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Incidencia ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Apelación",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.PresentarApelacionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.MessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/incidencias/{id}/asignar": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "incidencias"
+                ],
+                "summary": "Asignar responsable",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Incidencia ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Responsable",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.AsignarRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.MessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/incidencias/{id}/cerrar": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "incidencias"
+                ],
+                "summary": "Cerrar incidencia",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Incidencia ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.MessageResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/incidencias/{id}/comentarios": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "incidencias"
+                ],
+                "summary": "Agregar comentario",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Incidencia ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Comentario",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.AgregarComentarioRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.MessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/incidencias/{id}/expediente": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "incidencias"
+                ],
+                "summary": "Obtener expediente",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Incidencia ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/application.Expediente"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/incidencias/{id}/investigar": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "incidencias"
+                ],
+                "summary": "Iniciar investigación",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Incidencia ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.MessageResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/incidencias/{id}/resolver": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "incidencias"
+                ],
+                "summary": "Resolver incidencia",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Incidencia ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Resolución",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ResolverRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.MessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
                         "schema": {
                             "$ref": "#/definitions/handlers.ErrorResponse"
                         }
@@ -1803,6 +2400,512 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "application.Expediente": {
+            "type": "object",
+            "properties": {
+                "adjuntos": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.Adjunto"
+                    }
+                },
+                "apelaciones": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.Apelacion"
+                    }
+                },
+                "comentarios": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.Comentario"
+                    }
+                },
+                "descargos": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.Descargo"
+                    }
+                },
+                "eventos": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.IncidenciaEvento"
+                    }
+                },
+                "incidencia": {
+                    "$ref": "#/definitions/domain.Incidencia"
+                },
+                "medidas": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.Medida"
+                    }
+                },
+                "notificaciones": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.Notificacion"
+                    }
+                },
+                "resoluciones": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/domain.Resolucion"
+                    }
+                }
+            }
+        },
+        "domain.Adjunto": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "hashSHA256": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "incidenciaID": {
+                    "type": "integer"
+                },
+                "mimeType": {
+                    "type": "string"
+                },
+                "nombreAlmacenado": {
+                    "type": "string"
+                },
+                "nombreOriginal": {
+                    "type": "string"
+                },
+                "subidoPorID": {
+                    "type": "integer"
+                },
+                "tamanoBytes": {
+                    "type": "integer",
+                    "format": "int64"
+                }
+            }
+        },
+        "domain.Apelacion": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "estado": {
+                    "$ref": "#/definitions/domain.EstadoApelacion"
+                },
+                "fechaPresentacion": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "incidenciaID": {
+                    "type": "integer"
+                },
+                "motivo": {
+                    "type": "string"
+                },
+                "plazoVencimiento": {
+                    "type": "string"
+                },
+                "presentadaPorID": {
+                    "type": "integer"
+                },
+                "resolucionID": {
+                    "type": "integer"
+                }
+            }
+        },
+        "domain.CategoriaIncidencia": {
+            "type": "string",
+            "enum": [
+                "maltrato_entre_estudiantes",
+                "maltrato_adulto_estudiante",
+                "ciberacoso",
+                "vulneracion_derechos",
+                "connotacion_sexual",
+                "porte_arma",
+                "consumo",
+                "otro"
+            ],
+            "x-enum-varnames": [
+                "CategoriaMaltratoEstudiantes",
+                "CategoriaMaltratoAdulto",
+                "CategoriaCiberacoso",
+                "CategoriaVulneracion",
+                "CategoriaConnotacionSexual",
+                "CategoriaPorteArma",
+                "CategoriaConsumo",
+                "CategoriaOtro"
+            ]
+        },
+        "domain.ClaseMedida": {
+            "type": "string",
+            "enum": [
+                "FORMATIVA",
+                "DISCIPLINARIA"
+            ],
+            "x-enum-varnames": [
+                "ClaseFormativa",
+                "ClaseDisciplinaria"
+            ]
+        },
+        "domain.Comentario": {
+            "type": "object",
+            "properties": {
+                "autorID": {
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "cuerpo": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "incidenciaID": {
+                    "type": "integer"
+                }
+            }
+        },
+        "domain.Descargo": {
+            "type": "object",
+            "properties": {
+                "contenido": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "fechaPresentacion": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "incidenciaID": {
+                    "type": "integer"
+                },
+                "presentadoPorID": {
+                    "type": "integer"
+                }
+            }
+        },
+        "domain.EstadoApelacion": {
+            "type": "string",
+            "enum": [
+                "PENDIENTE",
+                "ACEPTADA",
+                "RECHAZADA"
+            ],
+            "x-enum-varnames": [
+                "ApelacionPendiente",
+                "ApelacionAceptada",
+                "ApelacionRechazada"
+            ]
+        },
+        "domain.EstadoCumplimiento": {
+            "type": "string",
+            "enum": [
+                "PENDIENTE",
+                "EN_CURSO",
+                "CUMPLIDA",
+                "INCUMPLIDA"
+            ],
+            "x-enum-varnames": [
+                "CumplimientoPendiente",
+                "CumplimientoEnCurso",
+                "CumplimientoCumplida",
+                "CumplimientoIncumplida"
+            ]
+        },
+        "domain.EstadoIncidencia": {
+            "type": "string",
+            "enum": [
+                "RECIBIDA",
+                "EN_INVESTIGACION",
+                "RESUELTA",
+                "EN_APELACION",
+                "RESOLUCION_FINAL",
+                "EN_SEGUIMIENTO",
+                "CERRADA",
+                "DERIVADA"
+            ],
+            "x-enum-varnames": [
+                "EstadoRecibida",
+                "EstadoEnInvestigacion",
+                "EstadoResuelta",
+                "EstadoEnApelacion",
+                "EstadoResolucionFinal",
+                "EstadoEnSeguimiento",
+                "EstadoCerrada",
+                "EstadoDerived"
+            ]
+        },
+        "domain.GravedadIncidencia": {
+            "type": "string",
+            "enum": [
+                "LEVE",
+                "GRAVE",
+                "GRAVISIMA"
+            ],
+            "x-enum-varnames": [
+                "GravedadLeve",
+                "GravedadGrave",
+                "GravedadGravisima"
+            ]
+        },
+        "domain.Incidencia": {
+            "type": "object",
+            "properties": {
+                "categoria": {
+                    "$ref": "#/definitions/domain.CategoriaIncidencia"
+                },
+                "codigo": {
+                    "type": "string"
+                },
+                "denuncianteID": {
+                    "type": "integer"
+                },
+                "descripcion": {
+                    "type": "string"
+                },
+                "esConstitutivoDeDelito": {
+                    "type": "boolean"
+                },
+                "estado": {
+                    "$ref": "#/definitions/domain.EstadoIncidencia"
+                },
+                "estudianteID": {
+                    "type": "integer"
+                },
+                "fechaCierre": {
+                    "type": "string"
+                },
+                "fechaEliminacionProgramada": {
+                    "type": "string"
+                },
+                "fechaInicioInvestigacion": {
+                    "type": "string"
+                },
+                "fechaRecepcion": {
+                    "type": "string"
+                },
+                "fechaSuspensionPreventiva": {
+                    "type": "string"
+                },
+                "gravedad": {
+                    "$ref": "#/definitions/domain.GravedadIncidencia"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "responsableID": {
+                    "type": "integer"
+                },
+                "scope": {
+                    "type": "string"
+                },
+                "suspensionPreventiva": {
+                    "type": "boolean"
+                },
+                "titulo": {
+                    "type": "string"
+                }
+            }
+        },
+        "domain.IncidenciaEvento": {
+            "type": "object",
+            "properties": {
+                "actorID": {
+                    "type": "integer"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "estadoAnterior": {
+                    "$ref": "#/definitions/domain.EstadoIncidencia"
+                },
+                "estadoNuevo": {
+                    "$ref": "#/definitions/domain.EstadoIncidencia"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "incidenciaID": {
+                    "type": "integer"
+                },
+                "resumen": {
+                    "type": "string"
+                },
+                "tipo": {
+                    "$ref": "#/definitions/domain.TipoEvento"
+                }
+            }
+        },
+        "domain.Medida": {
+            "type": "object",
+            "properties": {
+                "clase": {
+                    "$ref": "#/definitions/domain.ClaseMedida"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "descripcion": {
+                    "type": "string"
+                },
+                "estadoCumplimiento": {
+                    "$ref": "#/definitions/domain.EstadoCumplimiento"
+                },
+                "fechaInicio": {
+                    "type": "string"
+                },
+                "fechaTermino": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "incidenciaID": {
+                    "type": "integer"
+                },
+                "proporcionalidad": {
+                    "type": "string"
+                },
+                "responsableEjecucionID": {
+                    "type": "integer"
+                },
+                "tipo": {
+                    "$ref": "#/definitions/domain.TipoMedida"
+                }
+            }
+        },
+        "domain.Notificacion": {
+            "type": "object",
+            "properties": {
+                "acuse": {
+                    "type": "boolean"
+                },
+                "contenido": {
+                    "type": "string"
+                },
+                "createdAt": {
+                    "type": "string"
+                },
+                "destinatario": {
+                    "type": "string"
+                },
+                "fechaAcuse": {
+                    "type": "string"
+                },
+                "fechaNotificacion": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "incidenciaID": {
+                    "type": "integer"
+                },
+                "medio": {
+                    "type": "string"
+                }
+            }
+        },
+        "domain.Resolucion": {
+            "type": "object",
+            "properties": {
+                "createdAt": {
+                    "type": "string"
+                },
+                "decision": {
+                    "type": "string"
+                },
+                "fechaResolucion": {
+                    "type": "string"
+                },
+                "fundamentacion": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "incidenciaID": {
+                    "type": "integer"
+                },
+                "resueltoPorID": {
+                    "type": "integer"
+                },
+                "tipo": {
+                    "$ref": "#/definitions/domain.TipoResolucion"
+                }
+            }
+        },
+        "domain.TipoEvento": {
+            "type": "string",
+            "enum": [
+                "CREACION",
+                "CAMBIO_ESTADO",
+                "ASIGNACION",
+                "COMENTARIO",
+                "ADJUNTO",
+                "MEDIDA",
+                "DESCARGO",
+                "RESOLUCION",
+                "APELACION",
+                "NOTIFICACION"
+            ],
+            "x-enum-varnames": [
+                "EventoCreacion",
+                "EventoCambioEstado",
+                "EventoAsignacion",
+                "EventoComentario",
+                "EventoAdjunto",
+                "EventoMedida",
+                "EventoDescargo",
+                "EventoResolucion",
+                "EventoApelacion",
+                "EventoNotificacion"
+            ]
+        },
+        "domain.TipoMedida": {
+            "type": "string",
+            "enum": [
+                "dialogo",
+                "servicio",
+                "suspension",
+                "condicionalidad",
+                "cancelacion",
+                "expulsion"
+            ],
+            "x-enum-varnames": [
+                "TipoDialogo",
+                "TipoServicioComunitario",
+                "TipoSuspension",
+                "TipoCondicionalidad",
+                "TipoCancelacion",
+                "TipoExpulsion"
+            ]
+        },
+        "domain.TipoResolucion": {
+            "type": "string",
+            "enum": [
+                "ORIGINAL",
+                "APELACION"
+            ],
+            "x-enum-varnames": [
+                "ResolucionOriginal",
+                "ResolucionApelacion"
+            ]
+        },
         "handlers.APIMeta": {
             "type": "object",
             "properties": {
@@ -1836,6 +2939,29 @@ const docTemplate = `{
                 },
                 "success": {
                     "type": "boolean"
+                }
+            }
+        },
+        "handlers.AgregarComentarioRequest": {
+            "type": "object",
+            "required": [
+                "cuerpo"
+            ],
+            "properties": {
+                "cuerpo": {
+                    "type": "string",
+                    "minLength": 1
+                }
+            }
+        },
+        "handlers.AsignarRequest": {
+            "type": "object",
+            "required": [
+                "responsable_id"
+            ],
+            "properties": {
+                "responsable_id": {
+                    "type": "integer"
                 }
             }
         },
@@ -1970,6 +3096,43 @@ const docTemplate = `{
                 }
             }
         },
+        "handlers.CreateIncidenciaRequest": {
+            "type": "object",
+            "required": [
+                "categoria",
+                "descripcion",
+                "estudiante_id",
+                "gravedad",
+                "titulo"
+            ],
+            "properties": {
+                "categoria": {
+                    "type": "string"
+                },
+                "descripcion": {
+                    "type": "string"
+                },
+                "es_constitutivo_de_delito": {
+                    "type": "boolean"
+                },
+                "estudiante_id": {
+                    "type": "integer"
+                },
+                "gravedad": {
+                    "type": "string",
+                    "enum": [
+                        "LEVE",
+                        "GRAVE",
+                        "GRAVISIMA"
+                    ]
+                },
+                "titulo": {
+                    "type": "string",
+                    "maxLength": 200,
+                    "minLength": 3
+                }
+            }
+        },
         "handlers.CreateUserRequest": {
             "type": "object",
             "required": [
@@ -2017,6 +3180,50 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "rut": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.IncidenciaResponse": {
+            "type": "object",
+            "properties": {
+                "categoria": {
+                    "type": "string"
+                },
+                "codigo": {
+                    "type": "string"
+                },
+                "denunciante_id": {
+                    "type": "integer"
+                },
+                "descripcion": {
+                    "type": "string"
+                },
+                "es_constitutivo_de_delito": {
+                    "type": "boolean"
+                },
+                "estado": {
+                    "type": "string"
+                },
+                "estudiante_id": {
+                    "type": "integer"
+                },
+                "gravedad": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "responsable_id": {
+                    "type": "integer"
+                },
+                "scope": {
+                    "type": "string"
+                },
+                "suspension_preventiva": {
+                    "type": "boolean"
+                },
+                "titulo": {
                     "type": "string"
                 }
             }
@@ -2132,6 +3339,26 @@ const docTemplate = `{
                 }
             }
         },
+        "handlers.PresentarApelacionRequest": {
+            "type": "object",
+            "required": [
+                "motivo",
+                "plazo_vencimiento",
+                "resolucion_id"
+            ],
+            "properties": {
+                "motivo": {
+                    "type": "string",
+                    "minLength": 10
+                },
+                "plazo_vencimiento": {
+                    "type": "string"
+                },
+                "resolucion_id": {
+                    "type": "integer"
+                }
+            }
+        },
         "handlers.RefreshRequest": {
             "type": "object",
             "required": [
@@ -2142,6 +3369,43 @@ const docTemplate = `{
                     "type": "string",
                     "minLength": 1,
                     "example": "rand_base64_string"
+                }
+            }
+        },
+        "handlers.ResolverApelacionRequest": {
+            "type": "object",
+            "required": [
+                "decision",
+                "fundamentacion"
+            ],
+            "properties": {
+                "aceptada": {
+                    "type": "boolean"
+                },
+                "decision": {
+                    "type": "string",
+                    "minLength": 5
+                },
+                "fundamentacion": {
+                    "type": "string",
+                    "minLength": 10
+                }
+            }
+        },
+        "handlers.ResolverRequest": {
+            "type": "object",
+            "required": [
+                "decision",
+                "fundamentacion"
+            ],
+            "properties": {
+                "decision": {
+                    "type": "string",
+                    "minLength": 5
+                },
+                "fundamentacion": {
+                    "type": "string",
+                    "minLength": 10
                 }
             }
         },
