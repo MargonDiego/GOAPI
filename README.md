@@ -244,6 +244,21 @@ docker compose up -d --build
 | GET | `/api/v1/permissions` | Listar permisos. Query: `?page=&size=`. Respuesta: `{data, page, size, total, total_pages}` |
 | POST | `/api/v1/permissions` | Crear permiso. Body: `{"name","description"}` |
 
+### Estudiantes (Convivencia Escolar)
+
+Datos de estudiantes para el módulo de convivencia. PII (RUT, nombre) cifrada en reposo con AES-256-GCM. Acceso auditado (Ley 21.719).
+
+| Método | Ruta | Permiso requerido | Descripción |
+|---|---|---|---|
+| GET | `/api/v1/estudiantes` | `read:estudiantes` | Listar paginado. Query: `?page=&size=&curso=` |
+| POST | `/api/v1/estudiantes` | `manage:estudiantes` | Crear estudiante. Body: `{"rut","nombre","curso"}` |
+| GET | `/api/v1/estudiantes/{id}` | `read:estudiantes` | Detalle de estudiante (PII descifrada) |
+| PUT | `/api/v1/estudiantes/{id}` | `manage:estudiantes` | Actualizar nombre/curso |
+| DELETE | `/api/v1/estudiantes/{id}` | `manage:estudiantes` | Soft-delete estudiante |
+| POST | `/api/v1/estudiantes/{id}/restore` | `manage:estudiantes` | Restaurar estudiante soft-deleted |
+
+Permisos disponibles: `read:estudiantes`, `manage:estudiantes` (asignados al rol Admin por defecto).
+
 ### Healthchecks
 
 | Método | Ruta | Descripción |

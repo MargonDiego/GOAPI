@@ -1,5 +1,29 @@
 basePath: /api/v1
 definitions:
+  handlers.APIMeta:
+    properties:
+      page:
+        type: integer
+      size:
+        type: integer
+      total:
+        type: integer
+      total_pages:
+        type: integer
+    type: object
+  handlers.APIResponse:
+    properties:
+      code:
+        description: 'CÃ³digo de error de dominio (ej: "USER_NOT_FOUND")'
+        type: string
+      data: {}
+      error:
+        type: string
+      meta:
+        $ref: '#/definitions/handlers.APIMeta'
+      success:
+        type: boolean
+    type: object
   handlers.AssignPermissionsRequest:
     properties:
       permission_ids:
@@ -74,6 +98,26 @@ definitions:
     - role_ids
     - user_ids
     type: object
+  handlers.CreateEstudianteRequest:
+    properties:
+      curso:
+        example: 8°B
+        maxLength: 50
+        minLength: 1
+        type: string
+      nombre:
+        example: Juan Pérez
+        maxLength: 120
+        minLength: 2
+        type: string
+      rut:
+        example: 12.345.678-5
+        type: string
+    required:
+    - curso
+    - nombre
+    - rut
+    type: object
   handlers.CreateUserRequest:
     properties:
       email:
@@ -97,6 +141,17 @@ definitions:
     properties:
       error:
         example: invalid credentials
+        type: string
+    type: object
+  handlers.EstudianteResponse:
+    properties:
+      curso:
+        type: string
+      id:
+        type: integer
+      nombre:
+        type: string
+      rut:
         type: string
     type: object
   handlers.MessageResponse:
@@ -223,6 +278,17 @@ definitions:
     required:
     - name
     type: object
+  handlers.UpdateEstudianteRequest:
+    properties:
+      curso:
+        maxLength: 50
+        minLength: 1
+        type: string
+      nombre:
+        maxLength: 120
+        minLength: 2
+        type: string
+    type: object
   handlers.UpdateUserRequest:
     properties:
       email:
@@ -266,11 +332,219 @@ paths:
       summary: API info
       tags:
       - system
+  /estudiantes:
+    get:
+      parameters:
+      - default: 1
+        description: Página
+        in: query
+        name: page
+        type: integer
+      - default: 10
+        description: Tamaño
+        in: query
+        name: size
+        type: integer
+      - description: Filtrar por curso
+        in: query
+        name: curso
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.APIResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Listar estudiantes
+      tags:
+      - estudiantes
+    post:
+      consumes:
+      - application/json
+      description: Crea un estudiante (solo dato, no usuario). PII cifrada en reposo.
+      parameters:
+      - description: Datos del estudiante
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.CreateEstudianteRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Crear estudiante
+      tags:
+      - estudiantes
+  /estudiantes/{id}:
+    delete:
+      parameters:
+      - description: Estudiante ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Eliminar estudiante
+      tags:
+      - estudiantes
+    get:
+      parameters:
+      - description: Estudiante ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.EstudianteResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Obtener estudiante
+      tags:
+      - estudiantes
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Estudiante ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Datos a actualizar
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.UpdateEstudianteRequest'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Actualizar estudiante
+      tags:
+      - estudiantes
+  /estudiantes/{id}/restore:
+    post:
+      parameters:
+      - description: Estudiante ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Restaurar estudiante
+      tags:
+      - estudiantes
   /login:
     post:
       consumes:
       - application/json
-      description: Autentica credenciales y retorna un token JWT con permisos embebidos
+      description: |-
+        Autentica credenciales y retorna un token JWT con permisos embebidos.
+        Setea cookie HttpOnly access_token (anti-XSS) + SameSite=Strict (anti-CSRF).
       parameters:
       - description: Credenciales
         in: body

@@ -36,9 +36,334 @@ const docTemplate = `{
                 }
             }
         },
+        "/estudiantes": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "estudiantes"
+                ],
+                "summary": "Listar estudiantes",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "default": 1,
+                        "description": "Página",
+                        "name": "page",
+                        "in": "query"
+                    },
+                    {
+                        "type": "integer",
+                        "default": 10,
+                        "description": "Tamaño",
+                        "name": "size",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filtrar por curso",
+                        "name": "curso",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.APIResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Crea un estudiante (solo dato, no usuario). PII cifrada en reposo.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "estudiantes"
+                ],
+                "summary": "Crear estudiante",
+                "parameters": [
+                    {
+                        "description": "Datos del estudiante",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.CreateEstudianteRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.MessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/estudiantes/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "estudiantes"
+                ],
+                "summary": "Obtener estudiante",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Estudiante ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.EstudianteResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "estudiantes"
+                ],
+                "summary": "Actualizar estudiante",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Estudiante ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Datos a actualizar",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.UpdateEstudianteRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.MessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            },
+            "delete": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "estudiantes"
+                ],
+                "summary": "Eliminar estudiante",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Estudiante ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.MessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/estudiantes/{id}/restore": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "estudiantes"
+                ],
+                "summary": "Restaurar estudiante",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Estudiante ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.MessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/login": {
             "post": {
-                "description": "Autentica credenciales y retorna un token JWT con permisos embebidos",
+                "description": "Autentica credenciales y retorna un token JWT con permisos embebidos.\nSetea cookie HttpOnly access_token (anti-XSS) + SameSite=Strict (anti-CSRF).",
                 "consumes": [
                     "application/json"
                 ],
@@ -1478,6 +1803,42 @@ const docTemplate = `{
         }
     },
     "definitions": {
+        "handlers.APIMeta": {
+            "type": "object",
+            "properties": {
+                "page": {
+                    "type": "integer"
+                },
+                "size": {
+                    "type": "integer"
+                },
+                "total": {
+                    "type": "integer"
+                },
+                "total_pages": {
+                    "type": "integer"
+                }
+            }
+        },
+        "handlers.APIResponse": {
+            "type": "object",
+            "properties": {
+                "code": {
+                    "description": "CÃ³digo de error de dominio (ej: \"USER_NOT_FOUND\")",
+                    "type": "string"
+                },
+                "data": {},
+                "error": {
+                    "type": "string"
+                },
+                "meta": {
+                    "$ref": "#/definitions/handlers.APIMeta"
+                },
+                "success": {
+                    "type": "boolean"
+                }
+            }
+        },
         "handlers.AssignPermissionsRequest": {
             "type": "object",
             "required": [
@@ -1583,6 +1944,32 @@ const docTemplate = `{
                 }
             }
         },
+        "handlers.CreateEstudianteRequest": {
+            "type": "object",
+            "required": [
+                "curso",
+                "nombre",
+                "rut"
+            ],
+            "properties": {
+                "curso": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 1,
+                    "example": "8°B"
+                },
+                "nombre": {
+                    "type": "string",
+                    "maxLength": 120,
+                    "minLength": 2,
+                    "example": "Juan Pérez"
+                },
+                "rut": {
+                    "type": "string",
+                    "example": "12.345.678-5"
+                }
+            }
+        },
         "handlers.CreateUserRequest": {
             "type": "object",
             "required": [
@@ -1614,6 +2001,23 @@ const docTemplate = `{
                 "error": {
                     "type": "string",
                     "example": "invalid credentials"
+                }
+            }
+        },
+        "handlers.EstudianteResponse": {
+            "type": "object",
+            "properties": {
+                "curso": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "integer"
+                },
+                "nombre": {
+                    "type": "string"
+                },
+                "rut": {
+                    "type": "string"
                 }
             }
         },
@@ -1796,6 +2200,21 @@ const docTemplate = `{
                     "maxLength": 50,
                     "minLength": 2,
                     "example": "Editor"
+                }
+            }
+        },
+        "handlers.UpdateEstudianteRequest": {
+            "type": "object",
+            "properties": {
+                "curso": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 1
+                },
+                "nombre": {
+                    "type": "string",
+                    "maxLength": 120,
+                    "minLength": 2
                 }
             }
         },
