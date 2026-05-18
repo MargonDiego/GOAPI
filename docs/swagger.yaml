@@ -681,6 +681,65 @@ definitions:
     required:
     - refresh_token
     type: object
+  handlers.RegistrarDescargoRequest:
+    properties:
+      contenido:
+        minLength: 10
+        type: string
+    required:
+    - contenido
+    type: object
+  handlers.RegistrarMedidaRequest:
+    properties:
+      clase:
+        enum:
+        - FORMATIVA
+        - DISCIPLINARIA
+        type: string
+      descripcion:
+        minLength: 5
+        type: string
+      fecha_inicio:
+        type: string
+      fecha_termino:
+        type: string
+      proporcionalidad:
+        minLength: 10
+        type: string
+      responsable_ejec_id:
+        type: integer
+      tipo:
+        type: string
+    required:
+    - clase
+    - descripcion
+    - fecha_inicio
+    - proporcionalidad
+    - responsable_ejec_id
+    - tipo
+    type: object
+  handlers.RegistrarNotificacionRequest:
+    properties:
+      contenido:
+        minLength: 5
+        type: string
+      destinatario:
+        type: string
+      fecha:
+        type: string
+      medio:
+        enum:
+        - EMAIL
+        - CARTA
+        - TELEFONO
+        - PRESENCIAL
+        type: string
+    required:
+    - contenido
+    - destinatario
+    - fecha
+    - medio
+    type: object
   handlers.ResolverApelacionRequest:
     properties:
       aceptada:
@@ -1112,6 +1171,68 @@ paths:
       summary: Obtener incidencia
       tags:
       - incidencias
+  /incidencias/{id}/adjuntos:
+    post:
+      consumes:
+      - multipart/form-data
+      parameters:
+      - description: Incidencia ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Archivo a adjuntar
+        in: formData
+        name: archivo
+        required: true
+        type: file
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Adjuntar archivo
+      tags:
+      - incidencias
+  /incidencias/{id}/adjuntos/{adjunto}:
+    get:
+      parameters:
+      - description: Incidencia ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Adjunto ID
+        in: path
+        name: adjunto
+        required: true
+        type: integer
+      produces:
+      - application/octet-stream
+      responses:
+        "200":
+          description: OK
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Descargar adjunto
+      tags:
+      - incidencias
   /incidencias/{id}/apelaciones/{apelacion}/resolver:
     post:
       consumes:
@@ -1293,6 +1414,70 @@ paths:
       summary: Agregar comentario
       tags:
       - incidencias
+  /incidencias/{id}/derivar:
+    post:
+      parameters:
+      - description: Incidencia ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.MessageResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Derivar incidencia
+      tags:
+      - incidencias
+  /incidencias/{id}/descargos:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Incidencia ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Descargo
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.RegistrarDescargoRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Registrar descargo
+      tags:
+      - incidencias
   /incidencias/{id}/expediente:
     get:
       parameters:
@@ -1345,6 +1530,78 @@ paths:
       summary: Iniciar investigación
       tags:
       - incidencias
+  /incidencias/{id}/medidas:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Incidencia ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Medida
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.RegistrarMedidaRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Registrar medida
+      tags:
+      - incidencias
+  /incidencias/{id}/notificaciones:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Incidencia ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Notificación
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/handlers.RegistrarNotificacionRequest'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/handlers.MessageResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Registrar notificación
+      tags:
+      - incidencias
   /incidencias/{id}/resolver:
     post:
       consumes:
@@ -1383,6 +1640,34 @@ paths:
       security:
       - BearerAuth: []
       summary: Resolver incidencia
+      tags:
+      - incidencias
+  /incidencias/{id}/seguimiento:
+    post:
+      parameters:
+      - description: Incidencia ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.MessageResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Iniciar seguimiento
       tags:
       - incidencias
   /login:

@@ -125,6 +125,13 @@ func NewRouter(
 	incRoute.Handle("/{id}/apelar", authMw.RequirePermission("manage:incidencias")(http.HandlerFunc(incidenciaHandler.PresentarApelacion))).Methods("POST")
 	incRoute.Handle("/{id}/apelaciones/{apelacion}/resolver", authMw.RequirePermission("resolve:incidencias")(http.HandlerFunc(incidenciaHandler.ResolverApelacion))).Methods("POST")
 	incRoute.Handle("/{id}/cerrar", authMw.RequirePermission("resolve:incidencias")(http.HandlerFunc(incidenciaHandler.Cerrar))).Methods("POST")
+	incRoute.Handle("/{id}/descargos", authMw.RequirePermission("manage:incidencias")(http.HandlerFunc(incidenciaHandler.RegistrarDescargo))).Methods("POST")
+	incRoute.Handle("/{id}/medidas", authMw.RequirePermission("resolve:incidencias")(http.HandlerFunc(incidenciaHandler.RegistrarMedida))).Methods("POST")
+	incRoute.Handle("/{id}/seguimiento", authMw.RequirePermission("resolve:incidencias")(http.HandlerFunc(incidenciaHandler.IniciarSeguimiento))).Methods("POST")
+	incRoute.Handle("/{id}/notificaciones", authMw.RequirePermission("manage:incidencias")(http.HandlerFunc(incidenciaHandler.RegistrarNotificacion))).Methods("POST")
+	incRoute.Handle("/{id}/derivar", authMw.RequirePermission("manage:incidencias")(http.HandlerFunc(incidenciaHandler.Derivar))).Methods("POST")
+	incRoute.Handle("/{id}/adjuntos", authMw.RequirePermission("manage:incidencias")(http.HandlerFunc(incidenciaHandler.AdjuntarArchivo))).Methods("POST")
+	incRoute.Handle("/{id}/adjuntos/{adjunto}", authMw.RequirePermission("read:incidencias")(http.HandlerFunc(incidenciaHandler.ObtenerAdjunto))).Methods("GET")
 
 	return r
 }

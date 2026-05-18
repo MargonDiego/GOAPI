@@ -1,6 +1,8 @@
 package handlers
 
 import (
+	"fmt"
+	"io"
 	"net/http"
 	"time"
 
@@ -405,4 +407,258 @@ func (h *IncidenciaHandler) GetExpediente(w http.ResponseWriter, r *http.Request
 		return
 	}
 	RespondJSON(w, http.StatusOK, exp)
+}
+
+// --- DTOs adicionales ---
+
+type RegistrarDescargoRequest struct {
+	Contenido string `json:"contenido" validate:"required,min=10"`
+}
+
+type RegistrarMedidaRequest struct {
+	Clase             string     `json:"clase"              validate:"required,oneof=FORMATIVA DISCIPLINARIA"`
+	Tipo              string     `json:"tipo"               validate:"required"`
+	Descripcion       string     `json:"descripcion"        validate:"required,min=5"`
+	Proporcionalidad  string     `json:"proporcionalidad"   validate:"required,min=10"`
+	ResponsableEjecID uint       `json:"responsable_ejec_id" validate:"required"`
+	FechaInicio       time.Time  `json:"fecha_inicio"       validate:"required"`
+	FechaTermino      *time.Time `json:"fecha_termino,omitempty"`
+}
+
+type RegistrarNotificacionRequest struct {
+	Destinatario string    `json:"destinatario" validate:"required"`
+	Medio        string    `json:"medio"        validate:"required,oneof=EMAIL CARTA TELEFONO PRESENCIAL"`
+	Contenido    string    `json:"contenido"    validate:"required,min=5"`
+	Fecha        time.Time `json:"fecha"        validate:"required"`
+}
+
+// --- Handlers adicionales ---
+
+// RegistrarDescargo registra el descargo del estudiante (debido proceso).
+//
+// @Summary      Registrar descargo
+// @Tags         incidencias
+// @Accept       json
+// @Produce      json
+// @Param        id   path int                      true "Incidencia ID"
+// @Param        body body RegistrarDescargoRequest true "Descargo"
+// @Security     BearerAuth
+// @Success      201 {object} MessageResponse
+// @Failure      400 {object} ErrorResponse
+// @Failure      404 {object} ErrorResponse
+// @Router       /incidencias/{id}/descargos [post]
+func (h *IncidenciaHandler) RegistrarDescargo(w http.ResponseWriter, r *http.Request) {
+	id, err := getIDFromURL(r, "id")
+	if err != nil {
+		RespondError(w, http.StatusBadRequest, "invalid incidencia id")
+		return
+	}
+	var req RegistrarDescargoRequest
+	if errs := DecodeAndValidate(r, &req); len(errs) > 0 {
+		RenderValidationError(w, errs)
+		return
+	}
+	if err := h.svc.RegistrarDescargo(withActor(r), uint(id), req.Contenido); err != nil {
+		RenderError(w, r, err)
+		return
+	}
+	RespondJSON(w, http.StatusCreated, MessageResponse{Message: "descargo registrado"})
+}
+
+// RegistrarMedida registra una medida formativa o disciplinaria.
+//
+// @Summary      Registrar medida
+// @Tags         incidencias
+// @Accept       json
+// @Produce      json
+// @Param        id   path int                    true "Incidencia ID"
+// @Param        body body RegistrarMedidaRequest true "Medida"
+// @Security     BearerAuth
+// @Success      201 {object} MessageResponse
+// @Failure      400 {object} ErrorResponse
+// @Failure      404 {object} ErrorResponse
+// @Router       /incidencias/{id}/medidas [post]
+func (h *IncidenciaHandler) RegistrarMedida(w http.ResponseWriter, r *http.Request) {
+	id, err := getIDFromURL(r, "id")
+	if err != nil {
+		RespondError(w, http.StatusBadRequest, "invalid incidencia id")
+		return
+	}
+	var req RegistrarMedidaRequest
+	if errs := DecodeAndValidate(r, &req); len(errs) > 0 {
+		RenderValidationError(w, errs)
+		return
+	}
+	if err := h.svc.RegistrarMedida(
+		withActor(r), uint(id),
+		domain.ClaseMedida(req.Clase),
+		domain.TipoMedida(req.Tipo),
+		req.Descripcion,
+		req.Proporcionalidad,
+		req.ResponsableEjecID,
+		req.FechaInicio,
+		req.FechaTermino,
+	); err != nil {
+		RenderError(w, r, err)
+		return
+	}
+	RespondJSON(w, http.StatusCreated, MessageResponse{Message: "medida registrada"})
+}
+
+// IniciarSeguimiento transiciona la incidencia a EN_SEGUIMIENTO.
+//
+// @Summary      Iniciar seguimiento
+// @Tags         incidencias
+// @Produce      json
+// @Param        id path int true "Incidencia ID"
+// @Security     BearerAuth
+// @Success      200 {object} MessageResponse
+// @Failure      404 {object} ErrorResponse
+// @Failure      409 {object} ErrorResponse
+// @Router       /incidencias/{id}/seguimiento [post]
+func (h *IncidenciaHandler) IniciarSeguimiento(w http.ResponseWriter, r *http.Request) {
+	id, err := getIDFromURL(r, "id")
+	if err != nil {
+		RespondError(w, http.StatusBadRequest, "invalid incidencia id")
+		return
+	}
+	if err := h.svc.IniciarSeguimiento(withActor(r), uint(id)); err != nil {
+		RenderError(w, r, err)
+		return
+	}
+	RespondJSON(w, http.StatusOK, MessageResponse{Message: "seguimiento iniciado"})
+}
+
+// RegistrarNotificacion registra una notificación al apoderado (acuse de recibo).
+//
+// @Summary      Registrar notificación
+// @Tags         incidencias
+// @Accept       json
+// @Produce      json
+// @Param        id   path int                           true "Incidencia ID"
+// @Param        body body RegistrarNotificacionRequest  true "Notificación"
+// @Security     BearerAuth
+// @Success      201 {object} MessageResponse
+// @Failure      400 {object} ErrorResponse
+// @Failure      404 {object} ErrorResponse
+// @Router       /incidencias/{id}/notificaciones [post]
+func (h *IncidenciaHandler) RegistrarNotificacion(w http.ResponseWriter, r *http.Request) {
+	id, err := getIDFromURL(r, "id")
+	if err != nil {
+		RespondError(w, http.StatusBadRequest, "invalid incidencia id")
+		return
+	}
+	var req RegistrarNotificacionRequest
+	if errs := DecodeAndValidate(r, &req); len(errs) > 0 {
+		RenderValidationError(w, errs)
+		return
+	}
+	if err := h.svc.RegistrarNotificacion(withActor(r), uint(id), req.Destinatario, req.Medio, req.Contenido, req.Fecha); err != nil {
+		RenderError(w, r, err)
+		return
+	}
+	RespondJSON(w, http.StatusCreated, MessageResponse{Message: "notificación registrada"})
+}
+
+// Derivar deriva la incidencia a otra entidad.
+//
+// @Summary      Derivar incidencia
+// @Tags         incidencias
+// @Produce      json
+// @Param        id path int true "Incidencia ID"
+// @Security     BearerAuth
+// @Success      200 {object} MessageResponse
+// @Failure      404 {object} ErrorResponse
+// @Failure      409 {object} ErrorResponse
+// @Router       /incidencias/{id}/derivar [post]
+func (h *IncidenciaHandler) Derivar(w http.ResponseWriter, r *http.Request) {
+	id, err := getIDFromURL(r, "id")
+	if err != nil {
+		RespondError(w, http.StatusBadRequest, "invalid incidencia id")
+		return
+	}
+	if err := h.svc.Derivar(withActor(r), uint(id)); err != nil {
+		RenderError(w, r, err)
+		return
+	}
+	RespondJSON(w, http.StatusOK, MessageResponse{Message: "incidencia derivada"})
+}
+
+// AdjuntarArchivo sube un archivo adjunto a la incidencia (multipart/form-data).
+//
+// @Summary      Adjuntar archivo
+// @Tags         incidencias
+// @Accept       multipart/form-data
+// @Produce      json
+// @Param        id      path      int  true  "Incidencia ID"
+// @Param        archivo formData  file true  "Archivo a adjuntar"
+// @Security     BearerAuth
+// @Success      201 {object} MessageResponse
+// @Failure      400 {object} ErrorResponse
+// @Failure      404 {object} ErrorResponse
+// @Router       /incidencias/{id}/adjuntos [post]
+func (h *IncidenciaHandler) AdjuntarArchivo(w http.ResponseWriter, r *http.Request) {
+	id, err := getIDFromURL(r, "id")
+	if err != nil {
+		RespondError(w, http.StatusBadRequest, "invalid incidencia id")
+		return
+	}
+	if err := r.ParseMultipartForm(32 << 20); err != nil {
+		RespondError(w, http.StatusBadRequest, "invalid multipart form")
+		return
+	}
+	file, header, err := r.FormFile("archivo")
+	if err != nil {
+		RespondError(w, http.StatusBadRequest, "field 'archivo' is required")
+		return
+	}
+	defer file.Close()
+
+	meta := domain.FileMeta{
+		OriginalName: header.Filename,
+		MimeType:     header.Header.Get("Content-Type"),
+	}
+	adj, err := h.svc.AdjuntarArchivo(withActor(r), uint(id), file, meta)
+	if err != nil {
+		RenderError(w, r, err)
+		return
+	}
+	RespondJSON(w, http.StatusCreated, map[string]interface{}{
+		"id":                adj.ID,
+		"nombre_original":   adj.NombreOriginal,
+		"nombre_almacenado": adj.NombreAlmacenado,
+		"mime_type":         adj.MimeType,
+		"tamano_bytes":      adj.TamanoBytes,
+	})
+}
+
+// ObtenerAdjunto descarga un archivo adjunto.
+//
+// @Summary      Descargar adjunto
+// @Tags         incidencias
+// @Produce      application/octet-stream
+// @Param        id      path int true "Incidencia ID"
+// @Param        adjunto path int true "Adjunto ID"
+// @Security     BearerAuth
+// @Success      200
+// @Failure      404 {object} ErrorResponse
+// @Router       /incidencias/{id}/adjuntos/{adjunto} [get]
+func (h *IncidenciaHandler) ObtenerAdjunto(w http.ResponseWriter, r *http.Request) {
+	adjID, err := getIDFromURL(r, "adjunto")
+	if err != nil {
+		RespondError(w, http.StatusBadRequest, "invalid adjunto id")
+		return
+	}
+	adj, rc, err := h.svc.ObtenerAdjunto(withActor(r), uint(adjID))
+	if err != nil {
+		RenderError(w, r, err)
+		return
+	}
+	defer rc.Close()
+
+	w.Header().Set("Content-Type", adj.MimeType)
+	w.Header().Set("Content-Disposition", fmt.Sprintf(`attachment; filename="%s"`, adj.NombreOriginal))
+	w.Header().Set("Content-Length", fmt.Sprintf("%d", adj.TamanoBytes))
+	w.WriteHeader(http.StatusOK)
+	io.Copy(w, rc) //nolint:errcheck
 }

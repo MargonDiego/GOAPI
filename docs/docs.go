@@ -525,6 +525,104 @@ const docTemplate = `{
                 }
             }
         },
+        "/incidencias/{id}/adjuntos": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "multipart/form-data"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "incidencias"
+                ],
+                "summary": "Adjuntar archivo",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Incidencia ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "file",
+                        "description": "Archivo a adjuntar",
+                        "name": "archivo",
+                        "in": "formData",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.MessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/incidencias/{id}/adjuntos/{adjunto}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/octet-stream"
+                ],
+                "tags": [
+                    "incidencias"
+                ],
+                "summary": "Descargar adjunto",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Incidencia ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Adjunto ID",
+                        "name": "adjunto",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK"
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/incidencias/{id}/apelaciones/{apelacion}/resolver": {
             "post": {
                 "security": [
@@ -811,6 +909,108 @@ const docTemplate = `{
                 }
             }
         },
+        "/incidencias/{id}/derivar": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "incidencias"
+                ],
+                "summary": "Derivar incidencia",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Incidencia ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.MessageResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/incidencias/{id}/descargos": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "incidencias"
+                ],
+                "summary": "Registrar descargo",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Incidencia ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Descargo",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.RegistrarDescargoRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.MessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/incidencias/{id}/expediente": {
             "get": {
                 "security": [
@@ -895,6 +1095,120 @@ const docTemplate = `{
                 }
             }
         },
+        "/incidencias/{id}/medidas": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "incidencias"
+                ],
+                "summary": "Registrar medida",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Incidencia ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Medida",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.RegistrarMedidaRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.MessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/incidencias/{id}/notificaciones": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "incidencias"
+                ],
+                "summary": "Registrar notificación",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Incidencia ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Notificación",
+                        "name": "body",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/handlers.RegistrarNotificacionRequest"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.MessageResponse"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/incidencias/{id}/resolver": {
             "post": {
                 "security": [
@@ -941,6 +1255,51 @@ const docTemplate = `{
                         "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/incidencias/{id}/seguimiento": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "incidencias"
+                ],
+                "summary": "Iniciar seguimiento",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Incidencia ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.MessageResponse"
                         }
                     },
                     "404": {
@@ -3369,6 +3728,88 @@ const docTemplate = `{
                     "type": "string",
                     "minLength": 1,
                     "example": "rand_base64_string"
+                }
+            }
+        },
+        "handlers.RegistrarDescargoRequest": {
+            "type": "object",
+            "required": [
+                "contenido"
+            ],
+            "properties": {
+                "contenido": {
+                    "type": "string",
+                    "minLength": 10
+                }
+            }
+        },
+        "handlers.RegistrarMedidaRequest": {
+            "type": "object",
+            "required": [
+                "clase",
+                "descripcion",
+                "fecha_inicio",
+                "proporcionalidad",
+                "responsable_ejec_id",
+                "tipo"
+            ],
+            "properties": {
+                "clase": {
+                    "type": "string",
+                    "enum": [
+                        "FORMATIVA",
+                        "DISCIPLINARIA"
+                    ]
+                },
+                "descripcion": {
+                    "type": "string",
+                    "minLength": 5
+                },
+                "fecha_inicio": {
+                    "type": "string"
+                },
+                "fecha_termino": {
+                    "type": "string"
+                },
+                "proporcionalidad": {
+                    "type": "string",
+                    "minLength": 10
+                },
+                "responsable_ejec_id": {
+                    "type": "integer"
+                },
+                "tipo": {
+                    "type": "string"
+                }
+            }
+        },
+        "handlers.RegistrarNotificacionRequest": {
+            "type": "object",
+            "required": [
+                "contenido",
+                "destinatario",
+                "fecha",
+                "medio"
+            ],
+            "properties": {
+                "contenido": {
+                    "type": "string",
+                    "minLength": 5
+                },
+                "destinatario": {
+                    "type": "string"
+                },
+                "fecha": {
+                    "type": "string"
+                },
+                "medio": {
+                    "type": "string",
+                    "enum": [
+                        "EMAIL",
+                        "CARTA",
+                        "TELEFONO",
+                        "PRESENCIAL"
+                    ]
                 }
             }
         },
