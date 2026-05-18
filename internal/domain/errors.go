@@ -62,6 +62,12 @@ var (
 	// 400 â€” ValidaciÃ³n
 	ErrInvalidInput = &AppError{Code: "INVALID_INPUT", Message: "invalid user input data", Status: http.StatusBadRequest}
 
+	// 404 – Recurso de convivencia no encontrado
+	ErrEstudianteNotFound = &AppError{Code: "ESTUDIANTE_NOT_FOUND", Message: "estudiante not found", Status: http.StatusNotFound}
+
+	// 400 – RUT chileno inválido (módulo 11)
+	ErrRutInvalido = &AppError{Code: "RUT_INVALIDO", Message: "rut chileno inválido", Status: http.StatusBadRequest}
+
 	// 429 â€” Rate limit / bloqueo
 	ErrAccountLocked = &AppError{Code: "ACCOUNT_LOCKED", Message: "account temporarily locked due to multiple failed attempts", Status: http.StatusTooManyRequests}
 
