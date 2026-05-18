@@ -16,6 +16,7 @@ func NewRouter(
 	userHandler *handlers.UserHandler,
 	roleHandler *handlers.RoleHandler,
 	estudianteHandler *handlers.EstudianteHandler,
+	incidenciaHandler *handlers.IncidenciaHandler,
 	healthHandler *handlers.HealthHandler,
 	authMw *middleware.AuthMiddleware,
 	appEnv string,
@@ -110,6 +111,20 @@ func NewRouter(
 	estudiantesRoute.Handle("/{id}", authMw.RequirePermission("manage:estudiantes")(http.HandlerFunc(estudianteHandler.Update))).Methods("PUT")
 	estudiantesRoute.Handle("/{id}", authMw.RequirePermission("manage:estudiantes")(http.HandlerFunc(estudianteHandler.Delete))).Methods("DELETE")
 	estudiantesRoute.Handle("/{id}/restore", authMw.RequirePermission("manage:estudiantes")(http.HandlerFunc(estudianteHandler.Restore))).Methods("POST")
+
+	// Rutas de Incidencias (convivencia escolar — Ley 20.536)
+	incRoute := api.PathPrefix("/incidencias").Subrouter()
+	incRoute.Handle("", authMw.RequirePermission("read:incidencias")(http.HandlerFunc(incidenciaHandler.Search))).Methods("GET")
+	incRoute.Handle("", authMw.RequirePermission("manage:incidencias")(http.HandlerFunc(incidenciaHandler.Create))).Methods("POST")
+	incRoute.Handle("/{id}", authMw.RequirePermission("read:incidencias")(http.HandlerFunc(incidenciaHandler.GetByID))).Methods("GET")
+	incRoute.Handle("/{id}/expediente", authMw.RequirePermission("read:incidencias")(http.HandlerFunc(incidenciaHandler.GetExpediente))).Methods("GET")
+	incRoute.Handle("/{id}/comentarios", authMw.RequirePermission("manage:incidencias")(http.HandlerFunc(incidenciaHandler.AddComentario))).Methods("POST")
+	incRoute.Handle("/{id}/asignar", authMw.RequirePermission("manage:incidencias")(http.HandlerFunc(incidenciaHandler.Asignar))).Methods("POST")
+	incRoute.Handle("/{id}/investigar", authMw.RequirePermission("manage:incidencias")(http.HandlerFunc(incidenciaHandler.IniciarInvestigacion))).Methods("POST")
+	incRoute.Handle("/{id}/resolver", authMw.RequirePermission("resolve:incidencias")(http.HandlerFunc(incidenciaHandler.Resolver))).Methods("POST")
+	incRoute.Handle("/{id}/apelar", authMw.RequirePermission("manage:incidencias")(http.HandlerFunc(incidenciaHandler.PresentarApelacion))).Methods("POST")
+	incRoute.Handle("/{id}/apelaciones/{apelacion}/resolver", authMw.RequirePermission("resolve:incidencias")(http.HandlerFunc(incidenciaHandler.ResolverApelacion))).Methods("POST")
+	incRoute.Handle("/{id}/cerrar", authMw.RequirePermission("resolve:incidencias")(http.HandlerFunc(incidenciaHandler.Cerrar))).Methods("POST")
 
 	return r
 }

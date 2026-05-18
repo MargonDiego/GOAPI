@@ -26,6 +26,7 @@ import (
 	"github.com/MargonDiego/GOAPI/internal/infrastructure/cache"
 	"github.com/MargonDiego/GOAPI/internal/infrastructure/crypto"
 	"github.com/MargonDiego/GOAPI/internal/infrastructure/persistence"
+	"github.com/MargonDiego/GOAPI/internal/infrastructure/storage"
 	"github.com/MargonDiego/GOAPI/internal/presentation/rest"
 	"github.com/MargonDiego/GOAPI/internal/presentation/rest/handlers"
 	"github.com/MargonDiego/GOAPI/internal/presentation/rest/middleware"
@@ -43,6 +44,8 @@ type infraDeps struct {
 	roleRepo        domain.RoleRepository
 	auditRepo       domain.AuditRepository
 	estudianteRepo  domain.EstudianteRepository
+	incidenciaRepo  domain.IncidenciaRepository
+	fileStorage     domain.FileStorage
 	enc             *crypto.Encryptor
 	versionCache    *cache.TokenVersionCache
 }
@@ -52,6 +55,7 @@ type appServices struct {
 	user       application.UserService
 	role       application.RoleService
 	estudiante application.EstudianteService
+	incidencia application.IncidenciaService
 }
 
 // --- Entrypoint ---
@@ -115,6 +119,11 @@ func mustInitInfra(cfg *config.Config) *infraDeps {
 	// de 15 minutos (vida del JWT) a 30 segundos sin hits extra a Postgres por request.
 	versionCache := cache.NewTokenVersionCache(30 * time.Second)
 
+	fs, err := storage.NewLocalFileStorage(cfg.UploadDir)
+	if err != nil {
+		log.Fatal().Err(err).Str("dir", cfg.UploadDir).Msg("Failed to initialize file storage")
+	}
+
 	return &infraDeps{
 		db:             db,
 		sqlDB:          sqlDB,
@@ -122,6 +131,8 @@ func mustInitInfra(cfg *config.Config) *infraDeps {
 		roleRepo:       persistence.NewRoleRepository(db),
 		auditRepo:      persistence.NewAuditRepository(db),
 		estudianteRepo: persistence.NewEstudianteRepository(db),
+		incidenciaRepo: persistence.NewIncidenciaRepository(db),
+		fileStorage:    fs,
 		enc:            enc,
 		versionCache:   versionCache,
 	}
@@ -135,6 +146,7 @@ func initServices(cfg *config.Config, infra *infraDeps) *appServices {
 		user:       application.NewUserService(infra.userRepo, infra.roleRepo, infra.enc, infra.versionCache, infra.auditRepo),
 		role:       application.NewRoleService(infra.roleRepo, infra.userRepo, infra.versionCache, infra.auditRepo),
 		estudiante: application.NewEstudianteService(infra.estudianteRepo, infra.enc, infra.auditRepo),
+		incidencia: application.NewIncidenciaService(infra.incidenciaRepo, infra.fileStorage, infra.auditRepo),
 	}
 }
 
@@ -145,10 +157,11 @@ func initServer(cfg *config.Config, services *appServices, infra *infraDeps) *ht
 	userHandler := handlers.NewUserHandler(services.user)
 	roleHandler := handlers.NewRoleHandler(services.role)
 	estudianteHandler := handlers.NewEstudianteHandler(services.estudiante)
+	incidenciaHandler := handlers.NewIncidenciaHandler(services.incidencia)
 	healthHandler := handlers.NewHealthHandler(infra.sqlDB)
 	authMw := middleware.NewAuthMiddleware(cfg.JWTSecret, infra.userRepo, infra.versionCache)
 
-	router := rest.NewRouter(authHandler, userHandler, roleHandler, estudianteHandler, healthHandler, authMw, cfg.AppEnv, cfg.CORSOrigins)
+	router := rest.NewRouter(authHandler, userHandler, roleHandler, estudianteHandler, incidenciaHandler, healthHandler, authMw, cfg.AppEnv, cfg.CORSOrigins)
 	router.Use(middleware.RequestLogger())
 
 	log.Info().Str("port", cfg.Port).Msg("Starting API server")

@@ -19,6 +19,7 @@ type Config struct {
 	JWTSecret          []byte
 	EmailEncryptionKey []byte
 	CORSOrigins        []string // OrÃ­genes permitidos para CORS, separados por coma en env
+	UploadDir          string   // Directorio local para almacenar adjuntos de incidencias
 }
 
 // Load lee, valida y retorna la configuraciÃ³n de la aplicaciÃ³n.
@@ -30,8 +31,9 @@ func Load() (*Config, error) {
 	}
 
 	cfg := &Config{
-		AppEnv: getEnv("APP_ENV", "development"),
-		Port:   getEnv("PORT", "8080"),
+		AppEnv:    getEnv("APP_ENV", "development"),
+		Port:      getEnv("PORT", "8080"),
+		UploadDir: getEnv("UPLOAD_DIR", "./uploads"),
 	}
 
 	// CORS: orÃ­genes separados por coma. Default: localhost:3000 para desarrollo.
