@@ -15,6 +15,7 @@ func NewRouter(
 	authHandler *handlers.AuthHandler,
 	userHandler *handlers.UserHandler,
 	roleHandler *handlers.RoleHandler,
+	estudianteHandler *handlers.EstudianteHandler,
 	healthHandler *handlers.HealthHandler,
 	authMw *middleware.AuthMiddleware,
 	appEnv string,
@@ -100,6 +101,15 @@ func NewRouter(
 	permsRoute.Use(authMw.RequirePermission("manage:roles"))
 	permsRoute.HandleFunc("", roleHandler.GetPermissions).Methods("GET")
 	permsRoute.HandleFunc("", roleHandler.CreatePermission).Methods("POST")
+
+	// Rutas de Estudiantes (datos de menores — RBAC + scope)
+	estudiantesRoute := api.PathPrefix("/estudiantes").Subrouter()
+	estudiantesRoute.Handle("", authMw.RequirePermission("read:estudiantes")(http.HandlerFunc(estudianteHandler.Search))).Methods("GET")
+	estudiantesRoute.Handle("", authMw.RequirePermission("manage:estudiantes")(http.HandlerFunc(estudianteHandler.Create))).Methods("POST")
+	estudiantesRoute.Handle("/{id}", authMw.RequirePermission("read:estudiantes")(http.HandlerFunc(estudianteHandler.GetByID))).Methods("GET")
+	estudiantesRoute.Handle("/{id}", authMw.RequirePermission("manage:estudiantes")(http.HandlerFunc(estudianteHandler.Update))).Methods("PUT")
+	estudiantesRoute.Handle("/{id}", authMw.RequirePermission("manage:estudiantes")(http.HandlerFunc(estudianteHandler.Delete))).Methods("DELETE")
+	estudiantesRoute.Handle("/{id}/restore", authMw.RequirePermission("manage:estudiantes")(http.HandlerFunc(estudianteHandler.Restore))).Methods("POST")
 
 	return r
 }

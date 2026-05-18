@@ -37,19 +37,21 @@ import (
 // --- Tipos auxiliares para el wiring ---
 
 type infraDeps struct {
-	db           *gorm.DB
-	sqlDB        *sql.DB
-	userRepo     domain.UserRepository
-	roleRepo     domain.RoleRepository
-	auditRepo    domain.AuditRepository
-	enc          *crypto.Encryptor
-	versionCache *cache.TokenVersionCache
+	db              *gorm.DB
+	sqlDB           *sql.DB
+	userRepo        domain.UserRepository
+	roleRepo        domain.RoleRepository
+	auditRepo       domain.AuditRepository
+	estudianteRepo  domain.EstudianteRepository
+	enc             *crypto.Encryptor
+	versionCache    *cache.TokenVersionCache
 }
 
 type appServices struct {
-	auth application.AuthService
-	user application.UserService
-	role application.RoleService
+	auth       application.AuthService
+	user       application.UserService
+	role       application.RoleService
+	estudiante application.EstudianteService
 }
 
 // --- Entrypoint ---
@@ -114,13 +116,14 @@ func mustInitInfra(cfg *config.Config) *infraDeps {
 	versionCache := cache.NewTokenVersionCache(30 * time.Second)
 
 	return &infraDeps{
-		db:           db,
-		sqlDB:        sqlDB,
-		userRepo:     persistence.NewUserRepository(db),
-		roleRepo:     persistence.NewRoleRepository(db),
-		auditRepo:    persistence.NewAuditRepository(db),
-		enc:          enc,
-		versionCache: versionCache,
+		db:             db,
+		sqlDB:          sqlDB,
+		userRepo:       persistence.NewUserRepository(db),
+		roleRepo:       persistence.NewRoleRepository(db),
+		auditRepo:      persistence.NewAuditRepository(db),
+		estudianteRepo: persistence.NewEstudianteRepository(db),
+		enc:            enc,
+		versionCache:   versionCache,
 	}
 }
 
@@ -128,9 +131,10 @@ func mustInitInfra(cfg *config.Config) *infraDeps {
 
 func initServices(cfg *config.Config, infra *infraDeps) *appServices {
 	return &appServices{
-		auth: application.NewAuthService(infra.userRepo, infra.roleRepo, cfg.JWTSecret, infra.enc),
-		user: application.NewUserService(infra.userRepo, infra.roleRepo, infra.enc, infra.versionCache, infra.auditRepo),
-		role: application.NewRoleService(infra.roleRepo, infra.userRepo, infra.versionCache, infra.auditRepo),
+		auth:       application.NewAuthService(infra.userRepo, infra.roleRepo, cfg.JWTSecret, infra.enc),
+		user:       application.NewUserService(infra.userRepo, infra.roleRepo, infra.enc, infra.versionCache, infra.auditRepo),
+		role:       application.NewRoleService(infra.roleRepo, infra.userRepo, infra.versionCache, infra.auditRepo),
+		estudiante: application.NewEstudianteService(infra.estudianteRepo, infra.enc, infra.auditRepo),
 	}
 }
 
@@ -140,10 +144,11 @@ func initServer(cfg *config.Config, services *appServices, infra *infraDeps) *ht
 	authHandler := handlers.NewAuthHandler(services.auth)
 	userHandler := handlers.NewUserHandler(services.user)
 	roleHandler := handlers.NewRoleHandler(services.role)
+	estudianteHandler := handlers.NewEstudianteHandler(services.estudiante)
 	healthHandler := handlers.NewHealthHandler(infra.sqlDB)
 	authMw := middleware.NewAuthMiddleware(cfg.JWTSecret, infra.userRepo, infra.versionCache)
 
-	router := rest.NewRouter(authHandler, userHandler, roleHandler, healthHandler, authMw, cfg.AppEnv, cfg.CORSOrigins)
+	router := rest.NewRouter(authHandler, userHandler, roleHandler, estudianteHandler, healthHandler, authMw, cfg.AppEnv, cfg.CORSOrigins)
 	router.Use(middleware.RequestLogger())
 
 	log.Info().Str("port", cfg.Port).Msg("Starting API server")
