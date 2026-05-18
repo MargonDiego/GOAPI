@@ -245,7 +245,10 @@ Cero crypto nueva. Se usa para `Estudiante.Rut`/`Nombre`.
 
 - Modelos GORM espejo en **archivo nuevo `convivencia_models.go`** (no inflar
   `gorm_models.go`) + mappers `toDomainX`/`toDBX` siguiendo el patrón exacto.
-- `AutoMigrate` en `postgres.go` para las tablas nuevas.
+- **Migraciones golang-migrate** (archivos SQL versionados en `migrations/`, la última
+  es `000008`). NO se usa AutoMigrate — el proyecto corre `migrate.New("file://migrations")`
+  en `postgres.go`. Las tablas nuevas se crean con archivos `000009_*.up.sql`/`.down.sql`
+  y siguientes.
 - Índices: `estudiante.rut_hash` único · `incidencia.codigo` único por scope · FKs
   `incidencia_id` · índices `scope` y `estado`.
 - Implementaciones de repos con `context.WithTimeout(3s)` como los repos actuales.
