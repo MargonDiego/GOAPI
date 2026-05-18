@@ -63,7 +63,7 @@ var (
 	ErrInvalidInput = &AppError{Code: "INVALID_INPUT", Message: "invalid user input data", Status: http.StatusBadRequest}
 
 	// 404 – Recurso de convivencia no encontrado
-	ErrEstudianteNotFound = &AppError{Code: "ESTUDIANTE_NOT_FOUND", Message: "estudiante not found", Status: http.StatusNotFound}
+	ErrEstudianteNotFound = &AppError{Code: "ESTUDIANTE_NOT_FOUND", Message: "student not found", Status: http.StatusNotFound}
 
 	// 400 – RUT chileno inválido (módulo 11)
 	ErrRutInvalido = &AppError{Code: "RUT_INVALIDO", Message: "rut chileno inválido", Status: http.StatusBadRequest}
