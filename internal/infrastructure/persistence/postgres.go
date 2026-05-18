@@ -121,6 +121,15 @@ func seedDefaults(db *gorm.DB) {
 	manageEstudiantesPerm := Permission{Name: "manage:estudiantes"}
 	db.FirstOrCreate(&manageEstudiantesPerm, Permission{Name: "manage:estudiantes"})
 
-	db.Model(&adminRole).Association("Permissions").Append(&readPerm, &writePerm, &manageRolesPerm, &manageUsersPerm, &readEstudiantesPerm, &manageEstudiantesPerm)
-	db.Model(&userRole).Association("Permissions").Append(&readPerm)
+	readIncidenciasPerm := Permission{Name: "read:incidencias"}
+	db.FirstOrCreate(&readIncidenciasPerm, Permission{Name: "read:incidencias"})
+
+	manageIncidenciasPerm := Permission{Name: "manage:incidencias"}
+	db.FirstOrCreate(&manageIncidenciasPerm, Permission{Name: "manage:incidencias"})
+
+	resolveIncidenciasPerm := Permission{Name: "resolve:incidencias"}
+	db.FirstOrCreate(&resolveIncidenciasPerm, Permission{Name: "resolve:incidencias"})
+
+	db.Model(&adminRole).Association("Permissions").Append(&readPerm, &writePerm, &manageRolesPerm, &manageUsersPerm, &readEstudiantesPerm, &manageEstudiantesPerm, &readIncidenciasPerm, &manageIncidenciasPerm, &resolveIncidenciasPerm)
+	db.Model(&userRole).Association("Permissions").Append(&readPerm, &readIncidenciasPerm)
 }
