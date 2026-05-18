@@ -222,8 +222,8 @@ docker compose up -d --build
 | GET | `/api/v1/users` | `read:users` | Listar paginado. Query: `?page=&size=&search=&role=`. Respuesta: `{data, page, size, total, total_pages}` |
 | GET | `/api/v1/users/deleted` | `manage:users` | Listar usuarios soft-deleted |
 | GET | `/api/v1/users/{id}` | `read:users` | Detalle de usuario |
-| POST | `/api/v1/users` | `manage:users` | Crear usuario |
-| PUT | `/api/v1/users/{id}` | `manage:users` | Actualizar usuario |
+| POST | `/api/v1/users` | `write:users` | Crear usuario |
+| PUT | `/api/v1/users/{id}` | `write:users` | Actualizar usuario |
 | DELETE | `/api/v1/users/{id}` | `manage:users` | Soft-delete usuario |
 | POST | `/api/v1/users/{id}/restore` | `manage:users` | Restaurar usuario soft-deleted |
 | PUT | `/api/v1/users/{id}/roles` | `manage:roles` | Asignar roles a usuario |

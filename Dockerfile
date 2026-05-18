@@ -38,6 +38,10 @@ COPY --from=builder /app/migrations ./migrations
 
 # Usuario no-root
 RUN adduser -D -g '' appuser
+
+# Directorio para adjuntos de incidencias
+RUN mkdir -p /app/uploads && chown appuser:appuser /app/uploads
+
 USER appuser
 
 EXPOSE 8080
