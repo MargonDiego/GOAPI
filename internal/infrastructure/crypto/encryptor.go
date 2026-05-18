@@ -60,7 +60,10 @@ func (e *Encryptor) Encrypt(plaintext string) (string, error) {
 	return base64.StdEncoding.EncodeToString(ciphertext), nil
 }
 
-// Decrypt descifra un valor producido por Encrypt.
+// Decrypt descifra un valor producido por Encrypt. Espera el formato
+// base64(nonce || ciphertext || tag) y valida la autenticidad vía el tag GCM.
+// Si el ciphertext fue modificado o la clave no corresponde, retorna un error
+// genérico deliberadamente opaco (no se filtran detalles del cifrado).
 func (e *Encryptor) Decrypt(encrypted string) (string, error) {
 	data, err := base64.StdEncoding.DecodeString(encrypted)
 	if err != nil {
@@ -86,7 +89,13 @@ func (e *Encryptor) Decrypt(encrypted string) (string, error) {
 	return string(plaintext), nil
 }
 
-// Hash genera un HMAC-SHA256 determinista de cualquier valor.
+// Hash genera un HMAC-SHA256 determinista de cualquier valor (RUT, email, etc.):
+// el mismo input siempre produce el mismo hash, lo que permite usarlo como
+// índice único / búsqueda en la BD sin almacenar el dato en claro.
+//
+// Se usa HMAC y NO SHA256 puro: SHA256 sin clave es vulnerable a rainbow tables.
+// HMAC incorpora la clave de la aplicación como secreto, haciendo inútil una
+// tabla de hashes robada sin conocer esa clave.
 func (e *Encryptor) Hash(value string) string {
 	mac := hmac.New(sha256.New, e.key)
 	mac.Write([]byte(value))

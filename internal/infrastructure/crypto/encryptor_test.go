@@ -5,12 +5,13 @@ import (
 
 	appcrypto "github.com/MargonDiego/GOAPI/internal/infrastructure/crypto"
 	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/require"
 )
 
 func newEnc(t *testing.T) *appcrypto.Encryptor {
 	t.Helper()
 	enc, err := appcrypto.NewEncryptor([]byte("12345678901234567890123456789012"))
-	assert.NoError(t, err)
+	require.NoError(t, err)
 	return enc
 }
 
