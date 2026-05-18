@@ -78,6 +78,19 @@ var (
 	ErrPermissionAlreadyExists = &AppError{Code: "PERMISSION_ALREADY_EXISTS", Message: "permission already exists", Status: http.StatusConflict}
 	ErrEstudianteDuplicado     = &AppError{Code: "ESTUDIANTE_DUPLICADO", Message: "estudiante con ese RUT ya existe", Status: http.StatusConflict}
 
+	// 404 - Incidencias
+	ErrIncidenciaNotFound = &AppError{Code: "INCIDENCIA_NOT_FOUND", Message: "incidencia not found", Status: http.StatusNotFound}
+	ErrAdjuntoNotFound    = &AppError{Code: "ADJUNTO_NOT_FOUND", Message: "adjunto not found", Status: http.StatusNotFound}
+	ErrApelacionNotFound  = &AppError{Code: "APELACION_NOT_FOUND", Message: "apelacion not found", Status: http.StatusNotFound}
+
+	// 409 - Transicion de estado invalida
+	ErrTransicionInvalida    = &AppError{Code: "TRANSICION_INVALIDA", Message: "transition not allowed from current state", Status: http.StatusConflict}
+	ErrApelacionFueraDePlazo = &AppError{Code: "APELACION_FUERA_DE_PLAZO", Message: "apelacion fuera del plazo permitido", Status: http.StatusConflict}
+
+	// 400 - Validacion de negocio
+	ErrResolucionSinFundamento = &AppError{Code: "RESOLUCION_SIN_FUNDAMENTO", Message: "la fundamentacion de la resolucion es obligatoria", Status: http.StatusBadRequest}
+	ErrMedidaDesproporcionada  = &AppError{Code: "MEDIDA_DESPROPORCIONADA", Message: "expulsion y cancelacion solo aplican a faltas gravisimas", Status: http.StatusBadRequest}
+
 	// 403 - Autorizacion
 	ErrInsufficientPerms = &AppError{Code: "INSUFFICIENT_PERMISSIONS", Message: "insufficient permissions", Status: http.StatusForbidden}
 	ErrRoleImmutable     = &AppError{Code: "ROLE_IMMUTABLE", Message: "system role cannot be modified or deleted", Status: http.StatusForbidden}
