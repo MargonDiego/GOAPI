@@ -6,6 +6,7 @@ packages:
     interfaces:
       UserRepository:
       RoleRepository:
+      AuditRepository:
       EstudianteRepository:
       IncidenciaRepository:
       FileStorage:
