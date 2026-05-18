@@ -41,4 +41,5 @@ type IncidenciaService interface {
 	GetByID(ctx context.Context, id uint) (*domain.Incidencia, error)
 	Search(ctx context.Context, f domain.IncidenciaFilter, page, size int) (domain.PaginatedResult[domain.Incidencia], error)
 	GetExpediente(ctx context.Context, id uint) (*Expediente, error)
+	ConfirmarAcuseNotificacion(ctx context.Context, notifID uint) error
 }

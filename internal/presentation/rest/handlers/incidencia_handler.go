@@ -632,6 +632,30 @@ func (h *IncidenciaHandler) AdjuntarArchivo(w http.ResponseWriter, r *http.Reque
 	})
 }
 
+// ConfirmarAcuseNotificacion registra el acuse de recibo de una notificación.
+//
+// @Summary      Confirmar acuse de notificación
+// @Tags         incidencias
+// @Produce      json
+// @Param        id      path int true "Incidencia ID"
+// @Param        notif   path int true "Notificación ID"
+// @Security     BearerAuth
+// @Success      200 {object} MessageResponse
+// @Failure      404 {object} ErrorResponse
+// @Router       /incidencias/{id}/notificaciones/{notif}/acuse [patch]
+func (h *IncidenciaHandler) ConfirmarAcuseNotificacion(w http.ResponseWriter, r *http.Request) {
+	notifID, err := getIDFromURL(r, "notif")
+	if err != nil {
+		RespondError(w, http.StatusBadRequest, "invalid notificacion id")
+		return
+	}
+	if err := h.svc.ConfirmarAcuseNotificacion(withActor(r), uint(notifID)); err != nil {
+		RenderError(w, r, err)
+		return
+	}
+	RespondJSON(w, http.StatusOK, MessageResponse{Message: "acuse confirmado"})
+}
+
 // ObtenerAdjunto descarga un archivo adjunto.
 //
 // @Summary      Descargar adjunto

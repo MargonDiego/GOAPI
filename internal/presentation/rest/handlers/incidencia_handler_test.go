@@ -79,6 +79,9 @@ func (f *fakeIncidenciaService) GetByID(_ context.Context, _ uint) (*domain.Inci
 func (f *fakeIncidenciaService) Search(_ context.Context, _ domain.IncidenciaFilter, _, _ int) (domain.PaginatedResult[domain.Incidencia], error) {
 	return f.searchResult, f.searchErr
 }
+func (f *fakeIncidenciaService) ConfirmarAcuseNotificacion(_ context.Context, _ uint) error {
+	return nil
+}
 func (f *fakeIncidenciaService) GetExpediente(_ context.Context, _ uint) (*application.Expediente, error) {
 	return f.expediente, f.expedienteErr
 }

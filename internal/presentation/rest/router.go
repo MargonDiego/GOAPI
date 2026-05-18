@@ -132,6 +132,7 @@ func NewRouter(
 	incRoute.Handle("/{id}/derivar", authMw.RequirePermission("manage:incidencias")(http.HandlerFunc(incidenciaHandler.Derivar))).Methods("POST")
 	incRoute.Handle("/{id}/adjuntos", authMw.RequirePermission("manage:incidencias")(http.HandlerFunc(incidenciaHandler.AdjuntarArchivo))).Methods("POST")
 	incRoute.Handle("/{id}/adjuntos/{adjunto}", authMw.RequirePermission("read:incidencias")(http.HandlerFunc(incidenciaHandler.ObtenerAdjunto))).Methods("GET")
+	incRoute.Handle("/{id}/notificaciones/{notif}/acuse", authMw.RequirePermission("manage:incidencias")(http.HandlerFunc(incidenciaHandler.ConfirmarAcuseNotificacion))).Methods("PATCH")
 
 	return r
 }

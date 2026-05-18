@@ -1602,6 +1602,35 @@ paths:
       summary: Registrar notificación
       tags:
       - incidencias
+  /incidencias/{id}/notificaciones/{notif}/acuse:
+    patch:
+      parameters:
+      - description: Incidencia ID
+        in: path
+        name: id
+        required: true
+        type: integer
+      - description: Notificación ID
+        in: path
+        name: notif
+        required: true
+        type: integer
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/handlers.MessageResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/handlers.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Confirmar acuse de notificación
+      tags:
+      - incidencias
   /incidencias/{id}/resolver:
     post:
       consumes:

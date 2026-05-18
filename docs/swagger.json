@@ -1203,6 +1203,52 @@
                 }
             }
         },
+        "/incidencias/{id}/notificaciones/{notif}/acuse": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "incidencias"
+                ],
+                "summary": "Confirmar acuse de notificación",
+                "parameters": [
+                    {
+                        "type": "integer",
+                        "description": "Incidencia ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "type": "integer",
+                        "description": "Notificación ID",
+                        "name": "notif",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.MessageResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/handlers.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/incidencias/{id}/resolver": {
             "post": {
                 "security": [

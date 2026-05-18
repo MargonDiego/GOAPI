@@ -525,6 +525,15 @@ func (s *incidenciaService) Search(ctx context.Context, f domain.IncidenciaFilte
 	return domain.NewPaginatedResult(list, page, size, int(total)), nil
 }
 
+func (s *incidenciaService) ConfirmarAcuseNotificacion(ctx context.Context, notifID uint) error {
+	fecha := time.Now()
+	if err := s.repo.UpdateAcuseNotificacion(ctx, notifID, fecha); err != nil {
+		return fmt.Errorf("confirmar acuse notificacion: %w", err)
+	}
+	s.audit.log(ctx, "acuse_notificacion", "notificacion", notifID, nil, nil)
+	return nil
+}
+
 func (s *incidenciaService) GetExpediente(ctx context.Context, id uint) (*Expediente, error) {
 	inc, err := s.repo.FindByID(ctx, id)
 	if err != nil {
