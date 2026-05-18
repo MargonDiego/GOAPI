@@ -7,8 +7,12 @@ packages:
       UserRepository:
       RoleRepository:
       EstudianteRepository:
+      IncidenciaRepository:
+      FileStorage:
   github.com/MargonDiego/GOAPI/internal/application:
     interfaces:
       AuthService:
       UserService:
       RoleService:
+      EstudianteService:
+      IncidenciaService:
